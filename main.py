@@ -1,17 +1,55 @@
+import sys
+import os
+import queue
+
+# ==========================================
+# 【終極修復】修正 Bad file descriptor 崩潰問題
+# ==========================================
+system_log_queue = queue.Queue()
+
+class GUIWriter:
+    def __init__(self):
+        # 【關鍵】開啟系統底層的空裝置 (devnull)，取得真實合法的檔案描述符
+        self.null_file = open(os.devnull, 'w')
+
+    def write(self, data):
+        # 攔截所有 print 和系統報錯，丟進佇列中
+        if data and data.strip():
+            system_log_queue.put(data.strip())
+
+    def flush(self):
+        pass
+
+    def isatty(self):
+        return False
+
+    def fileno(self):
+        # 【關鍵】回傳真實合法的空裝置描述符，徹底騙過 Flask 的 click 模組！
+        return self.null_file.fileno()
+
+if getattr(sys, 'frozen', False):
+    # 打包成 EXE 後，強制把所有輸出導向我們的攔截器
+    sys_writer = GUIWriter()
+    sys.stdout = sys_writer
+    sys.stderr = sys_writer
+
+# ==========================================
+# 正常 Import 區
+# ==========================================
 import tkinter as tk
 from tkinter import messagebox
+# ... 下面的 import 保留原樣 ...
 import subprocess
-import os
 import shutil
 import threading
 import socket
-import sys
 import json
 import time
-import webbrowser  # <--- 新增：用來開啟網頁
+import webbrowser
 from flask import Flask, render_template, request, send_from_directory
 from flask_socketio import SocketIO, emit
 from spleeter.separator import Separator
+import multiprocessing
 
 # ==========================================
 # 設定區
@@ -30,7 +68,7 @@ if os.path.exists(FFMPEG_DIR):
 os.environ["PATH"] += os.pathsep + BASE_DIR
 
 SONGS_DIR = os.path.join(BASE_DIR, "ktv_songs")
-TEMP_BASE_DIR = os.path.join(BASE_DIR, "temp_processing") # 改名為 BASE
+TEMP_BASE_DIR = os.path.join(BASE_DIR, "temp_processing") 
 
 if not os.path.exists(SONGS_DIR): os.makedirs(SONGS_DIR)
 if not os.path.exists(TEMP_BASE_DIR): os.makedirs(TEMP_BASE_DIR)
@@ -56,6 +94,7 @@ LOCAL_IP = get_local_ip()
 PORT = 5000
 
 def broadcast_log(msg):
+    # 用 print 就會自動被我們的 GUIWriter 抓走並顯示在介面上
     print(msg)
     socketio.emit('admin_log', {'msg': msg})
 
@@ -63,24 +102,19 @@ def broadcast_log(msg):
 # Flask 路由
 # ------------------------------------------
 @app.route('/player')
-def page_player():
-    return render_template('player.html')
+def page_player(): return render_template('player.html')
 
 @app.route('/remote')
-def page_remote():
-    return render_template('remote.html')
+def page_remote(): return render_template('remote.html')
 
 @app.route('/admin')
-def page_admin():
-    return render_template('admin.html')
+def page_admin(): return render_template('admin.html')
 
-@app.route('/combo')  # <--- 新增：一體機路由
-def page_combo():
-    return render_template('combo.html')
+@app.route('/combo')  
+def page_combo(): return render_template('combo.html')
 
 @app.route('/')
-def page_index():
-    return render_template('remote.html')
+def page_index(): return render_template('remote.html')
 
 @app.route('/songs/<path:filename>')
 def serve_song(filename):
@@ -156,7 +190,20 @@ def handle_update_ytdlp():
     threading.Thread(target=run_update, daemon=True).start()
 
 def run_server_thread():
-    socketio.run(app, host='0.0.0.0', port=PORT, debug=False, allow_unsafe_werkzeug=True)
+    try:
+        print("🚀 準備啟動 Flask 伺服器...")
+        
+        # 【關鍵防護】強制關閉 Flask 雞婆的啟動橫幅 (Banner) 與日誌，從根本拔除報錯源頭
+        import logging
+        from flask import cli
+        cli.show_server_banner = lambda *args, **kwargs: None  # 暴力閹割橫幅印出功能
+        logging.getLogger('werkzeug').setLevel(logging.ERROR)  # 只允許印出重大錯誤
+        
+        socketio.run(app, host='0.0.0.0', port=PORT, debug=False, allow_unsafe_werkzeug=True)
+    except Exception as e:
+        import traceback
+        print(f"❌ 伺服器啟動失敗: {e}")
+        print(traceback.format_exc())
 
 # ==========================================
 # 核心處理類別
@@ -174,7 +221,6 @@ class KTVProcessor:
             safe_title = self.sanitize_filename(manual_title)
             self.log(f"目標歌曲：{safe_title}")
 
-            # 【重要修正】每次都產生一個獨立的、帶有時間戳記的專屬暫存資料夾
             job_id = str(int(time.time()))
             job_temp_dir = os.path.join(TEMP_BASE_DIR, job_id)
             os.makedirs(job_temp_dir, exist_ok=True)
@@ -238,12 +284,11 @@ class KTVProcessor:
             self.log(f"❌ 錯誤: {e}")
             return False
         finally:
-            # 【重要修正】執行完畢後（無論成功或失敗），嘗試刪除這個專屬暫存資料夾
             if job_temp_dir and os.path.exists(job_temp_dir):
                 try:
                     shutil.rmtree(job_temp_dir, ignore_errors=True)
                 except:
-                    pass # 如果被鎖住刪不掉也沒關係，不會影響下一次任務
+                    pass 
 
 # ==========================================
 # 本機 GUI 
@@ -252,43 +297,43 @@ class ServerApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("KTV 伺服器狀態")
-        self.geometry("450x400")
+        self.geometry("450x500") # 稍微拉高一點放日誌框
         self.configure(bg="#f4f4f9")
         
-        tk.Label(self, text="🎤 KTV 系統運作中", font=("Microsoft JhengHei", 20, "bold"), fg="#4CAF50", bg="#f4f4f9").pack(pady=15)
+        tk.Label(self, text="🎤 KTV 系統運作中", font=("Microsoft JhengHei", 20, "bold"), fg="#4CAF50", bg="#f4f4f9").pack(pady=10)
         
         info_frame = tk.Frame(self, bg="white", bd=1, relief="solid")
         info_frame.pack(fill="x", padx=20, pady=5)
         
-        # 使用自訂的建立連結函數
         self.create_clickable_link(info_frame, "📺 播放端 (電視用)", f"http://{LOCAL_IP}:{PORT}/player", "blue")
         self.create_clickable_link(info_frame, "📱 遙控端 (手機用)", f"http://{LOCAL_IP}:{PORT}/remote", "#d32f2f")
         self.create_clickable_link(info_frame, "🕹️ 一體機 (單機用)", f"http://{LOCAL_IP}:{PORT}/combo", "#9C27B0")
         self.create_clickable_link(info_frame, "⚙️ 管理端 (加歌用)", f"http://{LOCAL_IP}:{PORT}/admin", "#F57C00")
 
         stat_frame = tk.Frame(self, bg="#f4f4f9")
-        stat_frame.pack(fill="x", padx=20, pady=20)
+        stat_frame.pack(fill="x", padx=20, pady=5)
         
         self.lbl_count = tk.Label(stat_frame, text="總歌曲數: 載入中...", font=("Microsoft JhengHei", 12, "bold"), bg="#f4f4f9")
         self.lbl_count.pack(anchor="w")
         
         self.lbl_size = tk.Label(stat_frame, text="佔用空間: 載入中...", font=("Microsoft JhengHei", 12, "bold"), bg="#f4f4f9")
         self.lbl_size.pack(anchor="w", pady=5)
+
+        # 增加一個實體的 GUI 日誌框，用來接聽攔截到的錯誤訊息
+        self.log_txt = tk.Text(self, height=8, state="disabled", bg="#222", fg="#0f0", font=("Consolas", 9))
+        self.log_txt.pack(fill="both", expand=True, padx=20, pady=10)
         
         self.update_stats()
+        
+        # 啟動背景佇列監聽器
+        self.check_log_queue()
 
     def create_clickable_link(self, parent, text_prefix, url, color):
-        """建立可點擊的超連結 Label"""
-        # 容器用來讓文字跟網址排在同一行
         frame = tk.Frame(parent, bg="white")
-        frame.pack(pady=5, anchor="w", padx=10)
-        
+        frame.pack(pady=2, anchor="w", padx=10)
         tk.Label(frame, text=f"{text_prefix}: ", font=("Consolas", 11), bg="white").pack(side="left")
-        
         link_lbl = tk.Label(frame, text=url, font=("Consolas", 11, "underline"), fg=color, bg="white", cursor="hand2")
         link_lbl.pack(side="left")
-        
-        # 綁定點擊事件，使用 webbrowser 開啟
         link_lbl.bind("<Button-1>", lambda e, u=url: webbrowser.open(u))
 
     def update_stats(self):
@@ -304,11 +349,24 @@ class ServerApp(tk.Tk):
             pass
         self.after(5000, self.update_stats)
 
+    def check_log_queue(self):
+        """每 100 毫秒檢查一次佇列，把背景的文字寫進 GUI 日誌框"""
+        try:
+            while not system_log_queue.empty():
+                msg = system_log_queue.get_nowait()
+                self.log_txt.config(state="normal")
+                self.log_txt.insert("end", msg + "\n")
+                self.log_txt.see("end")
+                self.log_txt.config(state="disabled")
+        except Exception:
+            pass
+        self.after(100, self.check_log_queue)
+
 if __name__ == "__main__":
-    import multiprocessing
+    # 【關鍵】多進程保護必須放在 if __name__ == "__main__": 的第一行
     multiprocessing.freeze_support()
 
-    if shutil.which("ffmpeg") is None:
+    if shutil.which("ffmpeg") is None and not os.path.exists(FFMPEG_DIR):
         try:
             messagebox.showerror("錯誤", "找不到 FFmpeg\n請將 ffmpeg 資料夾放在程式同一目錄")
         except:
