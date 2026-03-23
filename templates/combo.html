@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KTV 播放+遙控一體機</title>
+    <style>
+        /* --- 全局與響應式佈局 --- */
+        body { background: #1a1a1a; color: white; font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        #player-container { flex: 0 0 45vh; background: #000; position: relative; display: flex; justify-content: center; align-items: center; }
+        #remote-container { flex: 1; overflow-y: auto; padding: 15px; background: #222; display: flex; flex-direction: column; }
+
+        /* 當螢幕夠寬 (例如筆電/PC) 時，自動變成左右分割模式 */
+        @media (min-width: 800px) {
+            body { flex-direction: row; }
+            #player-container { flex: 2; height: 100vh; border-right: 2px solid #333; }
+            #remote-container { flex: 1; height: 100vh; max-width: 450px; }
+        }
+
+        /* --- 播放器區塊 UI --- */
+        video { width: 100%; height: 100%; object-fit: contain; display: none; }
+        #overlay { position: absolute; top: 15px; left: 15px; font-size: 18px; text-shadow: 2px 2px 4px #000; z-index: 10; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 5px; pointer-events: none; }
+        #next-info { position: absolute; top: 0; left: 0; right: 0; background: rgba(0, 100, 0, 0.8); color: white; text-align: center; padding: 8px; font-size: 16px; z-index: 20; display: none; font-weight: bold; }
+        #fs-btn { position: absolute; top: 15px; right: 15px; z-index: 50; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 5px 10px; cursor: pointer; border-radius: 5px; font-size: 14px; }
+        #fs-btn:hover { background: rgba(255,255,255,0.4); }
+        #idle-screen { text-align: center; width: 100%; }
+        #waiting { font-size: 24px; color: #aaa; cursor: pointer; border: 2px dashed #555; padding: 20px; border-radius: 10px; background: rgba(255,255,255,0.05); display: inline-block; }
+        #waiting:hover { color: #fff; border-color: #fff; }
+
+        /* --- 遙控器區塊 UI --- */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s;}
+        .btn:active { transform: scale(0.95); }
+        .play { background: #009688; }
+        .pause { background: #2196F3; }
+        .stop { background: #F44336; }
+        .vocal { background: #FF9800; color: black; }
+        .inst { background: #FFC107; color: black; }
+        .admin-link { background: #607D8B; color: white; text-align: center; display: block; padding: 12px; text-decoration: none; border-radius: 8px; margin-bottom: 15px; font-weight: bold;}
+        
+        /* 音量與歌單 */
+        .control-group { background: #333; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
+        .control-label { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #ccc;}
+        input[type=range] { width: 100%; cursor: pointer;}
+        .queue-box { background: #111; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #444; flex-shrink: 0;}
+        .queue-title { color: #4CAF50; font-size: 14px; margin-bottom: 5px; font-weight: bold;}
+        #queue-list { font-size: 14px; color: #aaa; padding-left: 20px; margin: 0; }
+        #queue-list li { background: none; border: none; padding: 3px 0; display: list-item; list-style-type: decimal; }
+
+        /* 搜尋與列表 */
+        input[type=text] { width: 100%; padding: 12px; margin-bottom: 10px; box-sizing: border-box; background: #333; border: 1px solid #555; color: white; border-radius: 8px; font-size: 15px;}
+        ul#list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        ul#list li { background: #2a2a2a; padding: 12px; margin-bottom: 6px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444;}
+        .song-btn { background: #009688; border: none; padding: 8px 16px; border-radius: 20px; color: white; font-weight: bold; cursor: pointer;}
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div id="player-container">
+        <div id="next-info">下一首：無</div>
+        <div id="overlay">等待連線...</div>
+        <div id="fs-btn" onclick="toggleFullScreen()">⛶ 全螢幕</div>
+        
+        <div id="idle-screen" ondblclick="toggleFullScreen()">
+            <div id="waiting" onclick="initSystem()">📺 點擊此處啟動音效引擎</div>
+        </div>
+        
+        <video id="vid" playsinline crossorigin="anonymous" ondblclick="toggleFullScreen()"></video>
+    </div>
+
+    <div id="remote-container">
+        <a href="/admin" class="admin-link">⚙️ 進入後台 (下載新歌)</a>
+        
+        <div class="grid">
+            <button class="btn vocal" onclick="track('original')">🎤 原唱</button>
+            <button class="btn inst" onclick="track('instrumental')">🚫 伴奏</button>
+            <button class="btn pause" onclick="cmd('pause')">⏯ 暫停/播放</button>
+            <button class="btn stop" onclick="cmd('cut')">⏹ 切歌 (下一首)</button>
+        </div>
+
+        <div class="control-group">
+            <div class="control-label"><span>🔊 音量控制</span><span id="vol-val">100%</span></div>
+            <input type="range" id="vol" min="0" max="2" step="0.1" value="1" oninput="updateEffect()">
+        </div>
+
+        <div class="queue-box">
+            <div class="queue-title">📋 待播清單</div>
+            <ul id="queue-list"><li>(無)</li></ul>
+        </div>
+
+        <input type="text" id="search" placeholder="🔍 搜尋歌曲..." oninput="filter()">
+        <ul id="list"></ul>
+    </div>
+
+    <script>
+        const socket = io();
+        
+        // --- 播放器邏輯 ---
+        const video = document.getElementById('vid');
+        const overlay = document.getElementById('overlay');
+        const nextInfo = document.getElementById('next-info');
+        const idleScreen = document.getElementById('idle-screen');
+        const waitingBtn = document.getElementById('waiting');
+        const playerContainer = document.getElementById('player-container');
+        
+        let audioCtx, source, splitter, gainL, gainR, merger, masterGain;
+        let isAudioSetup = false;
+        let currentMode = 'original';
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                if (playerContainer.requestFullscreen) playerContainer.requestFullscreen();
+                else if (playerContainer.webkitRequestFullscreen) playerContainer.webkitRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function initSystem() {
+            if(!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            
+            waitingBtn.innerHTML = "✅ 音效已啟動<br><span style='font-size:16px;color:#888;'>請從下方/右方點歌</span>";
+            waitingBtn.style.borderColor = "#4CAF50";
+            waitingBtn.style.color = "#4CAF50";
+        }
+
+        function setupAudio() {
+            if(isAudioSetup) return;
+            if(!audioCtx) initSystem();
+            
+            source = audioCtx.createMediaElementSource(video);
+            splitter = audioCtx.createChannelSplitter(2);
+            merger = audioCtx.createChannelMerger(2);
+            gainL = audioCtx.createGain();
+            gainR = audioCtx.createGain();
+            masterGain = audioCtx.createGain(); // 總音量控制節點
+
+            source.connect(splitter);
+            splitter.connect(gainL, 0); gainL.connect(merger, 0, 0); gainL.connect(merger, 0, 1);
+            splitter.connect(gainR, 1); gainR.connect(merger, 0, 0); gainR.connect(merger, 0, 1);
+            merger.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+            
+            isAudioSetup = true;
+            setAudioMode(currentMode);
+        }
+
+        // 當歌曲播完自動觸發
+        video.onended = function() { socket.emit('song_ended'); };
+
+        socket.on('connect', () => { overlay.innerText = "✅ 已連線"; });
+
+        socket.on('play_video', (data) => {
+            idleScreen.style.display = 'none';
+            video.style.display = 'block';
+            overlay.innerText = "播放中: " + data.title;
+            video.src = "/songs/" + encodeURIComponent(data.filename) + "?t=" + new Date().getTime();
+            video.play().then(() => {
+                if(!isAudioSetup) setupAudio();
+                setAudioMode('original'); 
+                // 讀取當前滑桿音量並套用
+                updateEffect();
+            }).catch(e => { overlay.innerText = "⚠️ 請點擊畫面開始播放"; });
+        });
+
+        socket.on('stop_video', () => {
+            video.pause(); video.src = ""; video.style.display = 'none';
+            idleScreen.style.display = 'block'; overlay.innerText = "⏹ 已停止 (待機中)";
+            nextInfo.style.display = 'none';
+        });
+
+        socket.on('command', (cmd) => {
+            if (cmd === 'pause') video.paused ? video.play() : video.pause();
+        });
+
+        socket.on('set_audio', (mode) => {
+            currentMode = mode;
+            setAudioMode(mode);
+        });
+
+        socket.on('apply_effect', (data) => {
+            if(masterGain && data.volume !== undefined) {
+                masterGain.gain.setTargetAtTime(data.volume, audioCtx.currentTime, 0.1);
+            }
+            // 同步更新滑桿數值(若由別的手機操控)
+            document.getElementById('vol').value = data.volume;
+            document.getElementById('vol-val').innerText = Math.round(data.volume * 100) + "%";
+        });
+
+        function setAudioMode(mode) {
+            if(!isAudioSetup || !gainL || !gainR) return;
+            const now = audioCtx.currentTime;
+            if (mode === 'original') { 
+                gainL.gain.setTargetAtTime(1, now, 0.1); gainR.gain.setTargetAtTime(0, now, 0.1);
+                overlay.innerText = "🎤 模式：原唱";
+            } else if (mode === 'instrumental') { 
+                gainL.gain.setTargetAtTime(0, now, 0.1); gainR.gain.setTargetAtTime(1, now, 0.1);
+                overlay.innerText = "🚫 模式：伴奏";
+            }
+        }
+
+        // --- 遙控器邏輯 ---
+        let allSongs = [];
+
+        function updateEffect() {
+            const vol = parseFloat(document.getElementById('vol').value);
+            document.getElementById('vol-val').innerText = Math.round(vol * 100) + "%";
+            socket.emit('control_effect', { volume: vol });
+        }
+
+        socket.on('update_list', (songs) => { allSongs = songs; filter(); });
+
+        socket.on('update_queue', (playlist) => {
+            // 更新播放器上方的跑馬燈
+            if(playlist.length > 0) {
+                nextInfo.innerText = "下一首：" + playlist[0].replace('.mp4', '');
+                nextInfo.style.display = 'block';
+            } else {
+                nextInfo.style.display = 'none';
+            }
+
+            // 更新遙控器清單
+            const qList = document.getElementById('queue-list');
+            qList.innerHTML = "";
+            if(playlist.length === 0) {
+                qList.innerHTML = "<li>(無)</li>";
+            } else {
+                playlist.forEach(s => {
+                    qList.innerHTML += `<li>${s.replace('.mp4', '')}</li>`;
+                });
+            }
+        });
+
+        function filter() {
+            const key = document.getElementById('search').value.toLowerCase();
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+            allSongs.filter(s => s.toLowerCase().includes(key)).forEach(s => {
+                const name = s.replace('.mp4', '');
+                list.innerHTML += `<li><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%; font-size:15px;">${name}</span><button class="song-btn" onclick="play(this, '${s}')">播歌</button></li>`;
+            });
+        }
+
+        function play(btn, filename) { 
+            socket.emit('request_play', {filename: filename}); 
+            const originalText = btn.innerText;
+            btn.innerText = "已點";
+            btn.style.background = "#555";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.background = "#009688";
+            }, 1000);
+        }
+
+        function cmd(action) { socket.emit('control', action); }
+        function track(mode) { socket.emit('change_track', mode); }
+
+        function loadList() {
+            fetch('/api/list').then(r => r.json()).then(data => { allSongs = data; filter(); });
+        }
+        
+        loadList();
+        socket.on('refresh_list', loadList);
+    </script>
+</body>
+</html>

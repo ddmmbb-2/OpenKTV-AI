@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTV 系統管理後台</title>
+    <style>
+        body { background: #f4f4f9; color: #333; font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h3 { margin-top: 0; color: #333; }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; width: 100%; margin-bottom: 10px; }
+        
+        .btn-dl { background: #FF9800; }
+        .btn-update { background: #607D8B; }
+        .btn-dl:disabled, .btn-update:disabled { background: #ccc; cursor: not-allowed; }
+        textarea { width: 100%; height: 200px; background: #222; color: #0f0; padding: 10px; box-sizing: border-box; font-family: monospace; border-radius: 5px; resize: none; }
+        
+        /* 導航列樣式 */
+        .nav-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav-btn { flex: 1; text-align: center; padding: 12px 10px; text-decoration: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s;}
+        .nav-btn:active { transform: scale(0.95); }
+        .nav-remote { background: #E91E63; }
+        .nav-console { background: #9C27B0; }
+        .nav-player { background: #2196F3; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    
+    <div class="nav-bar">
+        <a href="/remote" class="nav-btn nav-remote">📱 遙控器</a>
+        <a href="/combo" class="nav-btn nav-combo">🖥️ 雙合一控制台</a>
+        <a href="/player" class="nav-btn nav-player">📺 播放端</a>
+    </div>
+
+    <div class="card">
+        <h3>📥 新增 KTV 歌曲</h3>
+        <label>1. YouTube 網址:</label>
+        <input type="text" id="yt_url" placeholder="https://www.youtube.com/watch?v=...">
+        <label>2. 設定歌名 (必填):</label>
+        <input type="text" id="yt_title" placeholder="例如：告五人 - 披星戴月的想你">
+        <button id="btn_dl" class="btn-dl" onclick="startDownload()">開始製作 (L:原唱 / R:伴奏)</button>
+    </div>
+
+    <div class="card">
+        <h3>⚙️ 系統維護</h3>
+        <button id="btn_update" class="btn-update" onclick="updateYtDlp()">🔄 手動更新 yt-dlp 核心</button>
+    </div>
+
+    <div class="card">
+        <h3>📝 系統日誌</h3>
+        <textarea id="log" readonly></textarea>
+    </div>
+
+    <script>
+        const socket = io();
+        const logArea = document.getElementById('log');
+        const btnDl = document.getElementById('btn_dl');
+        const btnUpdate = document.getElementById('btn_update');
+
+        socket.on('admin_log', (data) => {
+            logArea.value += data.msg + "\n";
+            logArea.scrollTop = logArea.scrollHeight; // 自動捲動到最底
+        });
+
+        socket.on('task_status', (data) => {
+            if(data.status === 'idle') {
+                btnDl.disabled = false;
+                btnDl.innerText = "開始製作 (L:原唱 / R:伴奏)";
+                btnUpdate.disabled = false;
+                document.getElementById('yt_url').value = '';
+                document.getElementById('yt_title').value = '';
+            } else if (data.status === 'busy') {
+                btnDl.disabled = true;
+                btnDl.innerText = "製作中...請稍候";
+                btnUpdate.disabled = true;
+            }
+        });
+
+        function startDownload() {
+            const url = document.getElementById('yt_url').value.trim();
+            const title = document.getElementById('yt_title').value.trim();
+            if(!url || !title) {
+                alert("網址與歌名皆為必填！");
+                return;
+            }
+            socket.emit('start_download', {url: url, title: title});
+        }
+
+        function updateYtDlp() {
+            if(confirm("確定要更新 yt-dlp 嗎？這需要幾秒鐘的時間。")) {
+                btnUpdate.disabled = true;
+                socket.emit('update_ytdlp');
+            }
+        }
+    </script>
+</body>
+</html>

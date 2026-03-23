@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KTV 遙控器</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; padding: 10px; margin: 0; }
+        .btn { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; }
+        .play { background: #009688; }
+        .pause { background: #2196F3; }
+        .stop { background: #F44336; }
+        .vocal { background: #FF9800; color: black; }
+        .inst { background: #FFC107; color: black; }
+        .admin-link { background: #607D8B; color: white; text-align: center; display: block; padding: 10px; text-decoration: none; border-radius: 5px; margin-bottom: 10px; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; background: #333; border: 1px solid #555; color: white; border-radius: 5px;}
+        li { background: #333; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        ul { list-style: none; padding: 0; }
+        .song-btn { background: #009688; border: none; padding: 5px 15px; border-radius: 20px; color: white; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div style="text-align:center; margin-bottom:10px;">
+        <h3 style="margin:0;">📱 KTV 遙控器</h3>
+        <small style="color:#aaa;">已連線至主機</small>
+    </div>
+
+    <a href="/admin" class="admin-link">⚙️ 進入後台 (下載新歌/管理系統)</a>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+        <button class="btn pause" onclick="cmd('pause')">⏯ 暫停/繼續</button>
+        <button class="btn stop" onclick="cmd('stop')">⏹ 切歌</button>
+        <button class="btn vocal" onclick="track('original')">🎤 原唱</button>
+        <button class="btn inst" onclick="track('instrumental')">🚫 伴奏</button>
+    </div>
+
+    <hr style="border-color: #333;">
+    
+    <input type="text" id="search" placeholder="🔍 搜尋歌曲..." oninput="filter()">
+    <ul id="list"></ul>
+
+    <script>
+        const socket = io();
+        let allSongs = [];
+
+        socket.on('update_list', (songs) => {
+            allSongs = songs;
+            filter();
+        });
+
+        function filter() {
+            const key = document.getElementById('search').value.toLowerCase();
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+            
+            allSongs.filter(s => s.toLowerCase().includes(key)).forEach(s => {
+                list.innerHTML += `
+                    <li>
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%;">${s}</span>
+                        <button class="song-btn" onclick="play('${s}')">播歌</button>
+                    </li>`;
+            });
+        }
+
+        function play(filename) { socket.emit('request_play', {filename: filename}); }
+        function cmd(action) { socket.emit('control', action); }
+        function track(mode) { socket.emit('change_track', mode); }
+
+        function loadList() {
+            fetch('/api/list').then(r => r.json()).then(data => {
+                allSongs = data;
+                filter();
+            });
+        }
+        
+        loadList();
+        // 監聽後台更新完畢事件，自動重整歌單
+        socket.on('refresh_list', loadList);
+    </script>
+</body>
+</html>

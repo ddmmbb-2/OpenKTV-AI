@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KTV 播放螢幕</title>
+    <style>
+        body { background: #000; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: Arial; }
+        video { width: 100%; height: 100%; object-fit: contain; }
+        #overlay { position: absolute; top: 20px; left: 20px; font-size: 24px; text-shadow: 2px 2px 4px #000; z-index: 10; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;}
+        #waiting { font-size: 50px; color: #555; cursor: pointer; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div id="overlay">等待連線...</div>
+    <div id="waiting" onclick="initAudioContext()">📺 KTV 準備就緒 (點我啟動音效)</div>
+    <video id="vid" playsinline crossorigin="anonymous"></video>
+
+    <script>
+        const socket = io();
+        const video = document.getElementById('vid');
+        const overlay = document.getElementById('overlay');
+        const waiting = document.getElementById('waiting');
+        
+        let audioCtx, source, splitter, gainL, gainR, merger;
+        let isAudioSetup = false;
+        let currentMode = 'stereo';
+
+        function initAudioContext() {
+            if(!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            waiting.innerText = "🔊 音效引擎已啟動，等待點歌...";
+            waiting.style.color = "#4CAF50";
+        }
+
+        function setupAudio() {
+            if(isAudioSetup) return;
+            if(!audioCtx) initAudioContext();
+
+            source = audioCtx.createMediaElementSource(video);
+            splitter = audioCtx.createChannelSplitter(2);
+            merger = audioCtx.createChannelMerger(2);
+            gainL = audioCtx.createGain();
+            gainR = audioCtx.createGain();
+
+            source.connect(splitter);
+            splitter.connect(gainL, 0); 
+            gainL.connect(merger, 0, 0); 
+            gainL.connect(merger, 0, 1); 
+            splitter.connect(gainR, 1);
+            gainR.connect(merger, 0, 0); 
+            gainR.connect(merger, 0, 1); 
+            merger.connect(audioCtx.destination);
+            
+            isAudioSetup = true;
+            setAudioMode(currentMode);
+        }
+
+        socket.on('connect', () => { overlay.innerText = "✅ 已連線主機"; });
+
+        socket.on('play_video', (data) => {
+            waiting.style.display = 'none';
+            overlay.innerText = "正在播放: " + data.title;
+            video.src = "/songs/" + encodeURIComponent(data.filename) + "?t=" + new Date().getTime();
+            video.play().then(() => {
+                if(!isAudioSetup) setupAudio();
+                setAudioMode('original'); 
+            }).catch(e => {
+                overlay.innerText = "⚠️ 請點擊畫面開始播放";
+            });
+        });
+
+        socket.on('command', (cmd) => {
+            if (cmd === 'pause') video.paused ? video.play() : video.pause();
+            if (cmd === 'stop') {
+                video.pause();
+                video.src = "";
+                waiting.style.display = 'block';
+                overlay.innerText = "⏹ 已停止";
+            }
+        });
+
+        socket.on('set_audio', (mode) => {
+            currentMode = mode;
+            setAudioMode(mode);
+        });
+
+        function setAudioMode(mode) {
+            if(!isAudioSetup || !gainL || !gainR) return;
+            const now = audioCtx.currentTime;
+            if (mode === 'original') { 
+                gainL.gain.setTargetAtTime(1, now, 0.1);
+                gainR.gain.setTargetAtTime(0, now, 0.1);
+                overlay.innerText = "🎤 目前模式：原唱";
+            } else if (mode === 'instrumental') { 
+                gainL.gain.setTargetAtTime(0, now, 0.1);
+                gainR.gain.setTargetAtTime(1, now, 0.1);
+                overlay.innerText = "🚫 目前模式：伴奏";
+            } else { 
+                gainL.gain.setTargetAtTime(1, now, 0.1);
+                gainR.gain.setTargetAtTime(1, now, 0.1);
+                overlay.innerText = "🎵 目前模式：立體聲";
+            }
+        }
+        document.body.addEventListener('click', initAudioContext);
+    </script>
+</body>
+</html>
