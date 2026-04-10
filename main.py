@@ -126,11 +126,53 @@ def get_song_list():
     return json.dumps(songs) 
 
 # ------------------------------------------
-# SocketIO 事件處理
+# SocketIO 事件處理 & 待播清單
 # ------------------------------------------
-@socketio.on('request_play')
-def handle_play(data):
-    emit('play_video', {'filename': data['filename'], 'title': data['filename']}, broadcast=True)
+playlist_queue = []
+
+@socketio.on('add_to_queue')
+def handle_add_queue(data):
+    filename = data['filename']
+    playlist_queue.append(filename)
+    
+    # 廣播更新所有設備上的歌單畫面
+    emit('update_queue', playlist_queue, broadcast=True)
+    
+    # 如果清單裡面只有剛點的這首歌，代表目前沒有歌在播，立刻開始播放
+    if len(playlist_queue) == 1:
+        emit('play_video', {'filename': filename, 'title': filename}, broadcast=True)
+
+@socketio.on('song_ended')
+def handle_song_ended():
+    if len(playlist_queue) > 0:
+        # 移除剛剛唱完的那首歌
+        playlist_queue.pop(0) 
+        emit('update_queue', playlist_queue, broadcast=True)
+        
+        # 檢查是否還有下一首
+        if len(playlist_queue) > 0:
+            next_song = playlist_queue[0]
+            emit('play_video', {'filename': next_song, 'title': next_song}, broadcast=True)
+        else:
+            # 沒歌了，停止畫面並回到待機狀態
+            emit('stop_video', broadcast=True)
+
+@socketio.on('control')
+def handle_control(action):
+    if action == 'cut':
+        # 按下切歌時，等於強迫觸發「歌曲結束」事件，讓系統自動播下一首
+        handle_song_ended()
+    else:
+        # 其他指令 (例如 pause) 照常發送
+        emit('command', action, broadcast=True)
+
+# ------------------------------------------
+# (以下原本的音效與下載事件保留不動)
+@socketio.on('control_effect')
+def handle_effect(data):
+    emit('apply_effect', data, broadcast=True)
+
+# ...後面的 @socketio.on('change_track') 等等都不用動...
 
 @socketio.on('control_effect')
 def handle_effect(data):
@@ -162,7 +204,7 @@ def handle_start_download(data):
         success = processor.process_song(url, title)
         
         if success:
-            socketio.emit('refresh_list', broadcast=True)
+            socketio.emit('refresh_list')
         
         is_processing = False
         socketio.emit('task_status', {'status': 'idle'})
