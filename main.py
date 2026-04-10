@@ -132,9 +132,10 @@ def get_song_list():
 def handle_play(data):
     emit('play_video', {'filename': data['filename'], 'title': data['filename']}, broadcast=True)
 
-@socketio.on('control')
-def handle_control(action):
-    emit('command', action, broadcast=True)
+@socketio.on('control_effect')
+def handle_effect(data):
+    # 收到音量或升降 KEY 指令後，同步廣播給所有設備（包含一體機自己）
+    emit('apply_effect', data, broadcast=True)
 
 @socketio.on('change_track')
 def handle_track(mode):

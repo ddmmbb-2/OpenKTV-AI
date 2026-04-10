@@ -54,6 +54,8 @@
         .song-btn { background: #009688; border: none; padding: 8px 16px; border-radius: 20px; color: white; font-weight: bold; cursor: pointer;}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
     <div id="player-container">
@@ -78,9 +80,18 @@
             <button class="btn stop" onclick="cmd('cut')">⏹ 切歌 (下一首)</button>
         </div>
 
-        <div class="control-group">
+<div class="control-group">
             <div class="control-label"><span>🔊 音量控制</span><span id="vol-val">100%</span></div>
             <input type="range" id="vol" min="0" max="2" step="0.1" value="1" oninput="updateEffect()">
+        </div>
+
+        <div class="control-group">
+            <div class="control-label"><span>🎵 升降 KEY</span><span id="key-val">原 KEY (0)</span></div>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn" style="background:#555; flex:1;" onclick="changeKey(-1)">🔻 降</button>
+                <button class="btn" style="background:#777; flex:1;" onclick="changeKey(0)">0 (原)</button>
+                <button class="btn" style="background:#555; flex:1;" onclick="changeKey(1)">🔺 升</button>
+            </div>
         </div>
 
         <div class="queue-box">
@@ -103,9 +114,10 @@
         const waitingBtn = document.getElementById('waiting');
         const playerContainer = document.getElementById('player-container');
         
-        let audioCtx, source, splitter, gainL, gainR, merger, masterGain;
+        let audioCtx, source, splitter, gainL, gainR, merger, masterGain, pitchShift;
         let isAudioSetup = false;
         let currentMode = 'original';
+        let currentKey = 0; // 紀錄目前的 KEY
 
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
@@ -139,15 +151,66 @@
             gainR = audioCtx.createGain();
             masterGain = audioCtx.createGain(); // 總音量控制節點
 
+            // 👑 啟動 Tone.js 接管 Context，並建立 PitchShift 節點
+            Tone.setContext(audioCtx);
+            pitchShift = new Tone.PitchShift({ pitch: 0, windowSize: 0.1 }).toDestination();
+
+            // 路由設定：影片 -> 左右聲道分離 -> 合併 -> 主音量
             source.connect(splitter);
             splitter.connect(gainL, 0); gainL.connect(merger, 0, 0); gainL.connect(merger, 0, 1);
             splitter.connect(gainR, 1); gainR.connect(merger, 0, 0); gainR.connect(merger, 0, 1);
             merger.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
+            
+            // 👑 關鍵步驟：將原生節點 (masterGain) 連接到 Tone.js 的 pitchShift 節點
+            Tone.connect(masterGain, pitchShift);
             
             isAudioSetup = true;
             setAudioMode(currentMode);
         }
+
+        // --- 新增升降 KEY 函數 ---
+        function changeKey(step) {
+            if (step === 0) currentKey = 0;
+            else currentKey += step;
+            
+            // 限制最多升降 12 個半音 (一個八度)
+            if(currentKey > 12) currentKey = 12;
+            if(currentKey < -12) currentKey = -12;
+            
+            // 將 KEY 的變更發送給伺服器，讓它回傳給所有設備套用
+            socket.emit('control_effect', { pitch: currentKey });
+        }
+
+        // --- 修改接收 apply_effect 事件，讓它支援 pitch ---
+        socket.on('apply_effect', (data) => {
+            // 處理音量
+            if(masterGain && data.volume !== undefined) {
+                masterGain.gain.setTargetAtTime(data.volume, audioCtx.currentTime, 0.1);
+                document.getElementById('vol').value = data.volume;
+                document.getElementById('vol-val').innerText = Math.round(data.volume * 100) + "%";
+            }
+            // 處理升降 KEY
+            if(pitchShift && data.pitch !== undefined) {
+                currentKey = data.pitch;
+                pitchShift.pitch = currentKey; // 直接設定 Tone.js 的音高
+                document.getElementById('key-val').innerText = currentKey === 0 ? "原 KEY (0)" : (currentKey > 0 ? "+" + currentKey : currentKey);
+            }
+        });
+
+        // --- 確保換歌時自動回到「原 KEY」 ---
+        socket.on('play_video', (data) => {
+            idleScreen.style.display = 'none';
+            video.style.display = 'block';
+            overlay.innerText = "播放中: " + data.title;
+            video.src = "/songs/" + encodeURIComponent(data.filename) + "?t=" + new Date().getTime();
+            video.play().then(() => {
+                if(!isAudioSetup) setupAudio();
+                setAudioMode('original'); 
+                updateEffect(); 
+                // 👇 新歌開始時，重置為原 KEY
+                socket.emit('control_effect', { pitch: 0 }); 
+            }).catch(e => { overlay.innerText = "⚠️ 請點擊畫面開始播放"; });
+        });
 
         // 當歌曲播完自動觸發
         video.onended = function() { socket.emit('song_ended'); };
