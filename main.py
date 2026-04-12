@@ -288,11 +288,25 @@ class KTVProcessor:
             )
 
             self.log("步驟 2/4: AI 去人聲 (Spleeter)... (這需要一點時間)")
-            separator = Separator('spleeter:2stems')
-            separator.separate_to_file(temp_input, job_temp_dir)
             
-            voc_path = os.path.join(job_temp_dir, "input", "vocals.wav")
-            acc_path = os.path.join(job_temp_dir, "input", "accompaniment.wav")
+            # 【修復】不要用 Python API 載入模型，改用 CLI 子進程呼叫
+            # 這樣只要分離一結束，作業系統就會強制回收 TensorFlow 佔用的所有記憶體
+            cmd_spleeter = [
+                "spleeter", "separate", 
+                "-p", "spleeter:2stems", 
+                "-o", job_temp_dir, 
+                temp_input
+            ]
+            
+            subprocess.run(
+                cmd_spleeter, check=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
+            )
+            
+            # Spleeter CLI 預設會建立一個以輸入檔名為名稱的資料夾，所以路徑稍微改變
+            base_name = os.path.splitext(os.path.basename(temp_input))[0] # 會得到 "input"
+            voc_path = os.path.join(job_temp_dir, base_name, "vocals.wav")
+            acc_path = os.path.join(job_temp_dir, base_name, "accompaniment.wav")
 
             if not os.path.exists(voc_path) or not os.path.exists(acc_path):
                 raise Exception("Spleeter 分離失敗，找不到音軌檔")
