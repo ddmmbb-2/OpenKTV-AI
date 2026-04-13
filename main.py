@@ -185,6 +185,23 @@ def handle_track(mode):
 
 is_processing = False
 
+
+# ==========================================
+# Spleeter 獨立進程處理函式
+# ==========================================
+def _run_spleeter_process(input_path, output_dir):
+    """
+    這個函式會在一個完全獨立的 Python 進程中執行。
+    結束時作業系統會強制清空此進程佔用的 TensorFlow 記憶體。
+    """
+    from spleeter.separator import Separator
+    # 初始化並執行分離
+    separator = Separator('spleeter:2stems')
+    separator.separate_to_file(input_path, output_dir)
+
+
+
+
 @socketio.on('start_download')
 def handle_start_download(data):
     global is_processing
@@ -289,19 +306,16 @@ class KTVProcessor:
 
             self.log("步驟 2/4: AI 去人聲 (Spleeter)... (這需要一點時間)")
             
-            # 【修復】不要用 Python API 載入模型，改用 CLI 子進程呼叫
-            # 這樣只要分離一結束，作業系統就會強制回收 TensorFlow 佔用的所有記憶體
-            cmd_spleeter = [
-                "spleeter", "separate", 
-                "-p", "spleeter:2stems", 
-                "-o", job_temp_dir, 
-                temp_input
-            ]
+            # 【終極修復】PyInstaller 打包後沒有 spleeter.exe 可用 subprocess 呼叫。
+            # 改用 multiprocessing 開啟獨立 Python 子進程執行 API。
+            # 效果與 CLI 完全相同：進程結束後，OS 會強制回收 TensorFlow 記憶體！
+            import multiprocessing
+            p = multiprocessing.Process(target=_run_spleeter_process, args=(temp_input, job_temp_dir))
+            p.start()
+            p.join() # 等待進程執行完畢
             
-            subprocess.run(
-                cmd_spleeter, check=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
-            )
+            if p.exitcode != 0:
+                raise Exception(f"Spleeter 分離失敗，子進程異常結束 (Exit code: {p.exitcode})")
             
             # Spleeter CLI 預設會建立一個以輸入檔名為名稱的資料夾，所以路徑稍微改變
             base_name = os.path.splitext(os.path.basename(temp_input))[0] # 會得到 "input"
