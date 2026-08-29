@@ -2,97 +2,535 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KTV 系統管理後台</title>
+    <title>KTV Admin</title>
     <style>
-        body { background: #f4f4f9; color: #333; font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h3 { margin-top: 0; color: #333; }
-        input { width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; width: 100%; margin-bottom: 10px; }
+        :root {
+            --bg: #151515;
+            --panel: #242424;
+            --panel-soft: #2e2e2e;
+            --line: #454545;
+            --text: #f2f2f2;
+            --muted: #a9a9a9;
+            --accent: #08a88a;
+            --danger: #d04c4c;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 10% 0%, #1e2830 0%, var(--bg) 42%);
+            color: var(--text);
+            font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+            padding: 18px;
+            max-width: 980px;
+            margin: auto;
+        }
+        .card {
+            background: rgba(26, 26, 26, 0.86);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(4px);
+        }
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        h3 { margin-top: 0; color: #f2f2f2; }
+        .version-badge {
+            background: rgba(8, 168, 138, 0.18);
+            border: 1px solid rgba(8, 168, 138, 0.45);
+            color: #9fe7d7;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        label { color: #d8d8d8; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            border: 1px solid #535353;
+            border-radius: 8px;
+            background: #303030;
+            color: #fff;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            color: white;
+            width: 100%;
+            margin-bottom: 10px;
+        }
         
-        .btn-dl { background: #FF9800; }
-        .btn-update { background: #607D8B; }
-        .btn-dl:disabled, .btn-update:disabled { background: #ccc; cursor: not-allowed; }
-        textarea { width: 100%; height: 200px; background: #222; color: #0f0; padding: 10px; box-sizing: border-box; font-family: monospace; border-radius: 5px; resize: none; }
+        .btn-dl { background: #ff9800; color: #1d1d1d; }
+        .btn-update { background: #607d8b; }
+        .btn-secondary { background: #455a64; }
+        .btn-dl:disabled, .btn-update:disabled { background: #666; cursor: not-allowed; color: #d0d0d0; }
+        textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #565656; border-radius: 8px; background: #101010; color: #d8ffd8; }
+        #log { height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: none; }
+        .batch-list { display: grid; gap: 8px; margin-bottom: 10px; }
+        .batch-row { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 8px; align-items: center; }
+        .batch-row input { margin: 0; }
+        .row-remove { width: auto; margin: 0; padding: 10px 12px; background: #d32f2f; }
+        .batch-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        @media (max-width: 820px) {
+            .batch-row { grid-template-columns: 1fr; }
+            .batch-actions { grid-template-columns: 1fr; }
+            .row-remove { width: 100%; }
+        }
+        .batch-help { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+        .inline-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .inline-row input[type="text"] { margin-bottom: 0; flex: 1 1 440px; }
+        .inline-row .btn-secondary { width: auto; margin-bottom: 0; }
+        .path-hint { margin-top: 8px; font-size: 12px; color: #9ec7ff; word-break: break-all; }
+        .check-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; color: #d8d8d8; }
+        .check-row input[type="checkbox"] { width: auto; margin: 0; }
         
-        /* 導航列樣式 */
-        .nav-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .nav-btn { flex: 1; text-align: center; padding: 12px 10px; text-decoration: none; border-radius: 8px; font-weight: bold; color: white; font-size: 14px; min-width: 100px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: 0.2s;}
-        .nav-btn:active { transform: scale(0.95); }
-        .nav-remote { background: #E91E63; }
-        .nav-console { background: #9C27B0; }
-        .nav-player { background: #2196F3; }
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .qr-item {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .qr-item h4 {
+            margin: 0 0 8px;
+            font-size: 14px;
+            color: #d8e8ef;
+        }
+        .qr-item img {
+            width: 150px;
+            height: 150px;
+            border-radius: 8px;
+            background: #fff;
+            padding: 6px;
+        }
+        .qr-link {
+            margin-top: 8px;
+            color: #9ec7ff;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .qr-open {
+            display: block;
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            color: #f2f2f2;
+            background: #455a64;
+            border: 1px solid rgba(255,255,255,0.14);
+            transition: 0.2s;
+        }
+        .qr-open:active { transform: scale(0.97); }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
-    
-    <div class="nav-bar">
-        <a href="/remote" class="nav-btn nav-remote">📱 遙控器</a>
-        <a href="/combo" class="nav-btn nav-combo">🖥️ 雙合一控制台</a>
-        <a href="/player" class="nav-btn nav-player">📺 播放端</a>
+    <div class="card">
+        <div class="app-header">
+            <h3>📲 Mobile QR Access</h3>
+            <div class="version-badge">v{{ app_version }}</div>
+        </div>
+        <div class="batch-help">Scan from phone on the same Wi-Fi network.</div>
+        <div class="qr-grid">
+            <div class="qr-item">
+                <h4>Remote</h4>
+                <img id="qr-remote" alt="Remote QR code">
+                <div class="qr-link" id="link-remote"></div>
+                <a id="open-remote" class="qr-open" href="/remote">Open Remote</a>
+            </div>
+            <div class="qr-item">
+                <h4>Combo</h4>
+                <img id="qr-combo" alt="Combo QR code">
+                <div class="qr-link" id="link-combo"></div>
+                <a id="open-combo" class="qr-open" href="/combo">Open Combo</a>
+            </div>
+            <div class="qr-item">
+                <h4>Player</h4>
+                <img id="qr-player" alt="Player QR code">
+                <div class="qr-link" id="link-player"></div>
+                <a id="open-player" class="qr-open" href="/player">Open Player</a>
+            </div>
+        </div>
     </div>
 
     <div class="card">
-        <h3>📥 新增 KTV 歌曲</h3>
-        <label>1. YouTube 網址:</label>
-        <input type="text" id="yt_url" placeholder="https://www.youtube.com/watch?v=...">
-        <label>2. 設定歌名 (必填):</label>
-        <input type="text" id="yt_title" placeholder="例如：告五人 - 披星戴月的想你">
-        <button id="btn_dl" class="btn-dl" onclick="startDownload()">開始製作 (L:原唱 / R:伴奏)</button>
+        <h3>📥 Add KTV Songs</h3>
+        <label>Unified input (single + batch):</label>
+        <div class="batch-help">Fill one row per song. The Start button automatically handles single or batch rows.</div>
+        <div id="batch_rows" class="batch-list"></div>
+        <div class="batch-actions">
+            <button id="btn_add_row" class="btn-secondary" onclick="addBatchRow()">+ Add Row</button>
+            <button id="btn_batch" class="btn-dl" onclick="startSmartDownload()">Start Processing</button>
+        </div>
     </div>
 
     <div class="card">
-        <h3>⚙️ 系統維護</h3>
-        <button id="btn_update" class="btn-update" onclick="updateYtDlp()">🔄 手動更新 yt-dlp 核心</button>
+        <h3>⚙️ Maintenance</h3>
+        <label>Song Library Path:</label>
+        <div class="inline-row">
+            <input type="text" id="library_path" placeholder="e.g. D:\\KTV\\MyLibrary">
+            <button class="btn-secondary" onclick="loadLibraryPath()">Refresh</button>
+            <button class="btn-secondary" onclick="pickLibraryPath()">Browse...</button>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="move_existing" checked>
+            <label for="move_existing" style="margin:0;">Move existing converted files to the new path</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="allow_unavailable" checked>
+            <label for="allow_unavailable" style="margin:0;">Allow setting remote/offline path when share is temporarily unavailable</label>
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="sync_metadata" checked>
+            <label for="sync_metadata" style="margin:0;">Update metadata entries during rescan</label>
+        </div>
+        <button id="btn_apply_path" class="btn-secondary" onclick="applyLibraryPath()">Apply Library Path</button>
+        <button id="btn_rescan" class="btn-secondary" onclick="rescanLibraryFiles()">Rescan / Sync Library Files</button>
+        <div id="library_status" class="path-hint"></div>
+        <hr style="border: 0; border-top: 1px solid #3b3b3b; margin: 16px 0;">
+        <label>Demucs Model Preference:</label>
+        <div class="inline-row">
+            <select id="demucs_model">
+                <option value="htdemucs">htdemucs (quality default)</option>
+                <option value="mdx_q">mdx_q (faster)</option>
+                <option value="auto">auto (adaptive)</option>
+            </select>
+            <button id="btn_demucs_apply" class="btn-secondary" onclick="applyDemucsSettings()">Apply Demucs Setting</button>
+        </div>
+        <div id="demucs_status" class="path-hint"></div>
+        <hr style="border: 0; border-top: 1px solid #3b3b3b; margin: 16px 0;">
+        <button id="btn_update" class="btn-update" onclick="updateYtDlp()">🔄 Update yt-dlp Core</button>
     </div>
 
     <div class="card">
-        <h3>📝 系統日誌</h3>
+        <h3>📝 System Log</h3>
         <textarea id="log" readonly></textarea>
     </div>
 
     <script>
         const socket = io();
         const logArea = document.getElementById('log');
-        const btnDl = document.getElementById('btn_dl');
+        const btnBatch = document.getElementById('btn_batch');
+        const btnAddRow = document.getElementById('btn_add_row');
         const btnUpdate = document.getElementById('btn_update');
+        const btnApplyPath = document.getElementById('btn_apply_path');
+        const btnRescan = document.getElementById('btn_rescan');
+        const btnDemucsApply = document.getElementById('btn_demucs_apply');
+        const batchRowsContainer = document.getElementById('batch_rows');
+        const libraryPathInput = document.getElementById('library_path');
+        const libraryStatus = document.getElementById('library_status');
+        const moveExistingInput = document.getElementById('move_existing');
+        const allowUnavailableInput = document.getElementById('allow_unavailable');
+        const syncMetadataInput = document.getElementById('sync_metadata');
+        const demucsModelSelect = document.getElementById('demucs_model');
+        const demucsStatus = document.getElementById('demucs_status');
+        let queuedCount = 0;
+
+        function setBusyUi(isBusy, labelText) {
+            btnUpdate.disabled = isBusy;
+            btnAddRow.disabled = isBusy;
+            btnBatch.innerText = isBusy ? `Queue Processing (${queuedCount} waiting)` : "Start Processing";
+        }
+
+        async function loadLibraryPath() {
+            libraryStatus.innerText = 'Loading library path...';
+            try {
+                const response = await fetch('/api/library/path');
+                const data = await response.json();
+                if (!data.ok) {
+                    libraryStatus.innerText = `Load failed: ${data.error || 'unknown error'}`;
+                    return;
+                }
+                libraryPathInput.value = data.path || '';
+                if (data.available === false) {
+                    libraryStatus.innerText = `Current library set to ${data.path || '(not set)'} but share is offline now. Cached songs: ${Number(data.song_count || 0)}. ${data.warning || ''}`;
+                } else {
+                    libraryStatus.innerText = `Current library: ${data.path || '(not set)'} · Songs: ${Number(data.song_count || 0)}`;
+                }
+            } catch (error) {
+                libraryStatus.innerText = 'Load failed.';
+            }
+        }
+
+        async function pickLibraryPath() {
+            libraryStatus.innerText = 'Opening folder picker...';
+            try {
+                const response = await fetch('/api/library/pick-path', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({}),
+                });
+                const data = await response.json();
+                if (data.cancelled) {
+                    libraryStatus.innerText = 'Folder picker cancelled.';
+                    return;
+                }
+                if (!response.ok || !data.ok) {
+                    libraryStatus.innerText = `Folder picker failed: ${data.error || 'unknown error'}`;
+                    return;
+                }
+                libraryPathInput.value = data.path || '';
+                libraryStatus.innerText = `Selected folder: ${data.path}`;
+            } catch (error) {
+                libraryStatus.innerText = 'Folder picker failed.';
+            }
+        }
+
+        async function applyLibraryPath() {
+            const targetPath = libraryPathInput.value.trim();
+            if (!targetPath) {
+                alert('Please input a valid library path.');
+                return;
+            }
+            if (!confirm('Apply new song library path now?')) {
+                return;
+            }
+
+            btnApplyPath.disabled = true;
+            btnRescan.disabled = true;
+            libraryStatus.innerText = 'Applying new library path...';
+            try {
+                const response = await fetch('/api/library/path', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        path: targetPath,
+                        move_existing: !!moveExistingInput.checked,
+                        allow_unavailable: !!allowUnavailableInput.checked,
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    libraryStatus.innerText = `Apply failed: ${data.error || 'unknown error'}`;
+                    return;
+                }
+                libraryPathInput.value = data.new_path || targetPath;
+                if (data.available === false) {
+                    libraryStatus.innerText = `Library path saved (${data.new_path}) but remote share is currently unavailable. Existing metadata and queue were kept safe. ${data.warning || ''}`;
+                } else {
+                    libraryStatus.innerText = `Updated library to ${data.new_path}. Moved: ${data.moved}, skipped: ${data.skipped}.`;
+                }
+            } catch (error) {
+                libraryStatus.innerText = 'Apply failed.';
+            } finally {
+                btnApplyPath.disabled = false;
+                btnRescan.disabled = false;
+            }
+        }
+
+        async function rescanLibraryFiles() {
+            btnRescan.disabled = true;
+            libraryStatus.innerText = 'Scanning shared library changes...';
+            try {
+                const response = await fetch('/api/library/rescan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sync_metadata: !!syncMetadataInput.checked,
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    libraryStatus.innerText = `Rescan failed: ${data.error || 'unknown error'}`;
+                    return;
+                }
+                if (data.library_available === false) {
+                    libraryStatus.innerText = `Share offline, skipped delete/sync actions to protect metadata. Reason: ${data.library_reason || 'unknown'}`;
+                    return;
+                }
+                libraryStatus.innerText = `Rescan done. Songs: ${data.songs}, metadata +${data.metadata_added}/-${data.metadata_removed}, queue removed: ${data.queue_removed}.`;
+            } catch (error) {
+                libraryStatus.innerText = 'Rescan failed.';
+            } finally {
+                btnRescan.disabled = false;
+            }
+        }
+
+        async function loadDemucsSettings() {
+            demucsStatus.innerText = 'Loading Demucs setting...';
+            try {
+                const response = await fetch('/api/settings/demucs');
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    demucsStatus.innerText = `Load failed: ${data.error || 'unknown error'}`;
+                    return;
+                }
+                demucsModelSelect.value = data.model || 'htdemucs';
+                demucsStatus.innerText = `Current: ${data.model}${data.env_override ? ` (env override active: ${data.effective_model})` : ''}`;
+            } catch (error) {
+                demucsStatus.innerText = 'Load failed.';
+            }
+        }
+
+        async function applyDemucsSettings() {
+            const model = demucsModelSelect.value;
+            if (!model) {
+                demucsStatus.innerText = 'Please select a model option.';
+                return;
+            }
+            btnDemucsApply.disabled = true;
+            demucsStatus.innerText = 'Saving Demucs setting...';
+            try {
+                const response = await fetch('/api/settings/demucs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model }),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    demucsStatus.innerText = `Save failed: ${data.error || 'unknown error'}`;
+                    return;
+                }
+                demucsStatus.innerText = `Saved: ${data.model}. New jobs will use this preference.`;
+            } catch (error) {
+                demucsStatus.innerText = 'Save failed.';
+            } finally {
+                btnDemucsApply.disabled = false;
+            }
+        }
+
+        function createBatchRow(url = '', title = '') {
+            const row = document.createElement('div');
+            row.className = 'batch-row';
+            row.innerHTML = `
+                <input type="text" class="batch-url" placeholder="YouTube URL" value="${url.replace(/"/g, '&quot;')}">
+                <input type="text" class="batch-title" placeholder="Song title" value="${title.replace(/"/g, '&quot;')}">
+                <button class="row-remove" onclick="removeBatchRow(this)">✕</button>
+            `;
+            return row;
+        }
+
+        function ensureAtLeastOneBatchRow() {
+            if (!batchRowsContainer.children.length) {
+                batchRowsContainer.appendChild(createBatchRow());
+            }
+        }
+
+        function addBatchRow(url = '', title = '') {
+            batchRowsContainer.appendChild(createBatchRow(url, title));
+        }
+
+        function removeBatchRow(button) {
+            const row = button.closest('.batch-row');
+            if (row) row.remove();
+            ensureAtLeastOneBatchRow();
+        }
+
+        function resetBatchRows(defaultCount = 3) {
+            batchRowsContainer.innerHTML = '';
+            for (let i = 0; i < defaultCount; i += 1) {
+                addBatchRow();
+            }
+        }
+
+        function collectBatchJobs() {
+            const rows = [...batchRowsContainer.querySelectorAll('.batch-row')];
+            const jobs = [];
+            const invalidRows = [];
+
+            rows.forEach((row, idx) => {
+                const url = row.querySelector('.batch-url').value.trim();
+                const title = row.querySelector('.batch-title').value.trim();
+                if (!url && !title) return;
+                if (!url) {
+                    invalidRows.push(idx + 1);
+                    return;
+                }
+                jobs.push({ url, title });
+            });
+
+            return { jobs, invalidRows };
+        }
 
         socket.on('admin_log', (data) => {
             logArea.value += data.msg + "\n";
-            logArea.scrollTop = logArea.scrollHeight; // 自動捲動到最底
+            logArea.scrollTop = logArea.scrollHeight;
         });
 
         socket.on('task_status', (data) => {
-            if(data.status === 'idle') {
-                btnDl.disabled = false;
-                btnDl.innerText = "開始製作 (L:原唱 / R:伴奏)";
-                btnUpdate.disabled = false;
-                document.getElementById('yt_url').value = '';
-                document.getElementById('yt_title').value = '';
-            } else if (data.status === 'busy') {
-                btnDl.disabled = true;
-                btnDl.innerText = "製作中...請稍候";
-                btnUpdate.disabled = true;
-            }
+            queuedCount = Number((data || {}).queued || 0);
+            if(data.status === 'idle') setBusyUi(false);
+            else setBusyUi(true, `Processing... (${queuedCount} waiting)`);
         });
 
-        function startDownload() {
-            const url = document.getElementById('yt_url').value.trim();
-            const title = document.getElementById('yt_title').value.trim();
-            if(!url || !title) {
-                alert("網址與歌名皆為必填！");
+        function enqueueDownload(url, title) {
+            if(!url) {
+                alert("YouTube URL is required.");
                 return;
             }
             socket.emit('start_download', {url: url, title: title});
+            logArea.value += `📥 Added to queue: ${title || 'auto-detected metadata'}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        function startSmartDownload() {
+            const parsed = collectBatchJobs();
+            if (!parsed.jobs.length) {
+                alert("Add at least one valid row with a YouTube URL.");
+                return;
+            }
+            if (parsed.invalidRows.length) {
+                alert("Some rows are missing a URL: " + parsed.invalidRows.join(', '));
+                return;
+            }
+
+            parsed.jobs.forEach((job) => {
+                enqueueDownload(job.url, job.title);
+            });
+            resetBatchRows();
         }
 
         function updateYtDlp() {
-            if(confirm("確定要更新 yt-dlp 嗎？這需要幾秒鐘的時間。")) {
+            if(confirm("Update yt-dlp now? This will take a few seconds.")) {
                 btnUpdate.disabled = true;
                 socket.emit('update_ytdlp');
             }
         }
+
+        function setupQrCodes() {
+            const fallbackHost = "{{ local_ip }}";
+            const host = (window.location.hostname && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost')
+                ? window.location.hostname
+                : fallbackHost;
+            const port = window.location.port || "{{ local_port }}";
+            const base = `http://${host}:${port}`;
+
+            const targets = [
+                { path: '/remote', img: 'qr-remote', link: 'link-remote', open: 'open-remote' },
+                { path: '/combo', img: 'qr-combo', link: 'link-combo', open: 'open-combo' },
+                { path: '/player', img: 'qr-player', link: 'link-player', open: 'open-player' },
+            ];
+
+            targets.forEach((t) => {
+                const url = `${base}${t.path}`;
+                const qr = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
+                document.getElementById(t.img).src = qr;
+                document.getElementById(t.link).innerText = url;
+                document.getElementById(t.open).href = url;
+            });
+        }
+
+        resetBatchRows();
+        setupQrCodes();
+        loadLibraryPath();
+        loadDemucsSettings();
     </script>
 </body>
 </html>

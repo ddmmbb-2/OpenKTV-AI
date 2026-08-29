@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenKTV Quick Add Settings</title>
+  <style>
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      margin: 20px;
+      max-width: 700px;
+      color: #1f1f1f;
+    }
+    .wrap {
+      border: 1px solid #d8d8d8;
+      border-radius: 10px;
+      padding: 16px;
+      background: #fafafa;
+    }
+    h2 { margin-top: 0; }
+    label { display: block; margin-bottom: 8px; font-weight: 600; }
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #b9b9b9;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      color: #fff;
+      background: #1e7d66;
+      font-weight: 700;
+    }
+    #status {
+      margin-top: 10px;
+      color: #0b6b56;
+      min-height: 20px;
+    }
+    .hint {
+      margin-top: 10px;
+      color: #555;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h2>OpenKTV Quick Add</h2>
+    <label for="serverBase">KTV Server URL</label>
+    <input id="serverBase" type="text" placeholder="http://127.0.0.1:5000">
+    <label for="startUrl">KTV Start URL (optional)</label>
+    <input id="startUrl" type="text" placeholder="openktv://start or http://127.0.0.1:5000/admin">
+    <button id="saveBtn" type="button">Save</button>
+    <div id="status"></div>
+    <div class="hint">
+      Example: http://192.168.1.100:5000<br>
+      If server is not running, plugin can open Start URL and retry automatically.<br>
+      Click extension icon on any song page, and it will queue that URL into OpenKTV.
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

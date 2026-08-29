@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KTV Admin</title>
+    <style>
+        :root {
+            --bg: #151515;
+            --panel: #242424;
+            --panel-soft: #2e2e2e;
+            --line: #454545;
+            --text: #f2f2f2;
+            --muted: #a9a9a9;
+            --accent: #08a88a;
+            --danger: #d04c4c;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: radial-gradient(circle at 10% 0%, #1e2830 0%, var(--bg) 42%);
+            color: var(--text);
+            font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+            padding: 18px;
+            max-width: 980px;
+            margin: auto;
+        }
+        .card {
+            background: rgba(26, 26, 26, 0.86);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(4px);
+        }
+        h3 { margin-top: 0; color: #f2f2f2; }
+        label { color: #d8d8d8; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            border: 1px solid #535353;
+            border-radius: 8px;
+            background: #303030;
+            color: #fff;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            color: white;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .btn-dl { background: #ff9800; color: #1d1d1d; }
+        .btn-update { background: #607d8b; }
+        .btn-secondary { background: #455a64; }
+        .btn-dl:disabled, .btn-update:disabled { background: #666; cursor: not-allowed; color: #d0d0d0; }
+        textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #565656; border-radius: 8px; background: #101010; color: #d8ffd8; }
+        #log { height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: none; }
+        .batch-list { display: grid; gap: 8px; margin-bottom: 10px; }
+        .batch-row { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 8px; align-items: center; }
+        .batch-row input { margin: 0; }
+        .row-remove { width: auto; margin: 0; padding: 10px 12px; background: #d32f2f; }
+        .batch-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .batch-help { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+        
+        /* 導航列樣式 */
+        .nav-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav-btn { flex: 1; text-align: center; padding: 12px 10px; text-decoration: none; border-radius: 8px; font-weight: 700; color: white; font-size: 14px; min-width: 100px; border: 1px solid rgba(255,255,255,0.14); transition: 0.2s;}
+        .nav-btn:active { transform: scale(0.95); }
+        .nav-remote { background: #3f5763; }
+        .nav-combo { background: #455a64; }
+        .nav-player { background: #4e6f80; }
+
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .qr-item {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .qr-item h4 {
+            margin: 0 0 8px;
+            font-size: 14px;
+            color: #d8e8ef;
+        }
+        .qr-item img {
+            width: 150px;
+            height: 150px;
+            border-radius: 8px;
+            background: #fff;
+            padding: 6px;
+        }
+        .qr-link {
+            margin-top: 8px;
+            color: #9ec7ff;
+            font-size: 12px;
+            word-break: break-all;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="card">
+        <h3>📲 Mobile QR Access</h3>
+        <div class="batch-help">Scan from phone on the same Wi-Fi network.</div>
+        <div class="qr-grid">
+            <div class="qr-item">
+                <h4>Remote</h4>
+                <img id="qr-remote" alt="Remote QR code">
+                <div class="qr-link" id="link-remote"></div>
+            </div>
+            <div class="qr-item">
+                <h4>Combo</h4>
+                <img id="qr-combo" alt="Combo QR code">
+                <div class="qr-link" id="link-combo"></div>
+            </div>
+            <div class="qr-item">
+                <h4>Player</h4>
+                <img id="qr-player" alt="Player QR code">
+                <div class="qr-link" id="link-player"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="nav-bar">
+        <a href="/remote" class="nav-btn nav-remote">📱 Remote</a>
+        <a href="/combo" class="nav-btn nav-combo">🖥️ Combo</a>
+        <a href="/player" class="nav-btn nav-player">📺 Player</a>
+    </div>
+
+    <div class="card">
+        <h3>📥 Add a KTV Song</h3>
+        <label>1. YouTube URL:</label>
+        <input type="text" id="yt_url" placeholder="https://www.youtube.com/watch?v=...">
+        <label>2. Song title (optional override):</label>
+        <input type="text" id="yt_title" placeholder="Auto-detected from YouTube metadata; optional override: Artist - Album - Song Title">
+        <button id="btn_dl" class="btn-dl" onclick="startDownload()">Start Processing (L: vocal / R: instrumental)</button>
+
+        <hr style="border: 0; border-top: 1px solid #ddd; margin: 18px 0;">
+        <label>4. Bulk add songs (easy mode):</label>
+        <div class="batch-help">Fill one row per song, then click Start Batch Processing.</div>
+        <div id="batch_rows" class="batch-list"></div>
+        <div class="batch-actions">
+            <button id="btn_add_row" class="btn-secondary" onclick="addBatchRow()">+ Add Row</button>
+            <button id="btn_batch" class="btn-dl" onclick="startBatchDownload()">Start Batch Processing</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>⚙️ Maintenance</h3>
+        <button id="btn_update" class="btn-update" onclick="updateYtDlp()">🔄 Update yt-dlp Core</button>
+    </div>
+
+    <div class="card">
+        <h3>📝 System Log</h3>
+        <textarea id="log" readonly></textarea>
+    </div>
+
+    <script>
+        const socket = io();
+        const logArea = document.getElementById('log');
+        const btnDl = document.getElementById('btn_dl');
+        const btnBatch = document.getElementById('btn_batch');
+        const btnAddRow = document.getElementById('btn_add_row');
+        const btnUpdate = document.getElementById('btn_update');
+        const batchRowsContainer = document.getElementById('batch_rows');
+        let queuedCount = 0;
+
+        function setBusyUi(isBusy, labelText) {
+            btnUpdate.disabled = isBusy;
+            btnDl.innerText = isBusy ? (labelText || "Processing... (you can keep adding)") : "Start Processing (L: vocal / R: instrumental)";
+            btnBatch.innerText = isBusy ? `Queue Batch (${queuedCount} waiting)` : "Start Batch Processing";
+        }
+
+        function createBatchRow(url = '', title = '') {
+            const row = document.createElement('div');
+            row.className = 'batch-row';
+            row.innerHTML = `
+                <input type="text" class="batch-url" placeholder="YouTube URL" value="${url.replace(/"/g, '&quot;')}">
+                <input type="text" class="batch-title" placeholder="Song title" value="${title.replace(/"/g, '&quot;')}">
+                <button class="row-remove" onclick="removeBatchRow(this)">✕</button>
+            `;
+            return row;
+        }
+
+        function ensureAtLeastOneBatchRow() {
+            if (!batchRowsContainer.children.length) {
+                batchRowsContainer.appendChild(createBatchRow());
+            }
+        }
+
+        function addBatchRow(url = '', title = '') {
+            batchRowsContainer.appendChild(createBatchRow(url, title));
+        }
+
+        function removeBatchRow(button) {
+            const row = button.closest('.batch-row');
+            if (row) row.remove();
+            ensureAtLeastOneBatchRow();
+        }
+
+        function resetBatchRows(defaultCount = 3) {
+            batchRowsContainer.innerHTML = '';
+            for (let i = 0; i < defaultCount; i += 1) {
+                addBatchRow();
+            }
+        }
+
+        function collectBatchJobs() {
+            const rows = [...batchRowsContainer.querySelectorAll('.batch-row')];
+            const jobs = [];
+            const invalidRows = [];
+
+            rows.forEach((row, idx) => {
+                const url = row.querySelector('.batch-url').value.trim();
+                const title = row.querySelector('.batch-title').value.trim();
+                if (!url && !title) return;
+                if (!url) {
+                    invalidRows.push(idx + 1);
+                    return;
+                }
+                jobs.push({ url, title });
+            });
+
+            return { jobs, invalidRows };
+        }
+
+        socket.on('admin_log', (data) => {
+            logArea.value += data.msg + "\n";
+            logArea.scrollTop = logArea.scrollHeight;
+        });
+
+        socket.on('task_status', (data) => {
+            queuedCount = Number((data || {}).queued || 0);
+            if(data.status === 'idle') setBusyUi(false);
+            else setBusyUi(true, `Processing... (${queuedCount} waiting)`);
+        });
+
+        function startDownload() {
+            const url = document.getElementById('yt_url').value.trim();
+            const title = document.getElementById('yt_title').value.trim();
+            if(!url) {
+                alert("YouTube URL is required.");
+                return;
+            }
+            socket.emit('start_download', {url: url, title: title});
+            logArea.value += `📥 Added to queue: ${title || 'auto-detected metadata'}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+            document.getElementById('yt_url').value = '';
+            document.getElementById('yt_title').value = '';
+        }
+
+        function startBatchDownload() {
+            const parsed = collectBatchJobs();
+            if (!parsed.jobs.length) {
+                alert("Add at least one valid row with a YouTube URL.");
+                return;
+            }
+            if (parsed.invalidRows.length) {
+                alert("Some rows are missing a URL: " + parsed.invalidRows.join(', '));
+                return;
+            }
+
+            parsed.jobs.forEach((job) => {
+                socket.emit('start_download', job);
+                logArea.value += `📥 Added to queue: ${job.title || 'auto-detected metadata'}\n`;
+            });
+            logArea.scrollTop = logArea.scrollHeight;
+            resetBatchRows();
+        }
+
+        function updateYtDlp() {
+            if(confirm("Update yt-dlp now? This will take a few seconds.")) {
+                btnUpdate.disabled = true;
+                socket.emit('update_ytdlp');
+            }
+        }
+
+        function setupQrCodes() {
+            const fallbackHost = "192.168.4.197";
+            const host = (window.location.hostname && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost')
+                ? window.location.hostname
+                : fallbackHost;
+            const port = window.location.port || "5000";
+            const base = `http://${host}:${port}`;
+
+            const targets = [
+                { path: '/remote', img: 'qr-remote', link: 'link-remote' },
+                { path: '/combo', img: 'qr-combo', link: 'link-combo' },
+                { path: '/player', img: 'qr-player', link: 'link-player' },
+            ];
+
+            targets.forEach((t) => {
+                const url = `${base}${t.path}`;
+                const qr = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
+                document.getElementById(t.img).src = qr;
+                document.getElementById(t.link).innerText = url;
+            });
+        }
+
+        resetBatchRows();
+        setupQrCodes();
+    </script>
+</body>
+</html>

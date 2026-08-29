@@ -1,29 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>KTV 播放螢幕</title>
+    <title>KTV Player</title>
     <style>
-        body { background: #000; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; font-family: Arial; }
-        video { width: 100%; height: 100%; object-fit: contain; }
+        body { background: #000; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: stretch; height: 100vh; color: #fff; font-family: Arial; }
+        #player-wrap { width: 100%; height: 100%; display: flex; flex-direction: column; min-height: 0; }
+        #video-shell { position: relative; flex: 1 1 auto; min-height: 0; }
+        #lyrics-box { display: block; }
+        video { width: 100%; height: 100%; object-fit: contain; display: block; }
         #overlay { position: absolute; top: 20px; left: 20px; font-size: 24px; text-shadow: 2px 2px 4px #000; z-index: 10; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;}
+        #lyrics-box { width: min(92vw, 900px); text-align: center; z-index: 12; pointer-events: none; margin: 10px auto 18px; padding: 10px 12px; box-sizing: border-box; border-top: 1px solid rgba(255,255,255,0.12); min-height: 88px; }
+        .lyric-line { display: block; padding: 8px 14px; margin: 6px 0; border-radius: 10px; background: rgba(0,0,0,0.35); text-shadow: 2px 2px 4px #000; }
+        .lyric-current { font-size: clamp(24px, 3.5vw, 40px); font-weight: 700; color: #fff; }
+        .lyric-next { font-size: clamp(16px, 2.2vw, 24px); color: #d0d0d0; opacity: 0.9; }
+        .lyric-placeholder { font-size: 16px; color: #9a9a9a; padding: 18px 0; }
         #waiting { font-size: 50px; color: #555; cursor: pointer; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
 <body>
-    <div id="overlay">等待連線...</div>
-    <div id="waiting" onclick="initAudioContext()">📺 KTV 準備就緒 (點我啟動音效)</div>
-    <video id="vid" playsinline crossorigin="anonymous"></video>
+    <div id="overlay">Connecting...</div>
+    <div id="player-wrap">
+        <div id="video-shell">
+            <video id="vid" playsinline crossorigin="anonymous"></video>
+        </div>
+        <div id="lyrics-box">
+            <span id="lyric-current" class="lyric-line lyric-current"></span>
+            <span id="lyric-next" class="lyric-line lyric-next"></span>
+        </div>
+    </div>
+    <div id="waiting" onclick="initAudioContext()">📺 KTV ready (click to start audio)</div>
 
     <script>
         const socket = io();
         const video = document.getElementById('vid');
         const overlay = document.getElementById('overlay');
         const waiting = document.getElementById('waiting');
-        
         let audioCtx, source, splitter, gainL, gainR, merger;
         let isAudioSetup = false;
         let currentMode = 'stereo';
+        let pendingSeekSeconds = null;
+        function applySeek(seconds) {
+            const target = Math.max(0, Number(seconds) || 0);
+            if (video.readyState >= 1) {
+                const duration = Number.isFinite(video.duration) ? video.duration : 0;
+                video.currentTime = duration > 0 ? Math.min(target, duration) : target;
+            } else {
+                pendingSeekSeconds = target;
+            }
+        }
+
+        let lyricsTrack = [];
+        let lyricsIndex = -1;
+        let lyricsBox = document.getElementById('lyrics-box');
+        let lyricCurrent = document.getElementById('lyric-current');
+        let lyricNext = document.getElementById('lyric-next');
+
+        function parseLrc(text) {
+            const parsed = String(text || '').split(/\r?\n/).flatMap((line) => {
+                const matches = [...line.matchAll(/\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\]/g)];
+                const lyricText = line.replace(/(?:\[\d{1,2}:\d{2}(?:\.\d{1,3})?\])+/, '').trim();
+                if (!matches.length || !lyricText) return [];
+                return matches.map((match) => {
+                    const minutes = parseInt(match[1], 10);
+                    const seconds = parseInt(match[2], 10);
+                    const fraction = parseInt((match[3] || '0').padEnd(3, '0'), 10);
+                    return { time: minutes * 60 + seconds + fraction / 1000, text: lyricText };
+                });
+            }).sort((a, b) => a.time - b.time);
+            return parsed;
+        }
+
+        async function loadLyricsForSong(filename) {
+            const baseName = String(filename || '').replace(/\.mp4$/i, '');
+            lyricsTrack = [];
+            lyricsIndex = -1;
+            lyricCurrent.innerText = 'Loading lyrics...';
+            lyricNext.innerText = '';
+            try {
+                const response = await fetch(`/lyrics/${encodeURIComponent(baseName)}.lrc?t=${Date.now()}`);
+                if (!response.ok) {
+                    lyricCurrent.innerText = 'No lyrics found';
+                    lyricNext.innerText = '';
+                    return;
+                }
+                const text = await response.text();
+                lyricsTrack = parseLrc(text);
+                if (lyricsTrack.length > 0) {
+                    updateLyricsDisplay();
+                } else {
+                    lyricCurrent.innerText = 'No lyrics found';
+                    lyricNext.innerText = '';
+                }
+            } catch (error) {
+                lyricCurrent.innerText = 'No lyrics found';
+                lyricNext.innerText = '';
+            }
+        }
+
+        function updateLyricsDisplay() {
+            if (!lyricsTrack.length) return;
+            const currentTime = video.currentTime || 0;
+            let index = lyricsTrack.findIndex((line, lineIndex) => {
+                const nextTime = lyricsTrack[lineIndex + 1]?.time ?? Number.POSITIVE_INFINITY;
+                return currentTime >= line.time && currentTime < nextTime;
+            });
+            if (index === -1 && currentTime >= lyricsTrack[lyricsTrack.length - 1].time) {
+                index = lyricsTrack.length - 1;
+            }
+            if (index === -1) {
+                lyricCurrent.innerText = '';
+                lyricNext.innerText = lyricsTrack[0]?.text || 'No lyrics found';
+                return;
+            }
+            if (index !== lyricsIndex) {
+                lyricsIndex = index;
+                lyricCurrent.innerText = lyricsTrack[index].text;
+                lyricNext.innerText = lyricsTrack[index + 1]?.text || '';
+            }
+        }
 
         function initAudioContext() {
             if(!audioCtx) {
@@ -33,7 +128,7 @@
             if(audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-            waiting.innerText = "🔊 音效引擎已啟動，等待點歌...";
+            waiting.innerText = "🔊 Audio engine started, waiting for a song...";
             waiting.style.color = "#4CAF50";
         }
 
@@ -60,17 +155,18 @@
             setAudioMode(currentMode);
         }
 
-        socket.on('connect', () => { overlay.innerText = "✅ 已連線主機"; });
+        socket.on('connect', () => { overlay.innerText = "✅ Connected to host"; });
 
         socket.on('play_video', (data) => {
             waiting.style.display = 'none';
-            overlay.innerText = "正在播放: " + data.title;
+            overlay.innerText = "Now playing: " + data.title;
             video.src = "/songs/" + encodeURIComponent(data.filename) + "?t=" + new Date().getTime();
+            loadLyricsForSong(data.filename);
             video.play().then(() => {
                 if(!isAudioSetup) setupAudio();
                 setAudioMode('original'); 
             }).catch(e => {
-                overlay.innerText = "⚠️ 請點擊畫面開始播放";
+                overlay.innerText = "⚠️ Click the screen to start playback";
             });
         });
 
@@ -80,7 +176,7 @@
                 video.pause();
                 video.src = "";
                 waiting.style.display = 'block';
-                overlay.innerText = "⏹ 已停止";
+                overlay.innerText = "⏹ Stopped";
             }
         });
 
@@ -89,23 +185,62 @@
             setAudioMode(mode);
         });
 
+        socket.on('seek_to', (data) => {
+            applySeek((data || {}).seconds);
+        });
+
         function setAudioMode(mode) {
             if(!isAudioSetup || !gainL || !gainR) return;
             const now = audioCtx.currentTime;
             if (mode === 'original') { 
                 gainL.gain.setTargetAtTime(1, now, 0.1);
                 gainR.gain.setTargetAtTime(0, now, 0.1);
-                overlay.innerText = "🎤 目前模式：原唱";
+                overlay.innerText = "🎤 Mode: Original";
             } else if (mode === 'instrumental') { 
                 gainL.gain.setTargetAtTime(0, now, 0.1);
                 gainR.gain.setTargetAtTime(1, now, 0.1);
-                overlay.innerText = "🚫 目前模式：伴奏";
+                overlay.innerText = "🚫 Mode: Instrumental";
             } else { 
                 gainL.gain.setTargetAtTime(1, now, 0.1);
                 gainR.gain.setTargetAtTime(1, now, 0.1);
-                overlay.innerText = "🎵 目前模式：立體聲";
+                overlay.innerText = "🎵 Mode: Stereo";
             }
         }
+
+        video.addEventListener('loadedmetadata', () => {
+            if (pendingSeekSeconds !== null) {
+                const target = pendingSeekSeconds;
+                pendingSeekSeconds = null;
+                applySeek(target);
+            }
+        });
+
+        video.addEventListener('timeupdate', () => {
+            updateLyricsDisplay();
+            socket.emit('song_status', { filename: currentTrackFilename || '', seconds: video.currentTime || 0 });
+        });
+        video.addEventListener('seeked', () => {
+            socket.emit('song_status', { filename: currentTrackFilename || '', seconds: video.currentTime || 0 });
+        });
+
+        let currentTrackFilename = '';
+        socket.on('play_video', (data) => {
+            currentTrackFilename = data.filename || '';
+            if (currentTrackFilename) {
+                socket.emit('song_status', { filename: currentTrackFilename, seconds: 0 });
+            }
+            waiting.style.display = 'none';
+            overlay.innerText = "Now playing: " + data.title;
+            video.src = "/songs/" + encodeURIComponent(data.filename) + "?t=" + new Date().getTime();
+            loadLyricsForSong(data.filename);
+            video.play().then(() => {
+                if(!isAudioSetup) setupAudio();
+                setAudioMode('original'); 
+            }).catch(e => {
+                overlay.innerText = "⚠️ Click the screen to start playback";
+            });
+        });
+
         document.body.addEventListener('click', initAudioContext);
     </script>
 </body>

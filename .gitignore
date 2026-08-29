@@ -1,0 +1,14 @@
+.venv/
+.venv-1/
+__pycache__/
+*.py[cod]
+
+build/
+dist/
+
+temp_processing/
+temp_demucs_test/
+_state/
+*.part
+
+*.lnk

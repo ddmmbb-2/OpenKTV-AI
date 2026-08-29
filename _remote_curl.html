@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KTV Remote</title>
+    <style>
+        :root {
+            --bg: #151515;
+            --panel: #222;
+            --panel-soft: #2b2b2b;
+            --line: #444;
+            --text: #f2f2f2;
+            --muted: #a9a9a9;
+            --accent: #08a88a;
+            --accent-2: #4e6f80;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 12px;
+            background: radial-gradient(circle at 10% 0%, #1e2830 0%, var(--bg) 42%);
+            color: var(--text);
+            font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        }
+        .remote-shell {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        @media (min-width: 980px) {
+            .remote-shell {
+                grid-template-columns: minmax(320px, 420px) minmax(420px, 1fr);
+                align-items: start;
+            }
+            .control-pane {
+                position: sticky;
+                top: 10px;
+                max-height: calc(100vh - 24px);
+                overflow-y: auto;
+                padding-right: 4px;
+            }
+        }
+        .pane {
+            background: rgba(20,20,20,0.84);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 12px;
+            backdrop-filter: blur(4px);
+        }
+        .pane-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+        .pane-title h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+        .pane-title small { color: var(--muted); }
+        .admin-link {
+            background: #607d8b;
+            color: white;
+            text-align: center;
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin: 4px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+        }
+        .pause { background: #2196F3; }
+        .stop { background: #F44336; }
+        .vocal { background: #FF9800; color: black; }
+        .inst { background: #FFC107; color: black; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .card {
+            background: var(--panel-soft);
+            border: 1px solid #3f3f3f;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            color: #d5d5d5;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+        input[type=text], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #303030;
+            border: 1px solid #535353;
+            color: white;
+            border-radius: 8px;
+        }
+        input[type=range] { width: 100%; margin: 8px 0; }
+        .lyrics-body {
+            white-space: pre-wrap;
+            line-height: 1.45;
+            color: #f0f0f0;
+            max-height: 180px;
+            overflow: auto;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .order-toolbar {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        @media (min-width: 700px) {
+            .order-toolbar {
+                grid-template-columns: minmax(180px, 1fr) 180px;
+                gap: 8px;
+            }
+        }
+        .stats { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
+        .order-utility {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 8px;
+        }
+        .meta-btn {
+            width: auto;
+            margin: 0;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid #4d6169;
+            background: #2d3d43;
+            color: #d8e7eb;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .meta-btn:hover {
+            background: #37515a;
+        }
+        #metadata-status {
+            margin: 0;
+            font-size: 11px;
+            color: #8ea2a8;
+        }
+        .song-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .group-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 360px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 10px;
+        }
+        .group-item {
+            background: #242424;
+            border: 1px solid #3d3d3d;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 0;
+        }
+        .group-cover {
+            position: relative;
+            height: 142px;
+            background-size: cover;
+            background-position: center;
+            border-bottom: 1px solid #3d3d3d;
+        }
+        .group-cover::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(8,8,8,0.82) 0%, rgba(8,8,8,0.3) 58%, rgba(8,8,8,0.1) 100%);
+        }
+        .group-label {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            bottom: 8px;
+            z-index: 1;
+            color: #fff;
+            font-weight: 800;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .group-body {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .group-cover {
+            cursor: pointer;
+        }
+        .group-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ececec;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .group-count {
+            color: #9cced7;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .song-picker-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.62);
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+        .song-picker-backdrop.open {
+            display: flex;
+        }
+        .song-picker-panel {
+            width: min(780px, 96vw);
+            max-height: 80vh;
+            background: #1f1f1f;
+            border: 1px solid #454545;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .song-picker-head {
+            padding: 12px;
+            border-bottom: 1px solid #3b3b3b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .song-picker-title {
+            font-weight: 800;
+            color: #f1f1f1;
+        }
+        .song-picker-close {
+            border: none;
+            border-radius: 8px;
+            background: #3e5059;
+            color: white;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .song-picker-list {
+            list-style: none;
+            margin: 0;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .song-picker-item {
+            background: #2a2a2a;
+            border: 1px solid #3f3f3f;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .song-picker-item:hover {
+            border-color: #08a88a;
+            box-shadow: inset 0 0 0 1px rgba(8,168,138,0.35);
+        }
+        .song-picker-sub {
+            margin-top: 4px;
+            color: #b5b5b5;
+            font-size: 12px;
+        }
+        .song-picker-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+        .song-picker-delete {
+            border: none;
+            border-radius: 8px;
+            background: #a73e3e;
+            color: #fff;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .song-picker-delete:hover {
+            background: #c24b4b;
+        }
+        .song-item {
+            background: #2a2a2a;
+            border: 1px solid #3f3f3f;
+            padding: 10px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+        .song-item.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(8,168,138,0.35); }
+        .song-title { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .song-meta { color: #b5b5b5; font-size: 12px; margin-top: 2px; }
+        .song-actions { display: flex; gap: 6px; }
+        .song-btn {
+            border: none;
+            border-radius: 16px;
+            padding: 6px 11px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .song-add { background: var(--accent); }
+        .song-focus { background: var(--accent-2); }
+        .song-del { background: #c94a4a; }
+        .queue-list { list-style: decimal; margin: 0; padding-left: 22px; color: #ddd; }
+        .queue-list li { margin: 4px 0; }
+        .now-playing { color: #7ee7ca; font-weight: 700; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="remote-shell">
+        <section class="pane control-pane">
+            <div class="pane-title">
+                <h3>📱 KTV Remote</h3>
+                <small>Control Panel</small>
+            </div>
+
+            <a href="/admin" class="admin-link">⚙️ Open Admin (add/manage songs)</a>
+
+            <div class="grid2">
+                <button class="btn pause" onclick="cmd('pause')">⏯ Play / Pause</button>
+                <button class="btn stop" onclick="cmd('stop')">⏹ Skip</button>
+                <button class="btn vocal" onclick="track('original')">🎤 Original</button>
+                <button class="btn inst" onclick="track('instrumental')">🚫 Instrumental</button>
+            </div>
+
+            <div class="card" style="margin-top:10px;">
+                <div class="card-head"><span>🔊 Volume</span><span id="vol-val">100%</span></div>
+                <input type="range" id="vol" min="0" max="2" step="0.1" value="1" oninput="updateEffect()">
+            </div>
+
+            <div class="card">
+                <div class="card-head"><span>🎵 Key Shift</span><span id="key-val">Original Key (0)</span></div>
+                <div class="grid2">
+                    <button class="btn" style="background:#555; margin:0;" onclick="changeKey(-1)">🔻 Down</button>
+                    <button class="btn" style="background:#777; margin:0;" onclick="changeKey(0)">0 (Original)</button>
+                </div>
+                <button class="btn" style="background:#555; margin:6px 0 0;" onclick="changeKey(1)">🔺 Up</button>
+            </div>
+
+            <div class="card">
+                <div class="card-head"><span>⏱ Jump To Time</span><span>mm:ss</span></div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="seek-input" placeholder="01:30" style="margin:0; flex:1;">
+                    <button class="btn" style="background:#3f51b5; width:auto; padding:0 16px; margin:0;" onclick="jumpToTimeInput()">Jump</button>
+                </div>
+            </div>
+
+            <div id="lyrics-panel" class="card" style="display:block;">
+                <div class="card-head" style="align-items:center;">
+                    <strong>🎵 Lyrics</strong>
+                    <button class="btn" style="width:auto; padding:7px 12px; margin:0; background:#607D8B;" onclick="toggleLyricsPanel()">Show / Hide</button>
+                </div>
+                <div id="lyrics-panel-content" class="lyrics-body">No local lyrics loaded yet. Select a song to search and display its lyrics.</div>
+            </div>
+        </section>
+
+        <section class="pane order-pane">
+            <div class="pane-title">
+                <h3>🎼 Song Ordering</h3>
+                <small>Search · Select · Queue</small>
+            </div>
+
+            <div class="order-toolbar">
+                <input type="text" id="search" placeholder="🔍 Search by title / artist / album" oninput="filter()">
+                <select id="sort-by" onchange="filter()">
+                    <option value="artist">Sort: Artist</option>
+                    <option value="album">Sort: Album</option>
+                    <option value="title">Sort: Title</option>
+                    <option value="genre">Sort: Genre</option>
+                </select>
+            </div>
+            <div class="order-utility">
+                <div id="metadata-status" class="stats">Metadata ready</div>
+                <button class="meta-btn" onclick="autofillMetadata()">Auto-fill metadata</button>
+            </div>
+            <div class="stats" id="result-stats">0 songs</div>
+
+            <ul id="list" class="song-list"></ul>
+
+            <div class="card" id="song-detail-card">
+                <div class="card-head"><strong>Selected Song</strong><span id="song-detail-status">None</span></div>
+                <div id="song-detail-body" style="color:#cfcfcf; font-size:14px;">Select a song from the list to preview details and add to queue.</div>
+            </div>
+
+            <div class="card">
+                <div class="card-head"><strong>📋 Queue</strong><span id="queue-count">0</span></div>
+                <ol id="queue-list" class="queue-list"><li>(none)</li></ol>
+            </div>
+        </section>
+    </div>
+
+    <div id="song-picker" class="song-picker-backdrop" onclick="onSongPickerBackdrop(event)">
+        <div class="song-picker-panel">
+            <div class="song-picker-head">
+                <div id="song-picker-title" class="song-picker-title">Songs</div>
+                <button class="song-picker-close" onclick="closeSongPicker()">Close</button>
+            </div>
+            <ul id="song-picker-list" class="song-picker-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let allSongs = [];
+        let currentKey = 0;
+        let currentLyricSong = null;
+        let selectedSong = null;
+        let queueState = [];
+        let metadataMap = {};
+        let songPickerSongs = [];
+
+        function parseSongMeta(filename) {
+            const raw = String(filename || '').replace(/\.mp4$/i, '');
+            const parts = raw.split(' - ').map(p => p.trim()).filter(Boolean);
+            if (parts.length >= 3) {
+                return {
+                    filename,
+                    title: parts.slice(2).join(' - '),
+                    artist: parts[0],
+                    album: parts[1],
+                    display: raw,
+                };
+            }
+            if (parts.length === 2) {
+                return {
+                    filename,
+                    title: parts[1],
+                    artist: parts[0],
+                    album: '',
+                    display: raw,
+                };
+            }
+            return {
+                filename,
+                title: raw,
+                artist: '',
+                album: '',
+                display: raw,
+            };
+        }
+
+        function getSongRecord(filename) {
+            const meta = metadataMap[filename] || {};
+            const fallback = parseSongMeta(filename);
+            const rawTitle = String(meta.title || '').trim();
+            const rawArtist = String(meta.artist || '').trim();
+            const rawAlbum = String(meta.album || '').trim();
+            return {
+                filename,
+                title: rawTitle || fallback.title || fallback.display,
+                artist: rawArtist,
+                album: rawAlbum,
+                genre: String(meta.genre || '').trim() || 'Unknown',
+                artworkUrl: String(meta.artwork_url || '').trim(),
+                artistImageUrl: String(meta.artist_image_url || '').trim(),
+                completed: Boolean(meta.completed),
+            };
+        }
+
+        function getMetadataOnlyRecord(filename) {
+            const meta = metadataMap[filename] || {};
+            return {
+                filename,
+                title: String(meta.title || '').trim(),
+                artist: String(meta.artist || '').trim(),
+                album: String(meta.album || '').trim(),
+                genre: String(meta.genre || '').trim(),
+            };
+        }
+
+        function cleanDisplaySongTitle(title) {
+            let text = String(title || '').trim();
+            if (!text) return 'Untitled';
+            text = text
+                .replace(/\s*[_-]?\d{8,}$/g, '')
+                .replace(/\s*\[(official|video|lyrics?|remastered|mv)[^\]]*\]/ig, '')
+                .replace(/\s*\((official|video|lyrics?|remastered|mv)[^)]*\)/ig, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+            return text || 'Untitled';
+        }
+
+        function cleanDisplayAlbum(album) {
+            let text = String(album || '').trim();
+            if (!text) return 'Unknown album';
+            text = text.replace(/\s{2,}/g, ' ').trim();
+            return text || 'Unknown album';
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function jsStringEscape(value) {
+            return String(value || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        function makeFallbackCover(seed) {
+            const key = String(seed || 'KTV');
+            let hash = 0;
+            for (let i = 0; i < key.length; i += 1) hash = ((hash << 5) - hash) + key.charCodeAt(i);
+            const hue = Math.abs(hash) % 360;
+            return `linear-gradient(135deg, hsl(${hue}, 62%, 38%) 0%, hsl(${(hue + 42) % 360}, 58%, 24%) 100%)`;
+        }
+
+        function toggleLyricsPanel() {
+            const panel = document.getElementById('lyrics-panel-content');
+            const visible = panel.style.display !== 'none';
+            panel.style.display = visible ? 'none' : 'block';
+        }
+
+        function showLyricsForCurrentSong(filename) {
+            const baseName = filename.replace(/\.mp4$/i, '');
+            currentLyricSong = filename;
+            fetch(`/api/lyrics/${encodeURIComponent(baseName)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const panel = document.getElementById('lyrics-panel');
+                    const panelContent = document.getElementById('lyrics-panel-content');
+                    if (!data.ok) {
+                        panel.style.display = 'block';
+                        panelContent.style.display = 'block';
+                        panelContent.textContent = 'No local lyrics available for this song.';
+                        return;
+                    }
+                    panel.style.display = 'block';
+                    panelContent.style.display = 'block';
+                    panelContent.textContent = data.content || 'No lyrics available.';
+                })
+                .catch(() => {
+                    document.getElementById('lyrics-panel').style.display = 'block';
+                    document.getElementById('lyrics-panel-content').textContent = 'No local lyrics available for this song.';
+                });
+        }
+
+        socket.on('update_list', (songs) => {
+            allSongs = songs;
+            filter();
+        });
+
+        socket.on('update_queue', (playlist) => {
+            queueState = Array.isArray(playlist) ? playlist : [];
+            renderQueue();
+        });
+
+        socket.on('play_video', (data) => {
+            const file = String((data || {}).filename || '');
+            if (file) {
+                showLyricsForCurrentSong(file);
+            }
+        });
+
+        socket.on('stop_video', () => {
+            queueState = [];
+            renderQueue();
+        });
+
+        function sortSongs(songs, sortBy) {
+            const getKey = (song) => {
+                const meta = getSongRecord(song);
+                if (sortBy === 'artist') return (meta.artist || 'zzzz').toLowerCase() + '|' + meta.title.toLowerCase();
+                if (sortBy === 'album') return (meta.album || 'zzzz').toLowerCase() + '|' + meta.title.toLowerCase();
+                if (sortBy === 'genre') return (meta.genre || 'zzzz').toLowerCase() + '|' + meta.title.toLowerCase();
+                return meta.title.toLowerCase();
+            };
+            return songs.slice().sort((a, b) => getKey(a).localeCompare(getKey(b)));
+        }
+
+        function filter() {
+            const key = document.getElementById('search').value.toLowerCase();
+            const sortBy = document.getElementById('sort-by').value;
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+            list.className = 'song-list';
+
+            const filtered = sortSongs(allSongs, sortBy).filter((song) => {
+                const meta = getSongRecord(song);
+                const haystack = `${meta.title} ${meta.artist} ${meta.album} ${meta.genre}`.toLowerCase();
+                return haystack.includes(key);
+            });
+
+            document.getElementById('result-stats').innerText = `${filtered.length} songs`;
+
+            if (sortBy === 'title') {
+                filtered.forEach((song) => list.appendChild(createSongItem(song)));
+                return;
+            }
+
+            const groupKey = sortBy;
+            const groups = {};
+            filtered.forEach((song) => {
+                const meta = getSongRecord(song);
+                const keyName = String(meta[groupKey] || '').trim() || `Unknown ${groupKey}`;
+                if (!groups[keyName]) groups[keyName] = [];
+                groups[keyName].push(song);
+            });
+
+            list.className = 'group-list';
+            Object.keys(groups).sort((a, b) => a.localeCompare(b)).forEach((groupName) => {
+                const groupItem = document.createElement('li');
+                groupItem.className = 'group-item';
+                const songs = groups[groupName];
+                const coverSong = songs.map(s => getSongRecord(s)).find(m => m.artworkUrl || m.artistImageUrl) || getSongRecord(songs[0]);
+                const cover = sortBy === 'artist' ? (coverSong.artistImageUrl || coverSong.artworkUrl) : coverSong.artworkUrl;
+                const safeName = escapeHtml(groupName);
+                const coverCss = cover ? `url('${cover.replace(/'/g, "%27")}')` : makeFallbackCover(groupName);
+                const groupId = `grp-${sortBy}-${groupName}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+                groupItem.innerHTML = `
+                    <div class="group-cover" style="background-image:${coverCss}">
+                        <div class="group-label">${safeName}</div>
+                    </div>
+                    <div class="group-body">
+                        <div class="group-head">
+                            <span class="group-count">${songs.length} songs · Tap to pick</span>
+                        </div>
+                    </div>
+                `;
+                const openPicker = () => openSongPicker(groupKey, groupName, songs);
+                groupItem.querySelector('.group-cover').addEventListener('click', openPicker);
+                groupItem.querySelector('.group-body').addEventListener('click', openPicker);
+                list.appendChild(groupItem);
+            });
+        }
+
+        function openSongPicker(groupKey, groupName, songs) {
+            songPickerSongs = Array.isArray(songs) ? songs.slice() : [];
+            const titleEl = document.getElementById('song-picker-title');
+            const listEl = document.getElementById('song-picker-list');
+            const picker = document.getElementById('song-picker');
+            titleEl.innerText = `${groupKey.toUpperCase()}: ${groupName}`;
+            listEl.innerHTML = '';
+            songPickerSongs.forEach((song) => {
+                const meta = getMetadataOnlyRecord(song);
+                const titleOnly = cleanDisplaySongTitle(meta.title);
+                const albumOnly = cleanDisplayAlbum(meta.album);
+                const li = document.createElement('li');
+                li.className = 'song-picker-item';
+                li.innerHTML = `
+                    <div class="song-picker-row">
+                        <div>
+                            <div class="song-title">${escapeHtml(titleOnly)}</div>
+                            ${groupKey === 'album' ? '' : `<div class="song-picker-sub">${escapeHtml(albumOnly)}</div>`}
+                        </div>
+                        <button class="song-picker-delete">Delete</button>
+                    </div>
+                `;
+                li.addEventListener('click', () => {
+                    selectSong(song);
+                    addToQueue(song);
+                    closeSongPicker();
+                });
+                const delBtn = li.querySelector('.song-picker-delete');
+                delBtn.addEventListener('click', async (event) => {
+                    event.stopPropagation();
+                    await deleteSongFromOrdering(song, titleOnly, true);
+                });
+                listEl.appendChild(li);
+            });
+            picker.classList.add('open');
+        }
+
+        function closeSongPicker() {
+            document.getElementById('song-picker').classList.remove('open');
+        }
+
+        function onSongPickerBackdrop(event) {
+            if (event.target && event.target.id === 'song-picker') {
+                closeSongPicker();
+            }
+        }
+
+        function createSongItem(song) {
+            const meta = getSongRecord(song);
+            const isSelected = selectedSong === song;
+            const item = document.createElement('li');
+            item.className = `song-item${isSelected ? ' active' : ''}`;
+            const safeSong = song.replace(/'/g, "\\'");
+            const cleanTitle = cleanDisplaySongTitle(meta.title);
+            const safeTitle = jsStringEscape(cleanTitle);
+            item.innerHTML = `
+                <div style="min-width:0; cursor:pointer;" onclick="selectSong('${safeSong}')">
+                    <div class="song-title">${escapeHtml(cleanTitle)}</div>
+                    <div class="song-meta">${escapeHtml(meta.artist || 'Unknown artist')}${meta.album ? ' · ' + escapeHtml(meta.album) : ''}${meta.genre ? ' · ' + escapeHtml(meta.genre) : ''}</div>
+                </div>
+                <div class="song-actions">
+                    <button class="song-btn song-focus" onclick="selectSong('${safeSong}')">View</button>
+                    <button class="song-btn song-add" onclick="addToQueue('${safeSong}')">Add</button>
+                    <button class="song-btn song-del" onclick="deleteSongFromOrdering('${safeSong}', '${safeTitle}')">Delete</button>
+                </div>
+            `;
+            return item;
+        }
+
+        function renderQueue() {
+            const queueList = document.getElementById('queue-list');
+            const queueCount = document.getElementById('queue-count');
+            queueCount.innerText = String(queueState.length);
+            if (!queueState.length) {
+                queueList.innerHTML = '<li>(none)</li>';
+                return;
+            }
+            queueList.innerHTML = '';
+            queueState.forEach((song, index) => {
+                const meta = getSongRecord(song);
+                const li = document.createElement('li');
+                li.className = index === 0 ? 'now-playing' : '';
+                li.innerText = `${index === 0 ? 'Now: ' : ''}${meta.title}${meta.artist ? ' - ' + meta.artist : ''}`;
+                queueList.appendChild(li);
+            });
+        }
+
+        function selectSong(filename) {
+            selectedSong = filename;
+            const meta = getSongRecord(filename);
+            document.getElementById('song-detail-status').innerText = 'Ready';
+            document.getElementById('song-detail-body').innerHTML = `
+                <strong style="font-size:16px; color:#fff;">${escapeHtml(meta.title)}</strong><br>
+                <span style="color:#c6c6c6;">Artist: ${escapeHtml(meta.artist || 'Unknown')}</span><br>
+                <span style="color:#9f9f9f;">Album: ${escapeHtml(meta.album || 'N/A')} · Genre: ${escapeHtml(meta.genre || 'Unknown')}</span>
+            `;
+            filter();
+        }
+
+        function addToQueue(filename) {
+            socket.emit('add_to_queue', { filename });
+            const meta = getMetadataOnlyRecord(filename);
+            document.getElementById('song-detail-status').innerText = `Queued: ${cleanDisplaySongTitle(meta.title)}`;
+            showLyricsForCurrentSong(filename);
+        }
+
+        async function deleteSongFromOrdering(filename, displayTitle, closePickerAfter = false) {
+            const fallbackTitle = getMetadataOnlyRecord(filename).title || filename;
+            const label = cleanDisplaySongTitle(displayTitle || fallbackTitle);
+            if (!confirm(`Delete "${label}"?`)) {
+                return false;
+            }
+
+            try {
+                const response = await fetch(`/api/delete/${encodeURIComponent(filename)}`, { method: 'POST' });
+                const data = await response.json();
+                if (!response.ok || !data.ok) {
+                    alert(data.error || 'Delete failed.');
+                    return false;
+                }
+
+                if (selectedSong === filename) {
+                    selectedSong = null;
+                    document.getElementById('song-detail-status').innerText = 'None';
+                    document.getElementById('song-detail-body').innerText = 'Select a song from the list to preview details and add to queue.';
+                } else {
+                    document.getElementById('song-detail-status').innerText = `Deleted: ${label}`;
+                }
+
+                await loadMetadata();
+                await loadList();
+                if (closePickerAfter) {
+                    closeSongPicker();
+                }
+                return true;
+            } catch (error) {
+                alert('Delete failed.');
+                return false;
+            }
+        }
+
+        function play(filename) {
+            socket.emit('request_play', {filename: filename});
+            showLyricsForCurrentSong(filename);
+        }
+        function cmd(action) { socket.emit('control', action); }
+        function track(mode) { socket.emit('change_track', mode); }
+
+        function parseTimeInput(raw) {
+            const parts = String(raw || '').trim().split(':').map(p => p.trim());
+            if (!parts.length || parts.some(p => p === '' || Number.isNaN(Number(p)))) return null;
+            if (parts.length === 1) return Number(parts[0]);
+            if (parts.length === 2) return Number(parts[0]) * 60 + Number(parts[1]);
+            if (parts.length === 3) return Number(parts[0]) * 3600 + Number(parts[1]) * 60 + Number(parts[2]);
+            return null;
+        }
+
+        function jumpToTimeInput() {
+            const input = document.getElementById('seek-input');
+            const seconds = parseTimeInput(input.value);
+            if (seconds === null) {
+                alert('Use mm:ss or hh:mm:ss');
+                return;
+            }
+            socket.emit('seek_to', { seconds: Math.max(0, seconds) });
+            input.value = '';
+        }
+
+        function loadList() {
+            fetch('/api/list').then(r => r.json()).then(data => {
+                allSongs = data;
+                filter();
+            });
+        }
+
+        function loadMetadata() {
+            return fetch('/api/metadata')
+                .then(r => r.json())
+                .then(data => {
+                    metadataMap = (data && data.ok && data.metadata) ? data.metadata : {};
+                })
+                .catch(() => {
+                    metadataMap = {};
+                });
+        }
+
+        function autofillMetadata() {
+            const status = document.getElementById('metadata-status');
+            status.innerText = 'Autofill in progress...';
+            fetch('/api/metadata/autofill', { method: 'POST' })
+                .then(r => r.json())
+                .then(async (data) => {
+                    if (!data.ok) {
+                        status.innerText = `Autofill failed: ${data.error || 'unknown error'}`;
+                        return;
+                    }
+                    await loadMetadata();
+                    status.innerText = `Updated ${data.updated} songs · Completed ${data.completed_after}/${data.songs}`;
+                    filter();
+                })
+                .catch(() => {
+                    status.innerText = 'Autofill failed.';
+                });
+        }
+        
+        loadMetadata().then(loadList);
+        socket.on('refresh_list', loadList);
+
+        // --- 音效與升降 KEY 控制 ---
+        function updateEffect() {
+            const vol = parseFloat(document.getElementById('vol').value);
+            socket.emit('control_effect', { volume: vol });
+        }
+
+        function changeKey(step) {
+            if (step === 0) {
+                currentKey = 0;
+            } else {
+                currentKey += step;
+            }
+            
+            if(currentKey > 12) currentKey = 12;
+            if(currentKey < -12) currentKey = -12;
+            
+            socket.emit('control_effect', { pitch: currentKey });
+        }
+
+        socket.on('apply_effect', (data) => {
+            if (data.pitch !== undefined) {
+                currentKey = data.pitch;
+                document.getElementById('key-val').innerText = currentKey === 0 ? "Original Key (0)" : (currentKey > 0 ? "+" + currentKey : currentKey);
+            }
+            if (data.volume !== undefined) {
+                document.getElementById('vol').value = data.volume;
+                document.getElementById('vol-val').innerText = Math.round(data.volume * 100) + "%";
+            }
+        });
+
+        renderQueue();
+    </script>
+</body>
+</html>
