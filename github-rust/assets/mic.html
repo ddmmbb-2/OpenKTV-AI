@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#10151f">
+<title>OpenKTV 手機點歌／MIC</title>
+<style>
+:root {color-scheme:dark;--bg:#10151f;--card:#1c2738;--line:#36485c;--text:#e6ecf4;--muted:#aab9cb;--accent:#66d7e1;--warn:#f0b35f;--danger:#eb9494}
+* {box-sizing:border-box}
+body {margin:0;padding:0 0 env(safe-area-inset-bottom);background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Microsoft JhengHei",sans-serif}
+header {max-width:760px;margin:auto;padding:18px 18px 8px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1 {margin:0;color:var(--accent);font-size:1.45rem}
+main {max-width:760px;margin:auto;padding:0 16px 36px}
+nav {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 16px}
+button {font-family:inherit;color:var(--text);cursor:pointer;touch-action:manipulation}
+button:disabled {opacity:.35;cursor:default}
+.tab {padding:13px;background:#1a2434;border:1px solid var(--line);border-radius:12px;font-size:1.06rem}
+.tab.active {border-color:var(--accent);background:#244451;color:#fff;font-weight:700}
+.panel[hidden] {display:none!important}
+.card {background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px;margin:12px 0}
+.label {color:var(--muted);font-size:.84rem;font-weight:700;letter-spacing:.03em}
+.now-title {font-size:1.23rem;overflow-wrap:anywhere;font-weight:700;margin:9px 0 6px;line-height:1.5}
+.subtle {color:var(--muted);font-size:.88rem;line-height:1.6}
+#connection {display:inline-flex;gap:5px;align-items:center;font-size:.83rem;color:var(--muted)}
+#connection.online {color:var(--accent)}
+.controls {display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0 0}
+.btn {border:1px solid #507083;border-radius:12px;background:#2a4557;padding:13px 10px;min-height:49px;font-size:1rem;font-weight:650}
+.btn.primary {background:#23717a;border-color:var(--accent)}
+.btn.secondary {background:#263447}
+.btn.danger {background:#624241;border-color:#b46c66}
+.key-value {text-align:center;font-size:1.75rem;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;align-self:center}
+.key-caption {text-align:center;color:var(--muted);font-size:.78rem;margin:5px 0}
+h2 {font-size:1.12rem;margin:22px 3px 11px}
+.search {width:100%;min-height:51px;padding:14px;border:1px solid #658395;border-radius:12px;background:#1b293a;color:#fff;font:inherit;font-size:1.03rem;outline-offset:2px}
+.search::placeholder {color:#9eafbf}
+.song-row {display:flex;flex-direction:column;gap:10px;padding:14px 13px;background:#192637;border:1px solid #314456;border-radius:12px;margin:9px 0}
+.song-title {font-weight:650;overflow-wrap:anywhere;line-height:1.5}
+.song-actions {display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.song-actions button {font-size:.93rem;padding:11px 8px;min-height:43px}
+.queue-item {padding:10px 0;border-bottom:1px solid #34455a;line-height:1.5;overflow-wrap:anywhere}
+.queue-item:last-child {border-bottom:0}
+#toast {margin:9px 0;color:var(--warn);font-size:.91rem;min-height:1.4em;line-height:1.55;overflow-wrap:anywhere}
+.mic-status {background:#213247;border-radius:12px;margin:16px 0;padding:15px;line-height:1.6}
+.mic-actions {display:grid;gap:8px}
+p {line-height:1.7;color:var(--muted)}
+@media(min-width:530px) {.song-row{flex-direction:row;align-items:center;justify-content:space-between}.song-actions{flex:0 0 205px}.song-title{flex:1}}
+</style>
+</head>
+<body>
+<header><h1>🎤 OpenKTV</h1><span id="connection" aria-live="polite">● 正在連線…</span></header>
+<main>
+<nav aria-label="手機功能">
+  <button type="button" class="tab active" id="tab-songs" aria-selected="true">🎵 手機點歌</button>
+  <button type="button" class="tab" id="tab-mic" aria-selected="false">🎤 無線 MIC</button>
+</nav>
+<section id="songs-panel" class="panel">
+  <div class="card">
+    <div class="label">目前播放</div>
+    <div id="now-title" class="now-title">正在讀取…</div>
+    <div id="now-detail" class="subtle"></div>
+    <div class="controls">
+      <button type="button" class="btn secondary" id="key-down">♭ 降 KEY</button>
+      <div><div class="key-value" id="key-value">KEY 0</div><div class="key-caption" id="key-pending">每次一個半音</div></div>
+      <button type="button" class="btn secondary" id="key-up">♯ 升 KEY</button>
+    </div>
+    <div class="controls">
+      <button type="button" class="btn secondary" id="key-zero">原 KEY</button>
+      <button type="button" class="btn primary" id="next-song" style="grid-column:span 2">⏭ 切歌／下一首</button>
+    </div>
+    <div class="subtle" style="margin-top:11px">KEY 範圍 −6～+6；更換歌曲自動回到原 KEY。</div>
+  </div>
+  <h2>🔎 搜尋歌曲</h2>
+  <input id="search" class="search" type="search" placeholder="歌名、歌手、關鍵字" autocomplete="off" maxlength="100" aria-label="搜尋歌庫">
+  <p id="result-note" class="subtle">顯示最新歌曲，搜尋可找到更多。</p>
+  <div id="results" aria-live="polite"></div>
+  <h2>📋 已點歌單 <span id="queue-count" class="subtle">(0)</span></h2>
+  <div id="queue-list" class="card"><span class="subtle">尚無待播歌曲</span></div>
+</section>
+<section id="mic-panel" class="panel" hidden>
+  <div class="card">
+    <div class="label">手機無線麥克風</div>
+    <p>手機與電腦需在同一 Wi-Fi。此頁只傳送 MIC 聲音，不在手機播放伴奏。點歌功能不需要啟用 MIC。</p>
+    <div id="mic-status" class="mic-status" aria-live="polite">未連線，請先確認電腦音量適中。</div>
+    <div class="mic-actions">
+      <button type="button" class="btn primary" id="mic-on">開啟麥克風並連線</button>
+      <button type="button" class="btn danger" id="mic-off" disabled>停止 MIC 傳輸</button>
+    </div>
+    <p class="subtle">按下開始後才要求錄音權限。手機 MIC 仍限一支手機連線，並且電腦端預設靜音；請到電腦解除 MIC 靜音。瀏覽器會要求回音消除與雜音抑制，實際支援依手機而異。</p>
+  </div>
+</section>
+<div id="toast" role="status" aria-live="polite"></div>
+<p class="subtle">連線使用本機 HTTPS 8443；配對連結等同遙控權限，請勿傳給不信任的人。關閉電腦主程式後手機遙控會停止。</p>
+</main>
+<script>
+'use strict';
+const token=new URLSearchParams(location.hash.slice(1)).get('token');
+const byId=id=>document.getElementById(id);
+const connection=byId('connection'),toast=byId('toast');
+let state={current:null,queue:[],key_requested:0,key_confirmed:0,key_pending:false,loaded:false,paused:false};
+let connected=false,desiredKey=0,keySending=false,searchSequence=0,searchTimer=null;
+let toastTimer=null;
+function message(text){toast.textContent=text;clearTimeout(toastTimer);if(text)toastTimer=setTimeout(()=>{if(toast.textContent===text)toast.textContent='';},6500);}
+function node(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+function modeName(format){return format==='dual'?'AI 雙音軌':format==='legacy'?'左右聲道':'一般影音';}
+function setTab(tab){
+  const songs=tab==='songs';
+  byId('songs-panel').hidden=!songs;byId('mic-panel').hidden=songs;
+  for(const name of ['songs','mic']){const selected=name===tab;byId('tab-'+name).classList.toggle('active',selected);byId('tab-'+name).setAttribute('aria-selected',String(selected));}
+}
+byId('tab-songs').onclick=()=>setTab('songs');
+byId('tab-mic').onclick=()=>setTab('mic');
+async function api(path,options={}){
+  if(!token)throw new Error('配對連結沒有 token，請重新掃描電腦 QR Code');
+  const response=await fetch(path,{...options,headers:{'Authorization':'Bearer '+token,...(options.headers||{})},cache:'no-store'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||('連線失敗 (HTTP '+response.status+')'));
+  return data;
+}
+function render(){
+  const now=byId('now-title'),detail=byId('now-detail');
+  now.textContent=state.current?state.current.title:'目前沒有播放歌曲';
+  detail.textContent=state.current?(modeName(state.current.format)+' · '+(state.loaded?'播放中':'歌曲載入中')+(state.paused?' · 已暫停':'')):'選擇歌曲即可開始';
+  const key=keySending?desiredKey:state.key_requested;
+  byId('key-value').textContent='KEY '+(key>0?'+':'')+key;
+  byId('key-pending').textContent=keySending||state.key_pending?'正在套用…':'已設定';
+  byId('key-down').disabled=!state.current||key<=-6;
+  byId('key-up').disabled=!state.current||key>=6;
+  byId('key-zero').disabled=!state.current||key===0;
+  byId('next-song').disabled=!state.current&&(!state.queue||!state.queue.length);
+  const queue=state.queue||[];
+  byId('queue-count').textContent='('+queue.length+')';
+  const parent=byId('queue-list');parent.replaceChildren();
+  if(!queue.length)parent.append(node('span','subtle','尚無待播歌曲'));
+  for(let i=0;i<queue.length;i++)parent.append(node('div','queue-item',(i+1)+'. '+queue[i].title));
+}
+async function refreshState(){
+  try{
+    const fresh=await api('/api/state');state=fresh;
+    if(!keySending)desiredKey=state.key_requested;
+    connected=true;connection.textContent='● 電腦已連線';connection.classList.add('online');
+    render();
+  }catch(err){
+    connected=false;connection.textContent='● 電腦未連線';connection.classList.remove('online');
+  }
+}
+async function command(action,parameters={}){
+  const result=await api('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...parameters})});
+  await refreshState();
+  return result;
+}
+async function safeCommand(action,parameters,success){
+  try{await command(action,parameters);if(success)message(success);}catch(e){message(e.message||String(e));}
+}
+byId('next-song').onclick=()=>safeCommand('next',{},'已送出切歌指令');
+function requestKey(value){
+  if(!state.current)return;
+  desiredKey=Math.max(-6,Math.min(6,value));
+  render();
+  if(!keySending)void flushKey();
+}
+async function flushKey(){
+  keySending=true;
+  try{
+    do {
+      const requested=desiredKey;
+      await command('set_key',{value:requested});
+      if(requested===desiredKey)break;
+    }while(true);
+  }catch(e){message(e.message||String(e));await refreshState();desiredKey=state.key_requested;}
+  finally{keySending=false;render();}
+}
+byId('key-down').onclick=()=>requestKey(desiredKey-1);
+byId('key-up').onclick=()=>requestKey(desiredKey+1);
+byId('key-zero').onclick=()=>requestKey(0);
+function renderSongs(songs){
+  const parent=byId('results');parent.replaceChildren();
+  if(!songs.length){parent.append(node('p','subtle','找不到符合的歌曲，可先在電腦匯入或下載。'));return;}
+  for(const song of songs){
+    const row=node('div','song-row');
+    const title=node('div','song-title',song.title);
+    title.append(node('div','subtle',modeName(song.format)));
+    const actions=node('div','song-actions');
+    const add=node('button','btn primary','＋ 點歌');
+    add.onclick=async()=>{add.disabled=true;try{await command('add_song',{id:song.id});message('已點歌：'+song.title);}catch(e){message(e.message||String(e));}finally{add.disabled=false;}};
+    const play=node('button','btn secondary','▶ 立刻唱');
+    play.onclick=async()=>{
+      if(state.current&&!confirm('要中斷目前歌曲，立刻播放「'+song.title+'」嗎？'))return;
+      play.disabled=true;try{await command('play_now',{id:song.id});message('正在播放：'+song.title);}catch(e){message(e.message||String(e));}finally{play.disabled=false;}
+    };
+    actions.append(add,play);row.append(title,actions);parent.append(row);
+  }
+}
+async function refreshSongs(){
+  const sequence=++searchSequence;
+  const query=byId('search').value.trim();
+  byId('result-note').textContent='正在搜尋…';
+  try{
+    const data=await api('/api/songs?q='+encodeURIComponent(query));
+    if(sequence!==searchSequence)return;
+    renderSongs(data.songs||[]);
+    byId('result-note').textContent='顯示 '+(data.songs||[]).length+' 首'+((data.songs||[]).length===80?'（最多顯示 80 首，輸入關鍵字可縮小範圍）':'');
+  }catch(e){if(sequence!==searchSequence)return;byId('result-note').textContent='搜尋失敗：'+(e.message||e);}
+}
+byId('search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(refreshSongs,260);});
+
+// The microphone stream is independent of the song/remote-control pane.
+const micOn=byId('mic-on'),micOff=byId('mic-off'),micStatus=byId('mic-status');
+let socket=null,context=null,stream=null,source=null,processor=null,carry=[];
+function showMic(value){micStatus.textContent=value;}
+function downsample(input,inRate,targetRate){
+  if(inRate===targetRate)return input;
+  const ratio=inRate/targetRate,data=carry.concat(Array.from(input)),out=[];
+  let i=0;
+  while(i+1<data.length){const whole=Math.floor(i),f=i-whole;out.push(data[whole]*(1-f)+data[whole+1]*f);i+=ratio;}
+  carry=data.slice(Math.floor(i));return out;
+}
+function sendPcm(input,rate){
+  if(!socket||socket.readyState!==WebSocket.OPEN)return;
+  const f=downsample(input,rate,16000);if(!f.length)return;
+  const buf=new ArrayBuffer(f.length*2),view=new DataView(buf);
+  for(let i=0;i<f.length;i++){const v=Math.max(-1,Math.min(1,f[i]));view.setInt16(i*2,v<0?v*32768:v*32767,true);}
+  if(socket.bufferedAmount<64000)socket.send(buf);
+}
+async function stopMic(reason='已停止 MIC 傳輸'){
+  micOn.disabled=false;micOff.disabled=true;
+  if(processor){processor.disconnect();processor.onaudioprocess=null;processor=null;}
+  if(source){source.disconnect();source=null;}
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  if(context){await context.close().catch(()=>{});context=null;}
+  if(socket){const old=socket;socket=null;old.close();}
+  carry=[];showMic(reason);
+}
+micOn.onclick=async()=>{
+  if(!token){showMic('配對連結沒有 token，請重新掃描電腦 QR Code');return;}
+  if(!navigator.mediaDevices?.getUserMedia){showMic('瀏覽器沒有麥克風權限，請確認 HTTPS 憑證已信任');return;}
+  micOn.disabled=true;showMic('正在要求麥克風權限…');
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    const ws=new WebSocket('wss://'+location.host+'/ws?token='+encodeURIComponent(token));
+    socket=ws;ws.binaryType='arraybuffer';
+    await new Promise((resolve,reject)=>{ws.onopen=resolve;ws.onerror=()=>reject(new Error('無法連接電腦 HTTPS WebSocket'));});
+    ws.onmessage=event=>{if(event.data==='MIC_BUSY')void stopMic('另一支手機已佔用 MIC，仍可繼續使用點歌功能');};
+    ws.onclose=()=>{if(socket===ws&&stream)void stopMic('MIC 連線已中斷，點歌功能仍可使用');};
+    context=new AudioContext({latencyHint:'interactive'});await context.resume();
+    source=context.createMediaStreamSource(stream);
+    processor=context.createScriptProcessor(2048,1,1);
+    processor.onaudioprocess=event=>{event.outputBuffer.getChannelData(0).fill(0);sendPcm(event.inputBuffer.getChannelData(0),context.sampleRate);};
+    source.connect(processor);processor.connect(context.destination);
+    micOff.disabled=false;showMic('● MIC 已連線，傳輸中。請至電腦解除 MIC 靜音。');
+  }catch(e){await stopMic('MIC 連線失敗：'+(e?.message||e));}
+};
+micOff.onclick=()=>stopMic();
+window.addEventListener('pagehide',()=>{if(socket)socket.close();if(stream)stream.getTracks().forEach(t=>t.stop());});
+if(!token){connection.textContent='● 尚未配對';message('請使用電腦程式的 QR Code 開啟手機點歌台。');}
+else{refreshState();refreshSongs();setInterval(refreshState,1500);}
+render();
+</script>
+</body>
+</html>
