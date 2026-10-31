@@ -15,3 +15,4 @@ nightingale_code/
 node_modules/
 app/public/songs/
 openktv_ai_drop/
+certs/
