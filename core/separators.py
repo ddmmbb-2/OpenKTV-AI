@@ -25,6 +25,10 @@ def separate_audio(
     log_cb=print,
 ) -> SeparationArtifacts:
     selected = (backend or settings.separator_backend or "demucs").strip().lower()
+    if selected in {"none", ""}:
+        selected = (settings.separator_backend or "demucs").strip().lower()
+    if selected not in {"demucs", "uvr", "hybrid"}:
+        selected = "demucs"
     if selected == "demucs":
         vocals, accompaniment = separate_with_demucs(
             input_path,

@@ -15,7 +15,17 @@ from flask import Blueprint, Flask, current_app, jsonify, redirect, render_templ
 from flask_socketio import SocketIO, emit
 
 from .config import AppSettings, load_settings
-from .library import delete_catalog_entry, find_intro_skip_seconds, update_catalog_entry, update_library_index
+from .library import (
+    cleanup_orphan_files,
+    delete_catalog_entry,
+    find_intro_skip_seconds,
+    get_catalog_health,
+    get_db_path,
+    init_library_db,
+    save_lyrics_for_song,
+    update_catalog_entry,
+    update_library_index,
+)
 from .metadata import ai_parse_youtube_title, parse_youtube_title
 
 CONTROL_ROLES = {"remote", "queue", "admin", "combo"}
@@ -158,7 +168,7 @@ def _create_blueprint() -> Blueprint:
         )
 
     def can_edit_catalog() -> bool:
-        expected = os.getenv("KTV_LIBRARY_ADMIN_TOKEN", "")
+        expected = (os.getenv("KTV_LIBRARY_ADMIN_TOKEN") or os.getenv("KTV_SECRET_KEY") or "").strip()
         supplied = request.headers.get("Authorization", "")
         scheme, separator, token = supplied.partition(" ")
         return bool(
@@ -200,11 +210,60 @@ def _create_blueprint() -> Blueprint:
             return jsonify(ok=False, error="曲庫管理權杖無效或尚未設定"), 401
         if len(song_id) > 128:
             return jsonify(ok=False, error="歌曲識別碼無效"), 400
+        delete_files = request.args.get("delete_files", "").lower() in ("true", "1")
+        if request.is_json:
+            body = request.get_json(silent=True) or {}
+            if "delete_files" in body:
+                delete_files = bool(body["delete_files"])
         settings: AppSettings = current_app.config["APP_SETTINGS"]
-        row = delete_catalog_entry(settings.library_index_path, song_id)
+        row = delete_catalog_entry(
+            settings.library_index_path,
+            song_id,
+            delete_media_files=delete_files,
+            songs_dir=settings.songs_dir
+        )
         if row is None:
             return jsonify(ok=False, error="找不到歌曲"), 404
-        return jsonify(ok=True, song=row, media_files_deleted=False)
+        return jsonify(
+            ok=True,
+            song=row,
+            media_files_deleted=bool(delete_files),
+            deleted_files=row.get("deleted_media_files", [])
+        )
+
+    @bp.route("/api/catalog/health", methods=["GET"])
+    def catalog_health():
+        settings: AppSettings = current_app.config["APP_SETTINGS"]
+        db_p = get_db_path(settings.library_index_path)
+        init_library_db(db_p, settings.library_index_path)
+        health = get_catalog_health(settings.songs_dir, db_p)
+        return jsonify(ok=True, **health)
+
+    @bp.route("/api/catalog/cleanup-orphans", methods=["POST"])
+    def cleanup_orphans():
+        if not can_edit_catalog():
+            return jsonify(ok=False, error="曲庫管理權杖無效或尚未設定"), 401
+        settings: AppSettings = current_app.config["APP_SETTINGS"]
+        db_p = get_db_path(settings.library_index_path)
+        init_library_db(db_p, settings.library_index_path)
+        res = cleanup_orphan_files(settings.songs_dir, db_p)
+        return jsonify(ok=True, **res)
+
+    @bp.route("/api/catalog/<song_id>/lyrics", methods=["PUT"])
+    def commit_lyrics(song_id: str):
+        if not can_edit_catalog():
+            return jsonify(ok=False, error="曲庫管理權杖無效或尚未設定"), 401
+        if not request.is_json:
+            return jsonify(ok=False, error="格式錯誤，需為 JSON"), 400
+        data = request.get_json(silent=True) or {}
+        lrc_content = (data.get("lrc_content") or "").strip()
+        if not lrc_content:
+            return jsonify(ok=False, error="歌詞內容不可為空"), 400
+        settings: AppSettings = current_app.config["APP_SETTINGS"]
+        result = save_lyrics_for_song(settings.songs_dir, settings.library_index_path, song_id, lrc_content)
+        if not result:
+            return jsonify(ok=False, error="找不到歌曲"), 404
+        return jsonify(ok=True, **result)
 
     @bp.route("/api/playlist_preview")
     def playlist_preview():
@@ -519,139 +578,211 @@ def register_socket_handlers(socketio: SocketIO, settings: AppSettings, log_cb: 
             socketio.emit("set_audio", mode)
             emit_all_state()
 
+    ingest_queue = []
+    ingest_lock = threading.Lock()
+    cancel_requested = threading.Event()
+    worker_running = False
+
+    def get_queue_status():
+        with ingest_lock:
+            return [{
+                "id": t["id"],
+                "title": t["title"],
+                "singer": t["singer"],
+                "status": t["status"],
+            } for t in ingest_queue if t["status"] in ("queued", "processing")]
+
+    @socketio.on("cancel_download")
+    def handle_cancel_download(data=None):
+        nonlocal cancel_requested
+        task_id = data.get("taskId") if isinstance(data, dict) else None
+        with ingest_lock:
+            if task_id:
+                for t in ingest_queue:
+                    if t["id"] == task_id:
+                        if t["status"] == "queued":
+                            t["status"] = "cancelled"
+                        elif t["status"] == "processing":
+                            cancel_requested.set()
+            else:
+                for t in ingest_queue:
+                    if t["status"] == "queued":
+                        t["status"] = "cancelled"
+                cancel_requested.set()
+        broadcast_log("🛑 已送出取消下載任務請求")
+        socketio.emit("queue_status", {"queue": get_queue_status()})
+
     @socketio.on("start_download")
     def handle_start_download(data):
-        if state["is_processing"]:
-            broadcast_log("⚠️ 系統正在處理其他歌曲，請稍候。")
-            return
+        nonlocal worker_running, cancel_requested
         if not can_control():
             return
 
-        url = (data.get("url") or "").strip()
-        try:
-            url = _validate_youtube_url(url)
-        except Exception as error:
-            broadcast_log(f"❌ 無效連結: {error}")
+        raw_url = (data.get("url") or "").strip()
+        lines = [u.strip() for u in raw_url.splitlines() if u.strip()]
+        if not lines:
+            broadcast_log("❌ 請輸入有效的 YouTube 網址")
             return
+
         manual_title = (data.get("title") or "").strip()
-        options = {
-            "stems": data.get("stems"),
-            "device": data.get("device"),
-            "separator_backend": data.get("separator_backend"),
-            "alignment_backend": data.get("alignment_backend"),
-        }
         manual_singer = (data.get("singer") or "").strip()
         manual_lyrics = (data.get("lyrics_text") or "").strip()
+        options = {
+            k: v for k, v in {
+                "stems": data.get("stems"),
+                "device": data.get("device"),
+                "separator_backend": data.get("separator_backend"),
+                "alignment_backend": data.get("alignment_backend"),
+            }.items() if v is not None and str(v).strip() != "" and str(v).strip().lower() != "none"
+        }
 
-        try:
-            if _is_playlist_url(url):
-                selected_entries = data.get("playlist_entries") or _playlist_entries(url, settings)
-                tasks = []
-                for item in selected_entries:
-                    item_url = item.get("url") or f"https://www.youtube.com/watch?v={item.get('id')}"
-                    tasks.append(
-                        {
+        new_tasks = []
+        for line_url in lines:
+            try:
+                valid_url = _validate_youtube_url(line_url)
+                if _is_playlist_url(valid_url):
+                    entries = data.get("playlist_entries") or _playlist_entries(valid_url, settings)
+                    for item in entries:
+                        item_url = item.get("url") or f"https://www.youtube.com/watch?v={item.get('id')}"
+                        new_tasks.append({
+                            "id": f"job_{int(time.time()*1000)}_{len(new_tasks)}",
                             "url": _validate_youtube_url(item_url),
-                            "title": item.get("title") or item.get("id") or manual_title,
+                            "title": item.get("title") or item.get("id") or manual_title or "YouTube 歌曲",
                             "singer": (item.get("singer") or "").strip(),
                             "singer_is_manual": False,
                             "youtube_title": (item.get("title") or "").strip(),
                             "title_is_auto": True,
                             "lyrics_text": "",
-                        }
-                    )
-            else:
-                tasks = [{
-                    "url": url,
-                    "title": manual_title,
-                    "singer": manual_singer,
-                    "singer_is_manual": bool(data.get("singer_is_manual")),
-                    "youtube_title": str(data.get("youtube_title") or ""),
-                    "title_is_auto": False,
-                    "lyrics_text": manual_lyrics,
-                }]
-        except Exception as error:
-            broadcast_log(f"❌ playlist 讀取失敗: {error}")
+                            "options": options,
+                            "status": "queued",
+                        })
+                else:
+                    new_tasks.append({
+                        "id": f"job_{int(time.time()*1000)}_{len(new_tasks)}",
+                        "url": valid_url,
+                        "title": manual_title or "YouTube 歌曲",
+                        "singer": manual_singer,
+                        "singer_is_manual": bool(data.get("singer_is_manual")),
+                        "youtube_title": str(data.get("youtube_title") or ""),
+                        "title_is_auto": False,
+                        "lyrics_text": manual_lyrics,
+                        "options": options,
+                        "status": "queued",
+                    })
+            except Exception as error:
+                broadcast_log(f"❌ 連結解析失敗 ({line_url}): {error}")
+
+        if not new_tasks:
             return
 
+        with ingest_lock:
+            ingest_queue.extend(new_tasks)
+
+        cancel_requested.clear()
+        broadcast_log(f"📥 已加入 {len(new_tasks)} 首新任務至入庫隊列 (待播中共 {len([t for t in ingest_queue if t['status'] == 'queued'])} 首)")
+        socketio.emit("queue_status", {"queue": get_queue_status()})
+
+        if worker_running:
+            return
+
+        worker_running = True
         state["is_processing"] = True
 
-        def run_process():
+        def run_queue_worker():
+            nonlocal worker_running, cancel_requested
             try:
                 from .unified_nightingale import KTVProcessor  # pylint: disable=import-outside-toplevel
 
                 socketio.emit("task_status", {"status": "busy"})
                 processor = KTVProcessor(settings=settings, log_cb=broadcast_log)
-                total = len(tasks)
-                succeeded = 0
-                failed_items = []
 
-                for index, task in enumerate(tasks, start=1):
-                    title = task["title"]
-                    provided_singer = (task.get("singer") or "").strip()
-                    provided_lyrics = (task.get("lyrics_text") or "").strip()
-                    socketio.emit(
-                        "task_progress",
-                        {
-                            "phase": "processing",
-                            "current": index,
-                            "total": total,
-                            "title": title,
-                            "attempt": 1,
-                        },
-                    )
+                while True:
+                    current_task = None
+                    with ingest_lock:
+                        pending = [t for t in ingest_queue if t["status"] == "queued"]
+                        if not pending:
+                            break
+                        current_task = pending[0]
+                        current_task["status"] = "processing"
+
+                    if cancel_requested.is_set():
+                        current_task["status"] = "cancelled"
+                        continue
+
+                    title = current_task["title"]
+                    broadcast_log(f"▶ 開始處理：{title}")
+                    socketio.emit("task_progress", {
+                        "phase": "processing",
+                        "current": 1,
+                        "total": len(ingest_queue),
+                        "title": title,
+                        "attempt": 1,
+                        "taskId": current_task["id"],
+                    })
+
                     success = False
                     for attempt in range(settings.download_retry_count + 1):
-                        socketio.emit(
-                            "task_progress",
-                            {
-                                "phase": "processing",
-                                "current": index,
-                                "total": total,
-                                "title": title,
-                                "attempt": attempt + 1,
-                            },
-                        )
-                        success = processor.process_song(
-                            task["url"],
-                            title,
-                            options={
-                                **options,
-                                "singer": provided_singer,
-                                "singer_is_manual": task.get("singer_is_manual", False),
-                                "youtube_title": task.get("youtube_title", ""),
-                                "title_is_auto": task.get("title_is_auto", False),
-                                "lyrics_text": provided_lyrics,
-                            },
-                        )
+                        if cancel_requested.is_set():
+                            current_task["status"] = "cancelled"
+                            break
+
+                        socketio.emit("task_progress", {
+                            "phase": "processing",
+                            "current": 1,
+                            "total": len(ingest_queue),
+                            "title": title,
+                            "attempt": attempt + 1,
+                            "taskId": current_task["id"],
+                        })
+
+                        try:
+                            success = processor.process_song(
+                                current_task["url"],
+                                title,
+                                options={
+                                    **current_task["options"],
+                                    "singer": current_task["singer"],
+                                    "singer_is_manual": current_task.get("singer_is_manual", False),
+                                    "youtube_title": current_task.get("youtube_title", ""),
+                                    "title_is_auto": current_task.get("title_is_auto", False),
+                                    "lyrics_text": current_task.get("lyrics_text", ""),
+                                },
+                            )
+                        except Exception as e:
+                            processor.last_error = str(e)
+                            broadcast_log(f"處理失敗: {e}")
+                            success = False
+
                         if success:
                             break
                         time.sleep(0.8)
 
+                    error_reason = getattr(processor, "last_error", "") or ""
+                    if not success and not error_reason:
+                        error_reason = "處理未完成（下載或音訊分離失敗）"
+                    current_task["error"] = error_reason
+                    current_task["status"] = "completed" if success else ("cancelled" if cancel_requested.is_set() else "failed")
                     if success:
-                        succeeded += 1
-                    else:
-                        failed_items.append(title)
+                        update_library_index(settings.songs_dir, settings.library_index_path)
+                        socketio.emit("refresh_list")
 
-                update_library_index(settings.songs_dir, settings.library_index_path)
-                if succeeded:
-                    socketio.emit("refresh_list")
-
-                socketio.emit(
-                    "task_progress",
-                    {
+                    socketio.emit("task_progress", {
                         "phase": "done",
-                        "total": total,
-                        "success": succeeded,
-                        "failed": failed_items,
-                    },
-                )
+                        "total": 1,
+                        "success": 1 if success else 0,
+                        "failed": [] if success else [title],
+                        "failed_reason": error_reason if not success else "",
+                        "taskId": current_task["id"],
+                    })
+                    socketio.emit("queue_status", {"queue": get_queue_status()})
+
             finally:
                 state["is_processing"] = False
+                worker_running = False
                 socketio.emit("task_status", {"status": "idle"})
+                socketio.emit("queue_status", {"queue": get_queue_status()})
 
-        broadcast_log("=== 開始新任務 ===")
-        threading.Thread(target=run_process, daemon=True).start()
+        threading.Thread(target=run_queue_worker, daemon=True).start()
 
     @socketio.on("update_ytdlp")
     def handle_update_ytdlp():

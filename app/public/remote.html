@@ -7,63 +7,1126 @@
   <title>OpenKTV｜手機遙控器</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    :root{color-scheme:dark;--bg:#090b10;--panel:#171c25;--panel2:#222a37;--line:#303949;--text:#f4f6fb;--muted:#9aa5b5;--blue:#7fa9ff;--mint:#75e8c9;--rose:#ff7894}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;padding-bottom:224px}.header{position:sticky;top:0;z-index:4;background:#11151ceF;backdrop-filter:blur(15px);border-bottom:1px solid #ffffff10;padding:14px 15px 10px}.brand-row,.search-row,.section-head,.song-row,.queue-row,.controls,.profile-row{display:flex;align-items:center;justify-content:space-between;gap:9px}.brand{font-weight:900;letter-spacing:.12em}.brand i{font-style:normal;color:var(--blue)}.connection{font-size:11px;color:var(--mint)}.connection.offline{color:#ffbe72}.profile-row{margin-top:9px;justify-content:flex-start;color:var(--muted);font-size:11px}.profile-row input{width:130px;background:#0d1118;border:1px solid var(--line);border-radius:99px;color:white;padding:7px 10px}.search-row{margin-top:10px}.search-row input{flex:1;min-width:0;background:#090c12;border:1px solid var(--line);border-radius:12px;padding:12px;color:white}.button{border:1px solid var(--line);background:#ffffff08;border-radius:10px;padding:9px 11px;color:var(--text);font-weight:700}.button.primary{background:var(--blue);color:#07101f;border-color:var(--blue)}.chips{display:flex;gap:7px;overflow:auto;padding:10px 0 2px;scrollbar-width:none}.chip{flex-shrink:0;border:1px solid transparent;border-radius:99px;padding:7px 12px;background:#252b35;color:var(--muted);font-size:11px;font-weight:750}.chip.active{background:#4875dd;color:white}.tabs{display:grid;grid-template-columns:repeat(3,1fr);padding:10px 12px;gap:7px}.tabs button{background:transparent;border:0;border-radius:10px;color:var(--muted);padding:10px;font-weight:750}.tabs button.active{background:#ffffff0e;color:var(--blue)}main{padding:0 12px}.pane[hidden]{display:none}.list{display:grid;gap:8px}.song-row,.queue-row{background:var(--panel);border:1px solid #ffffff0c;border-radius:13px;padding:12px}.song-info{min-width:0;flex:1}.title{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sub{color:var(--muted);font-size:11px;margin-top:3px}.song-actions{display:flex;gap:5px}.song-actions button{font-size:10px;padding:8px}.add{color:var(--mint)}.insert{color:var(--rose)}.empty{border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--muted);padding:36px 10px}.bottom{position:fixed;bottom:0;left:0;right:0;z-index:5;background:#11151cf2;backdrop-filter:blur(16px);border-top:1px solid #ffffff14;padding:8px 12px max(10px,env(safe-area-inset-bottom))}.seek{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;color:var(--muted);font-size:10px}.seek input{width:100%;accent-color:var(--blue)}.now{font-size:11px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 2px}.controls{justify-content:space-around}.controls button{border:0;background:transparent;padding:7px 4px;color:var(--text);font-size:11px;font-weight:750}.controls .play{height:45px;width:45px;border-radius:50%;background:var(--blue);color:#06101f;font-size:17px}.quick-row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #ffffff10;margin-top:5px;padding-top:6px}.quick-row button{background:none;border:0;color:var(--muted);font-size:11px}.notice{margin:10px 0;padding:10px;border:1px solid #ffffff12;border-radius:10px;color:var(--muted);font-size:11px}.interaction-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.interaction-grid button{height:62px;font-size:15px}.message-form{display:flex;gap:7px;margin-top:10px}.message-form input{flex:1;min-width:0;background:#11151c;border:1px solid var(--line);border-radius:10px;padding:10px;color:#fff}    .confirm{position:fixed;inset:0;background:#000b;z-index:10;display:grid;place-items:center;padding:20px}.confirm[hidden]{display:none}.confirm-box{width:min(340px,100%);background:var(--panel);padding:18px;border-radius:15px;border:1px solid var(--line)}.confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.badge{color:var(--mint);font-size:10px}.result-count{color:var(--muted);font-size:11px;text-align:right;padding:7px}.mic-panel{margin-bottom:12px}.mic-panel p{color:var(--muted);font-size:11px}.mic-volume{display:flex;align-items:center;gap:10px}.mic-volume input{flex:1;accent-color:var(--blue)}
-    @media(min-width:720px){body{max-width:700px;margin:auto;border-left:1px solid #ffffff0c;border-right:1px solid #ffffff0c}.header{position:relative}}
+    :root {
+      color-scheme: dark;
+      --bg: #090b10;
+      --panel: #171c25;
+      --panel2: #222a37;
+      --line: #303949;
+      --text: #f4f6fb;
+      --muted: #9aa5b5;
+      --blue: #7fa9ff;
+      --mint: #75e8c9;
+      --rose: #ff7894;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      padding-bottom: 224px;
+      user-select: none;
+    }
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: rgba(17, 21, 28, 0.94);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 15px 10px;
+    }
+    .brand-row, .search-row, .section-head, .song-row, .queue-row, .controls, .profile-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 9px;
+    }
+    .brand { font-weight: 900; letter-spacing: .12em; }
+    .brand i { font-style: normal; color: var(--blue); }
+    .connection { font-size: 11px; color: var(--mint); }
+    .connection.offline { color: #ffbe72; }
+    .profile-row {
+      margin-top: 9px;
+      justify-content: flex-start;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .profile-row input {
+      width: 130px;
+      background: #0d1118;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      color: white;
+      padding: 7px 10px;
+    }
+    .search-row { margin-top: 10px; }
+    .search-row input {
+      flex: 1;
+      min-width: 0;
+      background: #090c12;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      color: white;
+      font: inherit;
+    }
+    .button {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-weight: 700;
+      touch-action: manipulation;
+    }
+    .button.primary { background: var(--blue); color: #07101f; border-color: var(--blue); }
+    .chips { display: flex; gap: 7px; overflow: auto; padding: 10px 0 2px; scrollbar-width: none; }
+    .chip {
+      flex-shrink: 0;
+      border: 1px solid transparent;
+      border-radius: 99px;
+      padding: 7px 12px;
+      background: #252b35;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 750;
+    }
+    .chip.active { background: #4875dd; color: white; }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px 12px; gap: 7px; }
+    .tabs button {
+      background: transparent;
+      border: 0;
+      border-radius: 10px;
+      color: var(--muted);
+      padding: 10px;
+      font-weight: 750;
+      font-size: 13px;
+    }
+    .tabs button.active { background: rgba(255,255,255,0.08); color: var(--blue); }
+    main { padding: 0 12px; }
+    .pane[hidden] { display: none; }
+    .list { display: grid; gap: 8px; }
+    .song-row, .queue-row {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 13px;
+      padding: 12px;
+      gap: 10px;
+    }
+    .song-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 850;
+      font-size: 16px;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .song-info { min-width: 0; flex: 1; }
+    .title { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+    .sub { color: var(--muted); font-size: 11px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .song-actions button { font-size: 11px; padding: 8px 11px; }
+    .add { color: var(--mint); }
+    .insert { color: var(--rose); }
+    .badge-fire {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: #ff9248;
+      background: rgba(255,146,72,0.16);
+      padding: 1px 6px;
+      border-radius: 99px;
+      margin-left: 5px;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--mint);
+      background: rgba(117,232,201,0.12);
+      padding: 1px 5px;
+      border-radius: 99px;
+      margin-left: 4px;
+    }
+    .empty { border: 1px dashed var(--line); border-radius: 12px; text-align: center; color: var(--muted); padding: 36px 10px; }
+    
+    /* Explore Sections (Mobile) */
+    .explore-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 0 12px;
+      scrollbar-width: none;
+    }
+    .trending-card {
+      flex-shrink: 0;
+      width: 230px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .trending-rank {
+      font-size: 15px;
+      font-weight: 900;
+      width: 22px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .trending-card:nth-child(1) .trending-rank { color: #ffd700; }
+    .trending-card:nth-child(2) .trending-rank { color: #e0e0e0; }
+    .trending-card:nth-child(3) .trending-rank { color: #cd7f32; }
+    .artist-chip {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      width: 66px;
+      text-align: center;
+    }
+    .artist-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 850;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .artist-name {
+      font-size: 11px;
+      font-weight: 750;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    /* Fixed Bottom Controller */
+    .bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+      background: rgba(17, 21, 28, 0.95);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 14px max(10px, env(safe-area-inset-bottom));
+    }
+    .seek { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; color: var(--muted); font-size: 11px; }
+    .seek input { width: 100%; accent-color: var(--blue); }
+    .now { font-size: 12px; font-weight: 750; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 6px 2px; }
+    .controls { justify-content: space-around; }
+    .controls button { border: 0; background: transparent; padding: 8px 6px; color: var(--text); font-size: 12px; font-weight: 750; }
+    .controls .play { height: 46px; width: 46px; border-radius: 50%; background: var(--blue); color: #06101f; font-size: 18px; }
+    .quick-row { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 6px; padding-top: 6px; }
+    .quick-row button { background: none; border: 0; color: var(--muted); font-size: 12px; }
+    .notice { margin: 10px 0; padding: 12px; border: 1px solid rgba(255,255,255,0.1); border-radius: 11px; color: var(--muted); font-size: 12px; }
+    .interaction-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .interaction-grid button { height: 64px; font-size: 16px; }
+    .message-form { display: flex; gap: 7px; margin-top: 10px; }
+    .message-form input { flex: 1; min-width: 0; background: #11151c; border: 1px solid var(--line); border-radius: 10px; padding: 11px; color: #fff; font: inherit; }
+    .confirm { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 10; display: grid; place-items: center; padding: 20px; }
+    .confirm[hidden] { display: none; }
+    .confirm-box { width: min(340px, 100%); background: var(--panel); padding: 20px; border-radius: 16px; border: 1px solid var(--line); }
+    .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    .badge { color: var(--mint); font-size: 10px; }
+    .result-count { color: var(--muted); font-size: 11px; text-align: right; padding: 6px 0; }
+    .mic-panel { margin-bottom: 12px; }
+    .mic-panel p { color: var(--muted); font-size: 12px; }
+    .mic-volume { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .mic-volume input { flex: 1; accent-color: var(--blue); }
+
+    /* SFX Soundboard Grid */
+    .sfx-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .sfx-btn {
+      background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 14px 6px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      touch-action: manipulation;
+      transition: transform 0.08s ease, background 0.15s ease;
+      text-align: center;
+    }
+    .sfx-btn:active {
+      transform: scale(0.92);
+      background: rgba(127, 169, 255, 0.25);
+      border-color: var(--blue);
+    }
+    .combo-badge {
+      font-size: 13px;
+      font-weight: 900;
+      color: #ffd700;
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      padding: 2px 8px;
+      border-radius: 99px;
+      animation: comboPulse 0.2s ease-out;
+    }
+    @keyframes comboPulse {
+      0% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+    /* Sticker Rain Buttons */
+    .sticker-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .sticker-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 4px;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--text);
+      touch-action: manipulation;
+      text-align: center;
+      transition: transform 0.08s;
+    }
+    .sticker-btn:active {
+      transform: scale(0.9);
+      background: rgba(255,120,148,0.2);
+    }
+    /* Color Swatches */
+    .color-swatches {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .color-swatch {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      padding: 0;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: transform 0.12s;
+    }
+    .color-swatch.active {
+      border-color: #fff;
+      transform: scale(1.2);
+      box-shadow: 0 0 8px rgba(255,255,255,0.7);
+    }
+    /* Queue Row Actions */
+    .queue-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .queue-actions button {
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+    @media (min-width: 720px) {
+      body { max-width: 700px; margin: auto; border-left: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08); }
+      .header { position: relative; }
+    }
   </style>
 </head>
 <body>
   <header class="header">
-    <div class="brand-row"><div class="brand">OPEN<i>KTV</i> REMOTE</div><span id="connection" class="connection offline">● 連線中</span></div>
-    <div class="profile-row"><span>🎤 今晚我是</span><input id="nickname" maxlength="24" placeholder="輸入暱稱"><span class="badge">點歌時顯示</span></div>
-    <div class="search-row"><input id="query" type="search" placeholder="拼音、注音、歌名、歌詞…" autocomplete="off"><button id="voice" class="button">🎤 語音</button><button id="clear" class="button">清除</button></div>
-    <div class="chips" id="languages"><button class="chip active" data-language="">全部語種</button><button class="chip" data-language="國語">華語</button><button class="chip" data-language="台語">台語</button><button class="chip" data-language="粵語">粵語</button><button class="chip" data-language="韓語">K-POP</button><button class="chip" data-language="英語">英語</button><button class="chip" data-language="日語">日語</button></div>
+    <div class="brand-row">
+      <div class="brand">OPEN<i>KTV</i> REMOTE</div>
+      <span id="connection" class="connection offline">● 連線中</span>
+    </div>
+    <div class="profile-row">
+      <span>🎤 今晚我是</span>
+      <input id="nickname" maxlength="24" placeholder="輸入暱稱">
+      <span class="badge">點歌時顯示</span>
+    </div>
+    <div class="search-row">
+      <input id="query" type="search" placeholder="拼音、注音、歌名、歌詞…" autocomplete="off">
+      <button id="voice" class="button">🎤 語音</button>
+      <button id="clear" class="button">清除</button>
+    </div>
+    <div class="chips" id="languages">
+      <button class="chip active" data-language="">全部語種</button>
+      <button class="chip" data-language="國語">華語</button>
+      <button class="chip" data-language="台語">台語</button>
+      <button class="chip" data-language="粵語">粵語</button>
+      <button class="chip" data-language="韓語">K-POP</button>
+      <button class="chip" data-language="英語">英語</button>
+      <button class="chip" data-language="日語">日語</button>
+    </div>
   </header>
-  <nav class="tabs" aria-label="遙控器頁面"><button class="active" data-tab="search">🔍 找歌</button><button data-tab="queue">📋 待播佇列 <span id="queueBadge"></span></button><button data-tab="fun">🎉 氣氛互動</button></nav>
+
+  <nav class="tabs" aria-label="遙控器頁面">
+    <button class="active" data-tab="search">🔍 找歌</button>
+    <button data-tab="queue">📋 待播佇列 <span id="queueBadge"></span></button>
+    <button data-tab="fun">🎉 氣氛互動</button>
+  </nav>
+
   <main>
-    <section id="pane-search" class="pane"><div class="result-count" id="resultCount"></div><div id="songs" class="list"><div class="empty">正在載入曲庫…</div></div><button id="more" class="button" style="width:100%;margin-top:10px">載入更多歌曲</button></section>
-    <section id="pane-queue" class="pane" hidden><div id="queue" class="list"></div></section>
-    <section id="pane-fun" class="pane" hidden><article class="notice mic-panel"><strong>手機即時麥克風</strong><p id="micStatus">使用 WebRTC 將手機麥克風直接傳到本機播放器；需要 HTTPS 與麥克風權限。</p><label>麥克風模式 <select id="micMode" class="button"><option value="low-latency">低延遲（關閉回音消除／降噪／自動增益）</option><option value="feedback-safe">抗回授（開啟瀏覽器音訊處理）</option></select></label><button id="micToggle" class="button primary">🎙️ 開始傳送麥克風</button><label class="mic-volume">傳送音量 <input id="micVolume" type="range" min="0" max="1" step=".05" value=".8"><span id="micVolumeLabel">80%</span></label><p>低延遲模式建議搭配耳機；喇叭播放可能造成聲學回授。播放器不會把歌曲聲送回手機。</p></article><article class="notice">向電視送出即時氣氛訊息。</article><div class="interaction-grid"><button class="button" data-interaction="applause">👏 掌聲</button><button class="button" data-interaction="cheer">🎉 歡呼</button></div><div class="message-form"><input id="message" maxlength="100" placeholder="送一句應援訊息…"><button id="sendMessage" class="button primary">送出</button></div><article class="notice">現場音效素材尚未安裝；Key 升降調需播放端音訊引擎支援，未支援時不會假裝生效。</article></section>
+    <section id="pane-search" class="pane">
+      <div id="remoteExplore" style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:800;margin:6px 0 8px;display:flex;justify-content:space-between">
+          <span>🔥 熱門點播排行</span>
+          <span style="font-size:10px;color:var(--muted)">橫向滑動</span>
+        </div>
+        <div id="remoteTrending" class="explore-scroll"><div class="empty" style="padding:14px">載入熱門榜中…</div></div>
+
+        <div style="font-size:13px;font-weight:800;margin:10px 0 8px;display:flex;justify-content:space-between">
+          <span>🧑‍🎤 熱門巨星專區</span>
+          <span style="font-size:10px;color:var(--muted)">點擊快速找歌</span>
+        </div>
+        <div id="remoteArtists" class="explore-scroll"><div class="empty" style="padding:14px">載入歌手中…</div></div>
+      </div>
+      <div class="result-count" id="resultCount" hidden></div>
+      <div id="songs" class="list" hidden><div class="empty">正在載入曲庫…</div></div>
+      <button id="more" class="button" style="width:100%;margin-top:10px" hidden>載入更多歌曲</button>
+    </section>
+
+    <section id="pane-queue" class="pane" hidden>
+      <div class="queue-toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;color:var(--muted)">待播共 <b id="queueCount">0</b> 首</span>
+        <div style="display:flex;gap:6px;">
+          <button id="btnShuffleQueue" class="button" style="font-size:11px;">🔀 打亂佇列</button>
+          <button id="btnClearQueue" class="button" style="font-size:11px;color:var(--rose);">🧹 清空</button>
+        </div>
+      </div>
+      <div id="queue" class="list"></div>
+    </section>
+
+    <section id="pane-fun" class="pane" hidden>
+      <!-- 5 款現場實體音效打擊板 -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+        <strong style="font-size:14px;">🥁 氣氛音效狂歡打擊板</strong>
+        <span id="comboBadge" class="combo-badge" hidden>Combo x0!</span>
+      </div>
+      <div class="sfx-grid">
+        <button class="sfx-btn" data-sfx="applause">👏 掌聲</button>
+        <button class="sfx-btn" data-sfx="cheer">🎉 尖叫</button>
+        <button class="sfx-btn" data-sfx="laughter">🥁 笑聲</button>
+        <button class="sfx-btn" data-sfx="horn">🎺 號角</button>
+        <button class="sfx-btn" data-sfx="drum">💥 底鼓</button>
+      </div>
+
+      <!-- 8 鍵極速表情貼圖列 -->
+      <div style="margin-top:14px;">
+        <strong style="font-size:14px;">💖 8 鍵極速貼圖雨</strong>
+      </div>
+      <div class="sticker-grid">
+        <button class="sticker-btn" data-sticker="❤️">❤️ 愛你</button>
+        <button class="sticker-btn" data-sticker="🔥">🔥 燃爆</button>
+        <button class="sticker-btn" data-sticker="👏">👏 啪啪</button>
+        <button class="sticker-btn" data-sticker="🎉">🎉 嗨起來</button>
+        <button class="sticker-btn" data-sticker="💯">💯 滿分</button>
+        <button class="sticker-btn" data-sticker="🍻">🍻 乾杯</button>
+        <button class="sticker-btn" data-sticker="👑">👑 歌王</button>
+        <button class="sticker-btn" data-sticker="🚀">🚀 起飛</button>
+      </div>
+
+      <!-- 彩色彈幕發送面板 -->
+      <div style="margin-top:16px;">
+        <strong style="font-size:14px;">🌈 大螢幕高動態彩色彈幕</strong>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 6px;">
+          <div class="color-swatches" id="danmakuColors">
+            <button class="color-swatch active" data-color="#ffffff" style="background:#ffffff;"></button>
+            <button class="color-swatch" data-color="#ffd700" style="background:#ffd700;"></button>
+            <button class="color-swatch" data-color="#00f0ff" style="background:#00f0ff;"></button>
+            <button class="color-swatch" data-color="#ff3366" style="background:#ff3366;"></button>
+            <button class="color-swatch" data-color="#00ff88" style="background:#00ff88;"></button>
+            <button class="color-swatch" data-color="#b537f2" style="background:#b537f2;"></button>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button id="btnDanmakuScroll" class="chip active" style="padding:4px 8px;font-size:11px;">橫飛</button>
+            <button id="btnDanmakuTop" class="chip" style="padding:4px 8px;font-size:11px;">置頂</button>
+          </div>
+        </div>
+        <div class="message-form">
+          <input id="message" maxlength="60" placeholder="發送大螢幕彩色彈幕…">
+          <button id="sendMessage" class="button primary">發送</button>
+        </div>
+      </div>
+
+      <!-- 模式 B: 手機邊緣音準評分 (免外接麥克風) -->
+      <article class="notice edge-pitch-panel" style="margin-top:16px;">
+        <strong>🎤 手機邊緣音準評分 (模式 B)</strong>
+        <p style="font-size:11px;color:var(--muted);margin:4px 0 8px;">
+          零硬體成本！在手機端本地運算音高，只將音高數值發給電視評分，<strong>不向電視喇叭放音</strong>，徹底消滅 150ms 延遲回音干擾。
+        </p>
+        <button id="edgePitchToggle" class="button primary" style="width:100%;">🎙️ 開啟手機音準評分</button>
+        <div id="edgePitchStatus" style="font-size:12px;color:var(--mint);margin-top:6px;" hidden>
+          🎵 偵測中：<b id="edgePitchNote">--</b> <span id="edgePitchHz" style="color:var(--muted);font-size:10px;">(-- Hz)</span>
+        </div>
+      </article>
+
+      <!-- 原有 WebRTC 麥克風 (放音模式) -->
+      <article class="notice mic-panel" style="margin-top:14px;">
+        <strong>📱 手機放音麥克風 (WebRTC)</strong>
+        <p id="micStatus">使用 WebRTC 將手機聲音傳到電視；受限於 Wi-Fi 會有約 100~200ms 傳輸延遲。</p>
+        <label>麥克風模式
+          <select id="micMode" class="button" style="margin-top:6px;width:100%">
+            <option value="low-latency">低延遲（關閉回音消除／降噪／自動增益）</option>
+            <option value="feedback-safe">抗回授（開啟瀏覽器音訊處理）</option>
+          </select>
+        </label>
+        <button id="micToggle" class="button" style="width:100%;margin-top:10px">🎙️ 開始傳送麥克風聲音</button>
+        <label class="mic-volume">傳送音量
+          <input id="micVolume" type="range" min="0" max="1" step=".05" value=".8">
+          <span id="micVolumeLabel">80%</span>
+        </label>
+      </article>
+    </section>
   </main>
+
+  <!-- Bottom Player HUD -->
   <footer class="bottom">
     <div id="current" class="now">尚未點歌</div>
-    <div class="seek"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0" step=".1" aria-label="播放位置"><span id="duration">0:00</span></div>
-    <div class="controls"><button id="replay">⏮ 重唱</button><button id="mode">原唱</button><button id="play" class="play">▶</button><button id="next" style="color:var(--rose)">⏭ 切歌</button></div>
-    <div class="quick-row"><button id="musicDown">🎵 −</button><span id="musicLabel">歌曲音量 80%</span><button id="musicUp">＋</button><button disabled title="播放端目前不支援 Key 變更">Key − / +</button></div>
+    <div class="seek">
+      <span id="elapsed">0:00</span>
+      <input id="seek" type="range" min="0" max="100" value="0" step=".1" aria-label="播放位置">
+      <span id="duration">0:00</span>
+    </div>
+    <div class="controls">
+      <button id="replay">⏮ 重唱</button>
+      <button id="mode">原唱</button>
+      <button id="play" class="play">▶</button>
+      <button id="next" style="color:var(--rose)">⏭ 切歌</button>
+    </div>
+    <div class="quick-row">
+      <button id="musicDown">🎵 −</button>
+      <span id="musicLabel">歌曲音量 80%</span>
+      <button id="musicUp">＋</button>
+      <button id="keyDown" class="button" title="降調">Key −</button>
+      <span id="keyLabel" style="font-size:11px;min-width:44px;text-align:center;cursor:pointer" title="點擊重置原調">Key 0</span>
+      <button id="keyUp" class="button" title="升調">Key ＋</button>
+    </div>
   </footer>
-  <div id="confirm" class="confirm" hidden><div class="confirm-box"><strong>確定切換下一首？</strong><p class="sub">目前歌曲會加入已播歷史。</p><div class="confirm-actions"><button id="cancelNext" class="button">取消</button><button id="confirmNext" class="button primary">切歌</button></div></div></div>
+
+  <!-- Confirm Modal -->
+  <div id="confirm" class="confirm" hidden>
+    <div class="confirm-box">
+      <strong>確定切換下一首？</strong>
+      <p class="sub" style="margin-top:6px">目前歌曲會移至已播歷史。</p>
+      <div class="confirm-actions">
+        <button id="cancelNext" class="button">取消</button>
+        <button id="confirmNext" class="button primary">切歌</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const socket=io({query:{role:'remote'}}),$=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const time=v=>{const n=Math.max(0,Math.floor(Number(v)||0));return `${Math.floor(n/60)}:${String(n%60).padStart(2,'0')}`};
-    let queue=[],songs=[],state={},history=[],queryTimer,offset=0,total=0,requestId=0,busy=false,language='',duration=0,position=0,dragging=false;
-    $('nickname').value=localStorage.getItem('ktvNickname')||'';$('nickname').oninput=()=>localStorage.setItem('ktvNickname',$('nickname').value.slice(0,24));
-    document.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===button));document.querySelectorAll('.pane').forEach(p=>p.hidden=p.id!==`pane-${button.dataset.tab}`)});
-    function search(reset=false){if(reset){offset=0;total=0;busy=false;requestId++;songs=[];$('songs').innerHTML='<div class="empty">搜尋中…</div>'}if(busy)return;busy=true;$('more').disabled=true;socket.emit('search_songs',{query:$('query').value.trim(),language,offset,limit:40,paginated:true,requestId})}
-    $('query').oninput=()=>{clearTimeout(queryTimer);queryTimer=setTimeout(()=>search(true),180)};$('clear').onclick=()=>{$('query').value='';language='';document.querySelectorAll('[data-language]').forEach(b=>b.classList.toggle('active',!b.dataset.language));search(true)};$('more').onclick=()=>search();
-    document.querySelectorAll('[data-language]').forEach(button=>button.onclick=()=>{language=button.dataset.language;document.querySelectorAll('[data-language]').forEach(b=>b.classList.toggle('active',b===button));search(true)});
-    function renderSongs(rows,append=false){if(!append)$('songs').innerHTML='';if(rows.length)$('songs').insertAdjacentHTML('beforeend',rows.map(song=>`<article class="song-row"><div class="song-info"><div class="title">${esc(song.title)}</div><div class="sub">${esc(song.artist||'未知歌手')} · ${esc(song.language||'')} · ${esc(song.duration_seconds?time(song.duration_seconds):'時長未知')}</div></div><div class="song-actions"><button class="button add" data-add="${esc(song.id)}">點歌</button><button class="button insert" data-insert="${esc(song.id)}">插播</button></div></article>`).join(''));else if(!append)$('songs').innerHTML='<div class="empty">沒有找到歌曲，換個關鍵字再試試。</div>';document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const song=songs.find(s=>s.id===b.dataset.add);if(song)socket.emit('add_to_queue',{...song,requestedBy:$('nickname').value.trim()||'來賓'});if(navigator.vibrate)navigator.vibrate(40);toast('已加入待播')});document.querySelectorAll('[data-insert]').forEach(b=>b.onclick=()=>{const song=songs.find(s=>s.id===b.dataset.insert);if(song)socket.emit('insert_to_top',{...song,requestedBy:$('nickname').value.trim()||'來賓'});document.querySelector('[data-tab="queue"]').click();toast('已插入下一首')})}
-    socket.on('search_page_results',page=>{if(page?.requestId!==requestId)return;busy=false;const rows=page.items||[];songs=page.offset?[...songs,...rows]:rows;offset=songs.length;total=page.total||0;renderSongs(rows,Boolean(page.offset));$('resultCount').textContent=`${total.toLocaleString()} 首歌曲 · 已載入 ${offset} 首`;$('more').hidden=offset>=total;$('more').disabled=false});
-    function renderQueue(){ $('queueBadge').textContent=queue.length?`(${Math.max(0,queue.length-1)})`:'';$('queue').innerHTML=queue.length?queue.map((song,i)=>`<article class="queue-row"><div class="song-info"><div class="title">${i===0?'▶ 播放中 · ':`#${i} · `}${esc(song.title)}</div><div class="sub">${esc(song.artist||'未知歌手')} · ${i===0?'現在播放':esc(song.requestedBy||'點播者')}</div></div>${i?`<button class="button" data-remove="${esc(song.queueId)}">移除</button>`:''}</article>`).join(''):'<div class="empty">佇列還沒有歌曲。回到找歌頁點一首歌吧！</div>';document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>socket.emit('remove_from_queue',b.dataset.remove))}
-    function apply(payload){queue=payload.queue||[];history=payload.history||history;state=payload.state||{};const current=queue[0];$('current').textContent=current?`${current.title} — ${current.artist||'未知歌手'}${queue[1]?`　｜　下一首：${queue[1].title}`:''}`:'尚未點歌';$('play').textContent=state.isPlaying?'Ⅱ':'▶';$('mode').textContent=state.audioMode==='accompaniment'?'伴奏':'原唱';duration=Number(current?.duration_seconds)||0;position=Number(state.position)||0;$('duration').textContent=time(duration);$('musicLabel').textContent=`歌曲音量 ${Math.round((state.musicVol??.8)*100)}%`;if(!dragging){$('seek').max=duration||100;$('seek').value=Math.min(position,duration||100);$('elapsed').textContent=time(position)}renderQueue()}
-    socket.on('sync_state',apply);socket.on('playback_snapshot',apply);socket.on('queue_updated',items=>{queue=items||[];renderQueue()});socket.on('playback_error',data=>toast(data?.message||'播放錯誤'));socket.on('connect',()=>{$('connection').textContent='● 主機已連線';$('connection').classList.remove('offline');search(true)});socket.on('disconnect',()=>{$('connection').textContent='● 重新連線中';$('connection').classList.add('offline')});
-    $('play').onclick=()=>socket.emit('player_command',{isPlaying:!state.isPlaying});$('mode').onclick=()=>socket.emit('player_command',{audioMode:state.audioMode==='accompaniment'?'original':'accompaniment'});$('replay').onclick=()=>socket.emit('replay_current');$('next').onclick=()=>{$('confirm').hidden=false};$('cancelNext').onclick=()=>{$('confirm').hidden=true};$('confirmNext').onclick=()=>{socket.emit('next_song');$('confirm').hidden=true};
-    $('seek').oninput=()=>{dragging=true;$('elapsed').textContent=time($('seek').value)};$('seek').onchange=()=>{socket.emit('seek',{position:Number($('seek').value)});dragging=false};setInterval(()=>{if(state.isPlaying&&!dragging&&duration){position=Math.min(duration,position+.25);$('seek').value=position;$('elapsed').textContent=time(position)}},250);
-    function setMusic(value){value=Math.max(0,Math.min(1.5,value));socket.emit('player_command',{musicVol:value})}$('musicDown').onclick=()=>setMusic((state.musicVol??.8)-.1);$('musicUp').onclick=()=>setMusic((state.musicVol??.8)+.1);
-    document.querySelectorAll('[data-interaction]').forEach(b=>b.onclick=()=>{socket.emit('crowd_interaction',{type:b.dataset.interaction,user:$('nickname').value.trim()||'來賓'});toast('已送出現場互動')});
-    $('sendMessage').onclick=()=>{const text=$('message').value.trim();if(!text)return;socket.emit('crowd_interaction',{type:'message',text,user:$('nickname').value.trim()||'來賓'});$('message').value='';toast('應援訊息已送出')};$('message').onkeydown=e=>{if(e.key==='Enter')$('sendMessage').click()};
-    $('voice').onclick=()=>{const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Speech){toast('瀏覽器不支援語音辨識');return}const recognition=new Speech();recognition.lang='zh-TW';recognition.onresult=e=>{$('query').value=e.results[0][0].transcript;search(true)};recognition.onerror=()=>toast('請檢查麥克風權限');recognition.start()};
-    let micStream=null,micPeer=null,micOfferPending=false,pendingMicCandidates=[],micGeneration=0;
-    $('micMode').value=localStorage.getItem('ktvMicMode')||'low-latency';
-    $('micMode').onchange=()=>localStorage.setItem('ktvMicMode',$('micMode').value);
-    const setMicStatus=(status,message)=>{$('micStatus').textContent=message;$('micToggle').textContent=status==='active'?'⏹ 停止麥克風':'🎙️ 開始傳送麥克風';$('micToggle').disabled=['waiting','connecting'].includes(status);$('micMode').disabled=['waiting','connecting','active'].includes(status)};
-    async function closePhoneMic(sendStop=true){micGeneration++;micOfferPending=false;pendingMicCandidates=[];if(sendStop&&socket.connected)socket.emit('mic_stop');if(micPeer){micPeer.close();micPeer=null}if(micStream){micStream.getTracks().forEach(track=>track.stop());micStream=null}$('micToggle').disabled=false;$('micMode').disabled=false;$('micToggle').textContent='🎙️ 開始傳送麥克風'}
-    async function openPhoneMic(){if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){setMicStatus('error','手機瀏覽器的麥克風需要 HTTPS（或 localhost）；請用受信任的 HTTPS 遙控網址。');return}try{const lowLatency=$('micMode').value==='low-latency';setMicStatus('waiting','正在取得麥克風權限…');micStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:{ideal:1},latency:{ideal:0.01},echoCancellation:lowLatency?false:true,noiseSuppression:lowLatency?false:true,autoGainControl:lowLatency?false:true},video:false});const configResponse=await fetch('/api/webrtc-config',{cache:'no-store'});if(!configResponse.ok)throw Error('無法取得 WebRTC 網路設定');const config=await configResponse.json();micPeer=new RTCPeerConnection(config);const generation=micGeneration;micStream.getAudioTracks().forEach(track=>micPeer.addTrack(track,micStream));micPeer.onicecandidate=event=>{if(event.candidate&&generation===micGeneration)socket.emit('mic_signal',{type:'candidate',data:event.candidate.toJSON()})};micPeer.onconnectionstatechange=()=>{if(generation!==micGeneration)return;if(micPeer?.connectionState==='connected'){setMicStatus('active',`${lowLatency?'低延遲':'抗回授'}模式：手機麥克風已連接播放器。`)}else if(['failed','closed'].includes(micPeer?.connectionState)){closePhoneMic();setMicStatus('error','WebRTC 連線中斷；請確認網路或 TURN 設定後重試。')}};pendingMicCandidates=[];micOfferPending=true;socket.emit('mic_request');setMicStatus('waiting','正在連線本機播放器…')}catch(error){await closePhoneMic();setMicStatus('error',`麥克風啟動失敗：${error.message||'請檢查權限與 HTTPS'}`)}}
-    $('micToggle').onclick=()=>{if(micStream){closePhoneMic();setMicStatus('stopped','手機麥克風已停止。')}else openPhoneMic()};
-    $('micVolume').oninput=()=>{const value=Number($('micVolume').value);$('micVolumeLabel').textContent=`${Math.round(value*100)}%`;socket.emit('mic_volume',value)};
-    socket.on('mic_status',async payload=>{if(payload?.status==='waiting')setMicStatus('waiting','正在等待本機播放器…');else if(payload?.status==='connecting'&&micPeer&&micOfferPending){try{const offer=await micPeer.createOffer();await micPeer.setLocalDescription(offer);socket.emit('mic_signal',{type:'offer',data:micPeer.localDescription.toJSON()});micOfferPending=false;setMicStatus('connecting','正在建立低延遲 WebRTC 音訊連線…')}catch(error){await closePhoneMic();setMicStatus('error',`無法建立 WebRTC 連線：${error.message}`)}}else if(payload?.status==='busy'){await closePhoneMic(false);setMicStatus('busy','目前已有另一支手機使用麥克風。')}else if(payload?.status==='unavailable'){await closePhoneMic(false);setMicStatus('unavailable','本機播放器尚未開啟，請先由中控開啟播放器。')}else if(payload?.status==='disconnected'){await closePhoneMic(false);setMicStatus('disconnected','播放器已離線，手機麥克風已停止。')}else if(payload?.status==='stopped'){await closePhoneMic(false);setMicStatus('stopped','手機麥克風已停止。')}});
-    socket.on('mic_signal',async payload=>{if(!micPeer||!payload)return;try{if(payload.type==='answer'){await micPeer.setRemoteDescription(payload.data);for(const candidate of pendingMicCandidates)await micPeer.addIceCandidate(candidate);pendingMicCandidates=[]}else if(payload.type==='candidate'){const candidate=new RTCIceCandidate(payload.data);if(micPeer.remoteDescription)await micPeer.addIceCandidate(candidate);else pendingMicCandidates.push(candidate)}}catch(error){await closePhoneMic();setMicStatus('error',`WebRTC 訊號錯誤：${error.message}`)}});
-    socket.on('disconnect',()=>{if(micStream){closePhoneMic(false);setMicStatus('disconnected','遙控器斷線，手機麥克風已停止。')}});
-    let toastTimer;function toast(text){$('connection').textContent=`● ${text}`;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('connection').textContent=socket.connected?'● 主機已連線':'● 重新連線中'},1800)}
+    const socket = io({ query: { role: 'remote' } });
+    const $ = id => document.getElementById(id);
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const time = v => { const n = Math.max(0, Math.floor(Number(v) || 0)); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };
+
+    let queue = [], songs = [], state = {}, history = [];
+    let queryTimer, offset = 0, total = 0, requestId = 0, busy = false, language = '', duration = 0, position = 0, dragging = false;
+
+    // Procedural Avatar Helpers
+    function getAvatarColor(str) {
+      const s = String(str || 'KTV');
+      let hash = 0;
+      for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
+      const h1 = Math.abs(hash) % 360;
+      const h2 = (h1 + 45) % 360;
+      return `linear-gradient(135deg, hsl(${h1}, 75%, 45%), hsl(${h2}, 85%, 35%))`;
+    }
+    function getAvatarInitial(str) {
+      const clean = String(str || '').trim();
+      return clean ? clean[0].toUpperCase() : '🎵';
+    }
+
+    $('nickname').value = localStorage.getItem('ktvNickname') || '';
+    $('nickname').oninput = () => localStorage.setItem('ktvNickname', $('nickname').value.slice(0, 24));
+
+    document.querySelectorAll('[data-tab]').forEach(button => button.onclick = () => {
+      document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b === button));
+      document.querySelectorAll('.pane').forEach(p => p.hidden = p.id !== `pane-${button.dataset.tab}`);
+    });
+
+    // Remote Explore Loading
+    async function loadRemoteExplore() {
+      try {
+        const [rTrend, rArt] = await Promise.all([
+          fetch('/api/songs/trending?limit=10').then(r => r.json()).catch(() => null),
+          fetch('/api/artists/popular').then(r => r.json()).catch(() => null),
+        ]);
+        if (rTrend?.items?.length) {
+          $('remoteTrending').innerHTML = rTrend.items.map((s, i) => `
+            <div class="trending-card" data-song-id="${esc(s.id)}">
+              <span class="trending-rank">#${i + 1}</span>
+              <div class="song-avatar" style="background:${getAvatarColor(s.artist || s.title)}">${getAvatarInitial(s.artist || s.title)}</div>
+              <div class="song-info">
+                <div class="title">${esc(s.title)}${s.playCount ? `<span class="badge-fire">🔥 ${s.playCount}</span>` : ''}</div>
+                <div class="sub">${esc(s.artist || '未知歌手')}</div>
+              </div>
+              <button class="button add" data-quick-add="${esc(s.id)}">＋</button>
+            </div>
+          `).join('');
+
+          $('remoteTrending').querySelectorAll('[data-quick-add]').forEach(btn => btn.onclick = (e) => {
+            e.stopPropagation();
+            const song = rTrend.items.find(item => item.id === btn.dataset.quickAdd);
+            if (song) {
+              socket.emit('add_to_queue', { ...song, requestedBy: $('nickname').value.trim() || '來賓' });
+              if (navigator.vibrate) navigator.vibrate(40);
+              toast('已加入待播清單');
+            }
+          });
+          $('remoteTrending').querySelectorAll('.trending-card').forEach(card => card.onclick = () => {
+            const song = rTrend.items.find(item => item.id === card.dataset.songId);
+            if (song) {
+              socket.emit('add_to_queue', { ...song, requestedBy: $('nickname').value.trim() || '來賓' });
+              if (navigator.vibrate) navigator.vibrate(40);
+              toast(`已點播《${song.title}》`);
+            }
+          });
+        }
+
+        if (rArt?.items?.length) {
+          $('remoteArtists').innerHTML = rArt.items.slice(0, 15).map(art => `
+            <div class="artist-chip" data-artist="${esc(art.name)}">
+              <div class="artist-avatar" style="background:${getAvatarColor(art.name)}">${getAvatarInitial(art.name)}</div>
+              <span class="artist-name">${esc(art.name)}</span>
+            </div>
+          `).join('');
+
+          $('remoteArtists').querySelectorAll('[data-artist]').forEach(chip => chip.onclick = () => {
+            $('query').value = chip.dataset.artist;
+            search(true);
+          });
+        }
+      } catch (err) {
+        console.warn('Remote explore load failed:', err);
+      }
+    }
+
+    // Search Execution
+    function search(reset = false) {
+      const q = $('query').value.trim();
+      if (!q && !language) {
+        $('remoteExplore').hidden = false;
+        $('songs').hidden = true;
+        $('resultCount').hidden = true;
+        $('more').hidden = true;
+        return;
+      }
+      $('remoteExplore').hidden = true;
+      $('songs').hidden = false;
+      $('resultCount').hidden = false;
+      $('more').hidden = false;
+
+      if (reset) {
+        offset = 0;
+        total = 0;
+        busy = false;
+        requestId++;
+        songs = [];
+        $('songs').innerHTML = '<div class="empty">搜尋中…</div>';
+      }
+      if (busy) return;
+      busy = true;
+      $('more').disabled = true;
+      socket.emit('search_songs', { query: q, language, offset, limit: 40, paginated: true, requestId });
+    }
+
+    $('query').oninput = () => { clearTimeout(queryTimer); queryTimer = setTimeout(() => search(true), 180); };
+    $('clear').onclick = () => {
+      $('query').value = '';
+      language = '';
+      document.querySelectorAll('[data-language]').forEach(b => b.classList.toggle('active', !b.dataset.language));
+      search(true);
+    };
+    $('more').onclick = () => search();
+    document.querySelectorAll('[data-language]').forEach(button => button.onclick = () => {
+      language = button.dataset.language;
+      document.querySelectorAll('[data-language]').forEach(b => b.classList.toggle('active', b === button));
+      search(true);
+    });
+
+    function renderSongs(rows, append = false) {
+      if (!append) $('songs').innerHTML = '';
+      if (rows.length) {
+        $('songs').insertAdjacentHTML('beforeend', rows.map(song => `
+          <article class="song-row">
+            <div class="song-avatar" style="background:${getAvatarColor(song.artist || song.title)}">
+              ${getAvatarInitial(song.artist || song.title)}
+            </div>
+            <div class="song-info">
+              <div class="title">${esc(song.title)}${song.playCount ? `<span class="badge-fire">🔥 ${song.playCount}</span>` : ''}</div>
+              <div class="sub">${esc(song.artist || '未知歌手')} · ${esc(song.language || '未標語種')} · ${esc(song.duration_seconds ? time(song.duration_seconds) : '')} <span class="badge-pill">${song.instrumental_filename ? '原/伴' : '原唱'}</span></div>
+            </div>
+            <div class="song-actions">
+              <button class="button add" data-add="${esc(song.id)}">點歌</button>
+              <button class="button insert" data-insert="${esc(song.id)}">插播</button>
+            </div>
+          </article>
+        `).join(''));
+      } else if (!append) {
+        $('songs').innerHTML = '<div class="empty">沒有找到歌曲，換個關鍵字再試試。</div>';
+      }
+
+      document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
+        const song = songs.find(s => s.id === b.dataset.add);
+        if (song) socket.emit('add_to_queue', { ...song, requestedBy: $('nickname').value.trim() || '來賓' });
+        if (navigator.vibrate) navigator.vibrate(40);
+        toast('已加入待播');
+      });
+      document.querySelectorAll('[data-insert]').forEach(b => b.onclick = () => {
+        const song = songs.find(s => s.id === b.dataset.insert);
+        if (song) socket.emit('insert_to_top', { ...song, requestedBy: $('nickname').value.trim() || '來賓' });
+        document.querySelector('[data-tab="queue"]').click();
+        if (navigator.vibrate) navigator.vibrate(50);
+        toast('已插入下一首');
+      });
+    }
+
+    socket.on('search_page_results', page => {
+      if (page?.requestId !== requestId) return;
+      busy = false;
+      const rows = page.items || [];
+      songs = page.offset ? [...songs, ...rows] : rows;
+      offset = songs.length;
+      total = page.total || 0;
+      renderSongs(rows, Boolean(page.offset));
+      $('resultCount').textContent = `${total.toLocaleString()} 首歌曲 · 已載入 ${offset} 首`;
+      $('more').hidden = offset >= total;
+      $('more').disabled = false;
+    });
+
+    // Queue Rendering
+    function renderQueue() {
+      const pendingCount = Math.max(0, queue.length - 1);
+      $('queueBadge').textContent = queue.length ? `(${pendingCount})` : '';
+      if ($('queueCount')) $('queueCount').textContent = pendingCount;
+
+      $('queue').innerHTML = queue.length ? queue.map((song, i) => `
+        <article class="queue-row">
+          <div class="song-avatar" style="background:${getAvatarColor(song.artist || song.title)}">
+            ${getAvatarInitial(song.artist || song.title)}
+          </div>
+          <div class="song-info">
+            <div class="title">${i === 0 ? '▶ 播放中 · ' : `#${i} · `}${esc(song.title)}</div>
+            <div class="sub">${esc(song.artist || '未知歌手')} · ${i === 0 ? '<span class="badge-pill" style="color:#34d399;background:rgba(52,211,153,0.15)">播放中</span>' : `<span class="badge-pill">👤 ${esc(song.requestedBy || '來賓')}</span>`}</div>
+          </div>
+          ${i ? `
+            <div class="queue-actions">
+              ${i > 1 ? `<button class="button" data-top="${esc(song.queueId)}" title="置頂為下一首">🔝</button>` : ''}
+              ${i > 1 ? `<button class="button" data-up="${esc(song.queueId)}" title="上移">▲</button>` : ''}
+              ${i < queue.length - 1 ? `<button class="button" data-down="${esc(song.queueId)}" title="下移">▼</button>` : ''}
+              <button class="button" data-remove="${esc(song.queueId)}" style="color:var(--rose);" title="移除">🗑️</button>
+            </div>
+          ` : ''}
+        </article>
+      `).join('') : '<div class="empty">佇列還沒有歌曲。回到找歌頁點一首歌吧！</div>';
+
+      $('queue').querySelectorAll('[data-remove]').forEach(b => b.onclick = () => socket.emit('remove_from_queue', b.dataset.remove));
+      $('queue').querySelectorAll('[data-top]').forEach(b => b.onclick = () => socket.emit('move_to_top', b.dataset.top));
+      $('queue').querySelectorAll('[data-up]').forEach(b => b.onclick = () => socket.emit('move_queue_item', { queueId: b.dataset.up, direction: 'up' }));
+      $('queue').querySelectorAll('[data-down]').forEach(b => b.onclick = () => socket.emit('move_queue_item', { queueId: b.dataset.down, direction: 'down' }));
+    }
+
+    if ($('btnShuffleQueue')) $('btnShuffleQueue').onclick = () => { socket.emit('shuffle_queue'); toast('已隨機打亂佇列'); };
+    if ($('btnClearQueue')) $('btnClearQueue').onclick = () => { if (confirm('確定清空所有待播歌曲？')) { socket.emit('clear_queue'); toast('已清空佇列'); } };
+
+    // Playback Sync
+    function apply(payload) {
+      queue = payload.queue || [];
+      history = payload.history || history;
+      state = payload.state || {};
+      const current = queue[0];
+      $('current').textContent = current ? `${current.title} — ${current.artist || '未知歌手'}${queue[1] ? `　｜　下一首：${queue[1].title}` : ''}` : '尚未點歌';
+      $('play').textContent = state.isPlaying ? 'Ⅱ' : '▶';
+      $('mode').textContent = state.audioMode === 'accompaniment' ? '伴奏' : '原唱';
+      duration = Number(current?.duration_seconds) || 0;
+      position = Number(state.position) || 0;
+      $('duration').textContent = time(duration);
+      $('musicLabel').textContent = `歌曲音量 ${Math.round((state.musicVol ?? .8) * 100)}%`;
+      if (state.pitch !== undefined && $('keyLabel')) {
+        $('keyLabel').textContent = state.pitch === 0 ? 'Key 0' : (state.pitch > 0 ? `Key +${state.pitch}` : `Key ${state.pitch}`);
+      }
+      if (!dragging) {
+        $('seek').max = duration || 100;
+        $('seek').value = Math.min(position, duration || 100);
+        $('elapsed').textContent = time(position);
+      }
+      renderQueue();
+    }
+
+    socket.on('sync_state', apply);
+    socket.on('playback_snapshot', apply);
+    socket.on('queue_updated', items => { queue = items || []; renderQueue(); });
+    socket.on('playback_error', data => toast(data?.message || '播放錯誤'));
+    socket.on('catalog_updated', () => { loadRemoteExplore(); if ($('query').value.trim() || language) search(true); });
+    socket.on('connect', () => {
+      $('connection').textContent = '● 主機已連線';
+      $('connection').classList.remove('offline');
+      loadRemoteExplore();
+      search(true);
+    });
+    socket.on('disconnect', () => {
+      $('connection').textContent = '● 重新連線中';
+      $('connection').classList.add('offline');
+    });
+
+    // Control Handlers
+    $('play').onclick = () => socket.emit('player_command', { isPlaying: !state.isPlaying });
+    $('mode').onclick = () => socket.emit('player_command', { audioMode: state.audioMode === 'accompaniment' ? 'original' : 'accompaniment' });
+    $('replay').onclick = () => socket.emit('replay_current');
+    $('next').onclick = () => { $('confirm').hidden = false; };
+    $('cancelNext').onclick = () => { $('confirm').hidden = true; };
+    $('confirmNext').onclick = () => { socket.emit('next_song'); $('confirm').hidden = true; };
+
+    $('keyDown').onclick = () => socket.emit('player_command', { pitch: Math.max(-6, (state.pitch || 0) - 1) });
+    $('keyUp').onclick = () => socket.emit('player_command', { pitch: Math.min(6, (state.pitch || 0) + 1) });
+    $('keyLabel').onclick = () => socket.emit('player_command', { pitch: 0 });
+
+    $('seek').oninput = () => { dragging = true; $('elapsed').textContent = time($('seek').value); };
+    $('seek').onchange = () => { socket.emit('seek', { position: Number($('seek').value) }); dragging = false; };
+
+    setInterval(() => {
+      if (state.isPlaying && !dragging && duration) {
+        position = Math.min(duration, position + .25);
+        $('seek').value = position;
+        $('elapsed').textContent = time(position);
+      }
+    }, 250);
+
+    function setMusic(value) {
+      value = Math.max(0, Math.min(1.5, value));
+      socket.emit('player_command', { musicVol: value });
+    }
+    $('musicDown').onclick = () => setMusic((state.musicVol ?? .8) - .1);
+    $('musicUp').onclick = () => setMusic((state.musicVol ?? .8) + .1);
+
+    // 5-SFX Soundboard with Combo and Haptics
+    let comboCount = 0;
+    let comboTimer = null;
+    document.querySelectorAll('[data-sfx]').forEach(b => b.onclick = () => {
+      const type = b.dataset.sfx;
+      socket.emit('play_sfx', { type });
+      socket.emit('crowd_interaction', { type, user: $('nickname').value.trim() || '來賓' });
+
+      comboCount++;
+      clearTimeout(comboTimer);
+      comboTimer = setTimeout(() => {
+        comboCount = 0;
+        if ($('comboBadge')) $('comboBadge').hidden = true;
+      }, 2200);
+
+      if ($('comboBadge')) {
+        $('comboBadge').hidden = false;
+        $('comboBadge').textContent = comboCount >= 10 ? `🔥 FEVER! x${comboCount}` : `Combo x${comboCount}`;
+      }
+
+      if (navigator.vibrate) {
+        if (comboCount >= 10) navigator.vibrate([40, 30, 60]);
+        else navigator.vibrate(35);
+      }
+      toast(`已觸發 ${b.textContent.trim()}`);
+    });
+
+    // 8-Key Quick Emoji Stickers
+    document.querySelectorAll('[data-sticker]').forEach(b => b.onclick = () => {
+      const icon = b.dataset.sticker;
+      socket.emit('crowd_interaction', {
+        type: 'sticker',
+        stickerIcon: icon,
+        text: icon,
+        user: $('nickname').value.trim() || '來賓',
+      });
+      if (navigator.vibrate) navigator.vibrate(30);
+      toast(`已送出貼圖 ${icon}`);
+    });
+
+    // Danmaku Palette & Mode Selection
+    let selectedDanmakuColor = '#ffffff';
+    let selectedDanmakuType = 'scroll';
+
+    document.querySelectorAll('[data-color]').forEach(b => b.onclick = () => {
+      document.querySelectorAll('[data-color]').forEach(c => c.classList.remove('active'));
+      b.classList.add('active');
+      selectedDanmakuColor = b.dataset.color;
+    });
+
+    if ($('btnDanmakuScroll')) $('btnDanmakuScroll').onclick = () => {
+      selectedDanmakuType = 'scroll';
+      $('btnDanmakuScroll').classList.add('active');
+      $('btnDanmakuTop').classList.remove('active');
+    };
+    if ($('btnDanmakuTop')) $('btnDanmakuTop').onclick = () => {
+      selectedDanmakuType = 'top';
+      $('btnDanmakuTop').classList.add('active');
+      $('btnDanmakuScroll').classList.remove('active');
+    };
+
+    $('sendMessage').onclick = () => {
+      const text = $('message').value.trim();
+      if (!text) return;
+      socket.emit('crowd_interaction', {
+        type: 'danmaku',
+        text,
+        color: selectedDanmakuColor,
+        danmakuType: selectedDanmakuType,
+        user: $('nickname').value.trim() || '來賓',
+      });
+      $('message').value = '';
+      if (navigator.vibrate) navigator.vibrate(35);
+      toast('彩色彈幕已發送！');
+    };
+    $('message').onkeydown = e => { if (e.key === 'Enter') $('sendMessage').click(); };
+
+    // Mode B: Phone Edge Pitch Detection (純手機本地音高分析，免外接麥克風)
+    let edgePitchStream = null;
+    let edgePitchAudioCtx = null;
+    let edgePitchAnalyser = null;
+    let edgePitchTimer = null;
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    function autoCorrelateEdge(buf, sampleRate) {
+      let sumSquare = 0;
+      for (let i = 0; i < buf.length; i++) sumSquare += buf[i] * buf[i];
+      const rms = Math.sqrt(sumSquare / buf.length);
+      if (rms < 0.015) return { hz: 0, midi: null, rms };
+
+      const minPeriod = Math.floor(sampleRate / 1000);
+      const maxPeriod = Math.floor(sampleRate / 70);
+      let bestPeriod = 0;
+      let bestCorrelation = 0;
+
+      for (let period = minPeriod; period <= maxPeriod; period++) {
+        let correlation = 0;
+        for (let i = 0; i < buf.length - period; i++) correlation += buf[i] * buf[i + period];
+        correlation = correlation / (buf.length - period);
+        if (correlation > bestCorrelation) {
+          bestCorrelation = correlation;
+          bestPeriod = period;
+        }
+      }
+
+      if (bestCorrelation > 0.01 && bestPeriod > 0) {
+        const hz = sampleRate / bestPeriod;
+        const midi = 69 + 12 * Math.log2(hz / 440);
+        return { hz, midi, rms };
+      }
+      return { hz: 0, midi: null, rms };
+    }
+
+    async function toggleEdgePitch() {
+      if (edgePitchStream) {
+        clearInterval(edgePitchTimer);
+        edgePitchStream.getTracks().forEach(t => t.stop());
+        edgePitchStream = null;
+        if (edgePitchAudioCtx) edgePitchAudioCtx.close().catch(() => {});
+        edgePitchAudioCtx = null;
+        $('edgePitchToggle').textContent = '🎙️ 開啟手機音準評分';
+        $('edgePitchToggle').classList.add('primary');
+        $('edgePitchStatus').hidden = true;
+        toast('手機邊緣音準評分已停止');
+      } else {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          alert('您的瀏覽器不支援麥克風存取或需要 HTTPS 連線。');
+          return;
+        }
+        try {
+          edgePitchStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, latency: 0 },
+            video: false,
+          });
+          edgePitchAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+          const src = edgePitchAudioCtx.createMediaStreamSource(edgePitchStream);
+          edgePitchAnalyser = edgePitchAudioCtx.createAnalyser();
+          edgePitchAnalyser.fftSize = 2048;
+          src.connect(edgePitchAnalyser);
+
+          const buf = new Float32Array(edgePitchAnalyser.fftSize);
+          $('edgePitchToggle').textContent = '⏹ 停止音準評分';
+          $('edgePitchToggle').classList.remove('primary');
+          $('edgePitchStatus').hidden = false;
+
+          let lastSent = 0;
+          edgePitchTimer = setInterval(() => {
+            if (!edgePitchAnalyser) return;
+            edgePitchAnalyser.getFloatTimeDomainData(buf);
+            const res = autoCorrelateEdge(buf, edgePitchAudioCtx.sampleRate);
+            if (res.midi !== null) {
+              const rounded = Math.round(res.midi);
+              const name = NOTE_NAMES[rounded % 12] + (Math.floor(rounded / 12) - 1);
+              $('edgePitchNote').textContent = name;
+              $('edgePitchHz').textContent = `(${Math.round(res.hz)} Hz)`;
+
+              const now = performance.now();
+              if (now - lastSent >= 45) {
+                lastSent = now;
+                socket.emit('pitch_data', {
+                  midi: res.midi,
+                  hz: res.hz,
+                  vol: res.rms,
+                  user: $('nickname').value.trim() || '歌手',
+                });
+              }
+            } else {
+              $('edgePitchNote').textContent = '--';
+              $('edgePitchHz').textContent = '(-- Hz)';
+            }
+          }, 35);
+          toast('手機音準評分已就緒，請對著手機歡唱！');
+        } catch (err) {
+          alert('麥克風啟動失敗：' + err.message);
+        }
+      }
+    }
+    if ($('edgePitchToggle')) $('edgePitchToggle').onclick = toggleEdgePitch;
+
+    $('voice').onclick = () => {
+      const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Speech) { toast('瀏覽器不支援語音辨識'); return; }
+      const recognition = new Speech();
+      recognition.lang = 'zh-TW';
+      recognition.onresult = e => { $('query').value = e.results[0][0].transcript; search(true); };
+      recognition.onerror = () => toast('請檢查麥克風權限');
+      recognition.start();
+    };
+
+    // WebRTC Phone Microphone
+    let micStream = null, micPeer = null, micOfferPending = false, pendingMicCandidates = [], micGeneration = 0;
+    $('micMode').value = localStorage.getItem('ktvMicMode') || 'low-latency';
+    $('micMode').onchange = () => localStorage.setItem('ktvMicMode', $('micMode').value);
+
+    const setMicStatus = (status, message) => {
+      $('micStatus').textContent = message;
+      $('micToggle').textContent = status === 'active' ? '⏹ 停止麥克風' : '🎙️ 開始傳送麥克風';
+      $('micToggle').disabled = ['waiting', 'connecting'].includes(status);
+      $('micMode').disabled = ['waiting', 'connecting', 'active'].includes(status);
+    };
+
+    async function closePhoneMic(sendStop = true) {
+      micGeneration++;
+      micOfferPending = false;
+      pendingMicCandidates = [];
+      if (sendStop && socket.connected) socket.emit('mic_stop');
+      if (micPeer) { micPeer.close(); micPeer = null; }
+      if (micStream) { micStream.getTracks().forEach(track => track.stop()); micStream = null; }
+      $('micToggle').disabled = false;
+      $('micMode').disabled = false;
+      $('micToggle').textContent = '🎙️ 開始傳送麥克風';
+    }
+
+    async function openPhoneMic() {
+      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+        setMicStatus('error', '手機瀏覽器的麥克風需要 HTTPS（或 localhost）；請用受信任的 HTTPS 遙控網址。');
+        return;
+      }
+      try {
+        const lowLatency = $('micMode').value === 'low-latency';
+        setMicStatus('waiting', '正在取得麥克風權限…');
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: { ideal: 1 },
+            latency: { ideal: 0.01 },
+            echoCancellation: !lowLatency,
+            noiseSuppression: !lowLatency,
+            autoGainControl: !lowLatency
+          },
+          video: false
+        });
+        const configResponse = await fetch('/api/webrtc-config', { cache: 'no-store' });
+        if (!configResponse.ok) throw Error('無法取得 WebRTC 網路設定');
+        const config = await configResponse.json();
+        micPeer = new RTCPeerConnection(config);
+        const generation = micGeneration;
+        micStream.getAudioTracks().forEach(track => micPeer.addTrack(track, micStream));
+        micPeer.onicecandidate = event => {
+          if (event.candidate && generation === micGeneration) socket.emit('mic_signal', { type: 'candidate', data: event.candidate.toJSON() });
+        };
+        micPeer.onconnectionstatechange = () => {
+          if (generation !== micGeneration) return;
+          if (micPeer?.connectionState === 'connected') {
+            setMicStatus('active', `${lowLatency ? '低延遲' : '抗回授'}模式：手機麥克風已連接電視。`);
+          } else if (['failed', 'closed'].includes(micPeer?.connectionState)) {
+            closePhoneMic();
+            setMicStatus('error', 'WebRTC 連線中斷；請確認網路或 TURN 設定後重試。');
+          }
+        };
+        pendingMicCandidates = [];
+        micOfferPending = true;
+        socket.emit('mic_request');
+        setMicStatus('waiting', '正在連線本機播放器…');
+      } catch (error) {
+        await closePhoneMic();
+        setMicStatus('error', `麥克風啟動失敗：${error.message || '請檢查權限與 HTTPS'}`);
+      }
+    }
+
+    $('micToggle').onclick = () => { if (micStream) { closePhoneMic(); setMicStatus('stopped', '手機麥克風已停止。'); } else openPhoneMic(); };
+    $('micVolume').oninput = () => {
+      const value = Number($('micVolume').value);
+      $('micVolumeLabel').textContent = `${Math.round(value * 100)}%`;
+      socket.emit('mic_volume', value);
+    };
+
+    socket.on('mic_status', async payload => {
+      if (payload?.status === 'waiting') setMicStatus('waiting', '正在等待本機播放器…');
+      else if (payload?.status === 'connecting' && micPeer && micOfferPending) {
+        try {
+          const offer = await micPeer.createOffer();
+          await micPeer.setLocalDescription(offer);
+          socket.emit('mic_signal', { type: 'offer', data: micPeer.localDescription.toJSON() });
+          micOfferPending = false;
+          setMicStatus('connecting', '正在建立低延遲 WebRTC 音訊連線…');
+        } catch (error) { await closePhoneMic(); setMicStatus('error', `無法建立 WebRTC 連線：${error.message}`); }
+      } else if (payload?.status === 'busy') { await closePhoneMic(false); setMicStatus('busy', '目前已有另一支手機使用麥克風。'); }
+      else if (payload?.status === 'unavailable') { await closePhoneMic(false); setMicStatus('unavailable', '本機播放器尚未開啟，請先由中控開啟播放器。'); }
+      else if (payload?.status === 'disconnected') { await closePhoneMic(false); setMicStatus('disconnected', '播放器已離線，手機麥克風已停止。'); }
+      else if (payload?.status === 'stopped') { await closePhoneMic(false); setMicStatus('stopped', '手機麥克風已停止。'); }
+    });
+
+    socket.on('mic_signal', async payload => {
+      if (!micPeer || !payload) return;
+      try {
+        if (payload.type === 'answer') {
+          await micPeer.setRemoteDescription(payload.data);
+          for (const candidate of pendingMicCandidates) await micPeer.addIceCandidate(candidate);
+          pendingMicCandidates = [];
+        } else if (payload.type === 'candidate') {
+          const candidate = new RTCIceCandidate(payload.data);
+          if (micPeer.remoteDescription) await micPeer.addIceCandidate(candidate);
+          else pendingMicCandidates.push(candidate);
+        }
+      } catch (error) { await closePhoneMic(); setMicStatus('error', `WebRTC 訊號錯誤：${error.message}`); }
+    });
+
+    socket.on('disconnect', () => { if (micStream) { closePhoneMic(false); setMicStatus('disconnected', '遙控器斷線，手機麥克風已停止。'); } });
+
+    let toastTimer;
+    function toast(text) {
+      $('connection').textContent = `● ${text}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { $('connection').textContent = socket.connected ? '● 主機已連線' : '● 重新連線中'; }, 1800);
+    }
   </script>
 </body>
 </html>

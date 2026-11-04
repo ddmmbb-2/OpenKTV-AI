@@ -72,6 +72,9 @@ function openPlayerWindow() {
   });
   playerWindow.loadURL(`http://127.0.0.1:${serverPort}/player`);
   if (playerDisplay) playerWindow.setFullScreen(true);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('player:opened');
+  }
   playerWindow.on('closed', () => {
     playerWindow = null;
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -80,9 +83,58 @@ function openPlayerWindow() {
   });
 }
 
+function closePlayerWindow() {
+  if (playerWindow && !playerWindow.isDestroyed()) {
+    playerWindow.close();
+    playerWindow = null;
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('player:closed');
+  }
+}
+
 ipcMain.handle('player:open', async () => {
   openPlayerWindow();
+  return { ok: true, isFullscreen: Boolean(playerWindow?.isFullScreen()) };
+});
+
+ipcMain.handle('player:close', async () => {
+  closePlayerWindow();
   return { ok: true };
+});
+
+ipcMain.handle('player:toggle-fullscreen', async () => {
+  if (!playerWindow || playerWindow.isDestroyed()) {
+    openPlayerWindow();
+    return { ok: true, isFullscreen: true };
+  }
+  const next = !playerWindow.isFullScreen();
+  playerWindow.setFullScreen(next);
+  return { ok: true, isFullscreen: next };
+});
+
+ipcMain.handle('screen:get-displays', async () => {
+  const primaryId = screen.getPrimaryDisplay().id;
+  const displays = screen.getAllDisplays().map((d, index) => ({
+    id: d.id,
+    name: d.id === primaryId ? '內建主顯示器' : `外接顯示器 ${index}`,
+    bounds: d.bounds,
+    isPrimary: d.id === primaryId,
+  }));
+  const isOpen = Boolean(playerWindow && !playerWindow.isDestroyed());
+  let playerDisplay = null;
+  if (isOpen) {
+    try {
+      playerDisplay = screen.getDisplayMatching(playerWindow.getBounds());
+    } catch {}
+  }
+  return {
+    displays,
+    playerOpen: isOpen,
+    playerDisplayName: playerDisplay ? (playerDisplay.id === primaryId ? '內建顯示器' : '外接顯示器') : null,
+    playerResolution: playerDisplay ? `${playerDisplay.bounds.width}×${playerDisplay.bounds.height}` : null,
+    isFullscreen: isOpen ? Boolean(playerWindow.isFullScreen()) : false,
+  };
 });
 
 app.whenReady().then(async () => {

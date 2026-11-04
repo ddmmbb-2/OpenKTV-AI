@@ -14,16 +14,63 @@ import MiniSearch from 'minisearch';
 import QRCode from 'qrcode';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { DatabaseSync } from 'node:sqlite';
+import multer from 'multer';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
 const songsDir = path.resolve(projectRoot, process.env.KTV_SONGS_DIR || path.join(projectRoot, 'ktv_songs'));
 const catalogPath = path.resolve(projectRoot, process.env.KTV_LIBRARY_INDEX_PATH || path.join(songsDir, 'library_index.csv'));
+const dbPath = path.resolve(projectRoot, process.env.KTV_LIBRARY_DB_PATH || path.join(songsDir, 'library.db'));
 const legacyCatalogPath = path.join(__dirname, 'songs.csv');
+const statsPath = path.resolve(songsDir, 'song_stats.json');
+
+let songStats = {};
+
+function loadSongStats() {
+  try {
+    if (fs.existsSync(statsPath)) {
+      songStats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+    } else {
+      songStats = {};
+    }
+  } catch (err) {
+    songStats = {};
+  }
+}
+
+function saveSongStats() {
+  try {
+    fs.writeFileSync(statsPath, JSON.stringify(songStats, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('[Stats] Could not write song_stats.json:', err.message);
+  }
+}
+
+function recordSongPlay(songId) {
+  if (!songId) return;
+  const id = String(songId);
+  if (!songStats[id]) {
+    songStats[id] = { playCount: 0, lastPlayedAt: 0 };
+  }
+  songStats[id].playCount = (songStats[id].playCount || 0) + 1;
+  songStats[id].lastPlayedAt = Date.now();
+  saveSongStats();
+}
+
+function enrichSong(song) {
+  if (!song) return song;
+  const stats = songStats[song.id] || {};
+  return {
+    ...song,
+    playCount: stats.playCount || 0,
+    lastPlayedAt: stats.lastPlayedAt || null,
+  };
+}
 
 function mediaPath(filename) {
   if (!filename || path.basename(filename) !== filename
-    || !['.mp4', '.m4a', '.wav', '.lrc'].includes(path.extname(filename).toLowerCase())) return null;
+    || !['.mp4', '.m4a', '.wav', '.lrc', '.json'].includes(path.extname(filename).toLowerCase())) return null;
   try {
     const resolved = path.resolve(songsDir, filename);
     if (!resolved.startsWith(`${songsDir}${path.sep}`) || !fs.existsSync(resolved)) return null;
@@ -53,6 +100,7 @@ function normalizeSong(row) {
     video_filename: filename,
     instrumental_filename: row.instrumental_filename || row.instrumental || '',
     lyrics_filename: row.lyrics_filename || row.lyrics_lrc || '',
+    pitch_filename: row.pitch_filename || '',
   };
   if (!song.instrumental_filename && filename.toLowerCase().endsWith('.mp4')) {
     song.instrumental_filename = `${filename.slice(0, -4)}.instrumental.m4a`;
@@ -60,8 +108,12 @@ function normalizeSong(row) {
   if (!song.lyrics_filename && filename.toLowerCase().endsWith('.mp4')) {
     song.lyrics_filename = `${filename.slice(0, -4)}.lrc`;
   }
+  if (!song.pitch_filename && filename.toLowerCase().endsWith('.mp4')) {
+    song.pitch_filename = `${filename.slice(0, -4)}.pitch.json`;
+  }
   song.path = filename ? mediaUrl(filename) : '';
   song.instrumental_path = song.instrumental_filename ? mediaUrl(song.instrumental_filename) : '';
+  song.pitch_path = song.pitch_filename ? mediaUrl(song.pitch_filename) : '';
   return song;
 }
 
@@ -75,6 +127,30 @@ async function readCatalog(filePath) {
       .on('end', () => resolve(rows))
       .on('error', reject);
   });
+}
+
+function readCatalogFromDb(databasePath) {
+  if (!fs.existsSync(databasePath)) return null;
+  try {
+    const db = new DatabaseSync(databasePath);
+    const stmt = db.prepare('SELECT * FROM songs ORDER BY artist, title');
+    const rows = stmt.all();
+    db.close();
+    return rows.map(r => normalizeSong(r));
+  } catch (err) {
+    console.warn('[Database] Read from SQLite failed, falling back to CSV:', err.message);
+    return null;
+  }
+}
+
+async function loadSongs() {
+  const fromDb = readCatalogFromDb(dbPath);
+  if (fromDb && fromDb.length > 0) return fromDb;
+  let songs = await readCatalog(catalogPath);
+  if (!songs.length && fs.existsSync(legacyCatalogPath) && catalogPath !== legacyCatalogPath) {
+    songs = await readCatalog(legacyCatalogPath);
+  }
+  return songs;
 }
 
 function createSearchIndex(songs) {
@@ -126,24 +202,69 @@ function inverseSearch(songs, inverseIndex, query) {
 }
 
 function findSongs(songs, miniSearch, inverseIndex, query, language, charCount, mode = 'keyword', sort = 'relevance') {
-  let results = query ? inverseSearch(songs, inverseIndex, query) : songs;
-  if (query && results.length < 5) {
-    const fuzzy = miniSearch.search(query.toUpperCase())
-      .map(result => songs.find(song => song.id === result.id))
-      .filter(Boolean);
-    results = [...new Map([...results, ...fuzzy].map(song => [song.id, song])).values()];
+  const cleanQuery = String(query || '').trim();
+  let results = songs;
+
+  if (cleanQuery) {
+    const isZhuyin = /^[\u3105-\u3129\u02CA\u02C7\u02CB\u02D9\s]+$/.test(cleanQuery);
+    const isAlphaNum = /^[A-Za-z0-9\s]+$/.test(cleanQuery);
+
+    if (mode === 'zhuyin' || (mode === 'keyword' && isZhuyin)) {
+      const target = cleanQuery.replace(/\s+/g, '');
+      results = songs.filter(song => (song.zhuyin_abbr || '').replace(/\s+/g, '').includes(target));
+      if (results.length < 5) {
+        const fuzzy = miniSearch.search(cleanQuery, { fields: ['zhuyin_abbr'] })
+          .map(r => songs.find(s => s.id === r.id)).filter(Boolean);
+        results = [...new Map([...results, ...fuzzy].map(s => [s.id, s])).values()];
+      }
+    } else if (mode === 'pinyin' || (mode === 'keyword' && isAlphaNum)) {
+      const targetUpper = cleanQuery.toUpperCase().replace(/\s+/g, '');
+      const pinyinHits = songs.filter(song => (song.pinyin_abbr || '').replace(/\s+/g, '').includes(targetUpper));
+      const titleHits = songs.filter(song => (song.title || '').toUpperCase().includes(cleanQuery.toUpperCase()));
+      const artistHits = songs.filter(song => (song.artist || '').toUpperCase().includes(cleanQuery.toUpperCase()));
+      const combined = targetUpper.length <= 5
+        ? [...pinyinHits, ...titleHits, ...artistHits]
+        : [...titleHits, ...artistHits, ...pinyinHits];
+      results = [...new Map(combined.map(s => [s.id, s])).values()];
+      if (results.length < 5) {
+        const fuzzy = miniSearch.search(cleanQuery.toUpperCase())
+          .map(r => songs.find(s => s.id === r.id)).filter(Boolean);
+        results = [...new Map([...results, ...fuzzy].map(s => [s.id, s])).values()];
+      }
+    } else {
+      const fieldForMode = { lyrics: 'lyrics', artist: 'artist' }[mode];
+      if (fieldForMode) {
+        const cleanUpper = cleanQuery.toUpperCase();
+        results = songs.filter(song => String(song[fieldForMode] || '').toUpperCase().includes(cleanUpper));
+      } else {
+        results = inverseSearch(songs, inverseIndex, cleanQuery);
+        if (results.length < 5) {
+          const fuzzy = miniSearch.search(cleanQuery.toUpperCase())
+            .map(r => songs.find(s => s.id === r.id)).filter(Boolean);
+          results = [...new Map([...results, ...fuzzy].map(s => [s.id, s])).values()];
+        }
+      }
+    }
   }
-  const fieldForMode = { zhuyin: 'zhuyin_abbr', pinyin: 'pinyin_abbr', lyrics: 'lyrics', artist: 'artist' }[mode];
-  if (query && fieldForMode) {
-    const cleanQuery = query.trim().toUpperCase();
-    results = results.filter(song => String(song[fieldForMode] || '').toUpperCase().includes(cleanQuery));
-  }
+
   if (language) results = results.filter(song => song.language === language);
   if (charCount) results = results.filter(song => song.char_count === Number(charCount));
+
   if (sort === 'title') results = [...results].sort((a, b) => a.title.localeCompare(b.title));
   else if (sort === 'artist') results = [...results].sort((a, b) => a.artist.localeCompare(b.artist));
   else if (sort === 'duration') results = [...results].sort((a, b) => (a.duration_seconds || 0) - (b.duration_seconds || 0));
-  return results;
+  else if (sort === 'trending' || sort === 'popular') {
+    results = [...results].sort((a, b) => {
+      const countA = songStats[a.id]?.playCount || 0;
+      const countB = songStats[b.id]?.playCount || 0;
+      if (countB !== countA) return countB - countA;
+      return a.title.localeCompare(b.title);
+    });
+  } else if (sort === 'newest') {
+    results = [...results].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  }
+
+  return results.map(enrichSong);
 }
 
 function parseRange(range, size) {
@@ -167,10 +288,8 @@ function parseRange(range, size) {
 export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
   return new Promise(async (resolve, reject) => {
     try {
-      let songs = await readCatalog(catalogPath);
-      if (!fs.existsSync(catalogPath) && catalogPath !== legacyCatalogPath) {
-        songs = await readCatalog(legacyCatalogPath);
-      }
+      loadSongStats();
+      let songs = await loadSongs();
       let miniSearch = createSearchIndex(songs);
       let inverseIndex = createInverseIndex(songs);
       const app = express();
@@ -311,14 +430,136 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
       });
       app.delete('/api/catalog/:songId', pageRequestLimiter, async (req, res) => {
         try {
-          const response = await fetch(`http://127.0.0.1:${Number(process.env.KTV_PORT) || 5000}/api/catalog/${encodeURIComponent(req.params.songId)}`, {
+          const target = new URL(`http://127.0.0.1:${Number(process.env.KTV_PORT) || 5000}/api/catalog/${encodeURIComponent(req.params.songId)}`);
+          if (req.query.delete_files || req.query.deleteMediaFiles || req.body?.delete_files) {
+            target.searchParams.set('delete_files', 'true');
+          }
+          const response = await fetch(target, {
             method: 'DELETE',
+            headers: {
+              authorization: req.get('authorization') || '',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(req.body || {}),
+            signal: AbortSignal.timeout(10000),
+          });
+          const payload = await response.json();
+          songs = await loadSongs();
+          miniSearch = createSearchIndex(songs);
+          inverseIndex = createInverseIndex(songs);
+          io.emit('catalog_updated', { songCount: songs.length });
+          return res.status(response.status).json(payload);
+        } catch {
+          return res.status(503).json({ ok: false, error: 'Python 處理服務目前無法使用' });
+        }
+      });
+      app.get('/api/catalog/health', pageRequestLimiter, async (req, res) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:${Number(process.env.KTV_PORT) || 5000}/api/catalog/health`, {
+            signal: AbortSignal.timeout(10000),
+          });
+          return res.status(response.status).json(await response.json());
+        } catch {
+          return res.status(503).json({ ok: false, error: '無法取得曲庫健康度資訊' });
+        }
+      });
+      app.post('/api/catalog/cleanup-orphans', pageRequestLimiter, async (req, res) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:${Number(process.env.KTV_PORT) || 5000}/api/catalog/cleanup-orphans`, {
+            method: 'POST',
             headers: { authorization: req.get('authorization') || '' },
-            signal: AbortSignal.timeout(5000),
+            signal: AbortSignal.timeout(30000),
           });
           return res.status(response.status).json(await response.json());
         } catch {
           return res.status(503).json({ ok: false, error: 'Python 處理服務目前無法使用' });
+        }
+      });
+      app.put('/api/catalog/:songId/lyrics', pageRequestLimiter, async (req, res) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:${Number(process.env.KTV_PORT) || 5000}/api/catalog/${encodeURIComponent(req.params.songId)}/lyrics`, {
+            method: 'PUT',
+            headers: {
+              authorization: req.get('authorization') || '',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(req.body || {}),
+            signal: AbortSignal.timeout(10000),
+          });
+          const payload = await response.json();
+          if (response.ok && payload.ok) {
+            io.emit('lyrics_updated', { song_id: req.params.songId, lyrics_filename: payload.lyrics_filename });
+          }
+          return res.status(response.status).json(payload);
+        } catch {
+          return res.status(503).json({ ok: false, error: '無法更新歌詞檔案' });
+        }
+      });
+      app.post('/api/catalog/:songId/reprocess', pageRequestLimiter, async (req, res) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:${Number(process.env.KTV_PORT) || 5000}/api/catalog/${encodeURIComponent(req.params.songId)}/reprocess`, {
+            method: 'POST',
+            headers: {
+              authorization: req.get('authorization') || '',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(req.body || {}),
+            signal: AbortSignal.timeout(10000),
+          });
+          return res.status(response.status).json(await response.json());
+        } catch {
+          return res.status(503).json({ ok: false, error: 'Python 處理服務目前無法使用' });
+        }
+      });
+
+      const localUpload = multer({
+        storage: multer.diskStorage({
+          destination: (req, file, cb) => cb(null, songsDir),
+          filename: (req, file, cb) => {
+            const rawName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+            cb(null, rawName);
+          },
+        }),
+        limits: { fileSize: 500 * 1024 * 1024 },
+      });
+
+      app.post('/api/catalog/upload-local', pageRequestLimiter, localUpload.fields([{ name: 'file', maxCount: 1 }, { name: 'lyrics', maxCount: 1 }]), async (req, res) => {
+        try {
+          const uploadedFile = req.files?.file?.[0];
+          if (!uploadedFile) {
+            return res.status(400).json({ ok: false, error: '未上傳任何媒體檔案' });
+          }
+          const uploadedLrc = req.files?.lyrics?.[0];
+          const filename = uploadedFile.filename;
+          const stem = path.basename(filename, path.extname(filename));
+
+          let artist = (req.body?.artist || '').trim();
+          let title = (req.body?.title || '').trim();
+          if (!title) {
+            if (stem.includes(' - ')) {
+              const parts = stem.split(' - ');
+              artist = artist || parts[0].trim();
+              title = parts.slice(1).join(' - ').trim();
+            } else {
+              title = stem;
+            }
+          }
+
+          songs = await loadSongs();
+          miniSearch = createSearchIndex(songs);
+          inverseIndex = createInverseIndex(songs);
+          io.emit('catalog_updated', { songCount: songs.length });
+          io.emit('refresh_list');
+
+          return res.json({
+            ok: true,
+            filename,
+            artist,
+            title,
+            lyrics_filename: uploadedLrc?.filename || null,
+          });
+        } catch (err) {
+          return res.status(500).json({ ok: false, error: err.message });
         }
       });
       app.get('/api/songs', pageRequestLimiter, (req, res) => {
@@ -331,6 +572,39 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
         const mode = String(req.query.mode || 'keyword');
         const results = findSongs(songs, miniSearch, inverseIndex, query, language, charCount, mode, sort);
         return res.json({ items: results.slice(offset, offset + limit), total: results.length, offset, limit });
+      });
+      app.get('/api/songs/trending', pageRequestLimiter, (req, res) => {
+        const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 20));
+        const sorted = [...songs].sort((a, b) => {
+          const countA = songStats[a.id]?.playCount || 0;
+          const countB = songStats[b.id]?.playCount || 0;
+          if (countB !== countA) return countB - countA;
+          return (a.title || '').localeCompare(b.title || '');
+        });
+        return res.json({ items: sorted.slice(0, limit).map(enrichSong), total: sorted.length });
+      });
+      app.get('/api/artists/popular', pageRequestLimiter, (req, res) => {
+        const artistMap = new Map();
+        for (const song of songs) {
+          const raw = (song.artist || '').trim();
+          if (!raw) continue;
+          const primary = raw.split(/[,&/、]/)[0].trim();
+          if (!primary) continue;
+          const existing = artistMap.get(primary) || { name: primary, songCount: 0, playCount: 0, sampleSong: song };
+          existing.songCount += 1;
+          existing.playCount += (songStats[song.id]?.playCount || 0);
+          artistMap.set(primary, existing);
+        }
+        const list = [...artistMap.values()].sort((a, b) => {
+          if (b.playCount !== a.playCount) return b.playCount - a.playCount;
+          return b.songCount - a.songCount;
+        });
+        return res.json({ items: list.slice(0, 30) });
+      });
+      app.get('/api/songs/recent', pageRequestLimiter, (req, res) => {
+        const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 20));
+        const sorted = [...songs].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        return res.json({ items: sorted.slice(0, limit).map(enrichSong), total: sorted.length });
       });
       app.get('/api/bot/room', botApiLimiter, (req, res) => {
         const expected = process.env.KTV_BOT_API_TOKEN || '';
@@ -353,8 +627,11 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
           '.m4a': 'audio/mp4',
           '.wav': 'audio/wav',
           '.lrc': 'text/plain; charset=utf-8',
+          '.json': 'application/json; charset=utf-8',
         };
         res.setHeader('Content-Type', mimeTypes[path.extname(fullPath).toLowerCase()] || 'application/octet-stream');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
         const rangeHeader = req.headers.range;
         res.setHeader('Accept-Ranges', 'bytes');
         if (!rangeHeader) {
@@ -380,6 +657,7 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
         isPlaying: false,
         audioMode: 'original',
         musicVol: 0.8,
+        pitch: 0,
         position: 0,
         startedAt: null,
         serverTime: Date.now(),
@@ -408,6 +686,7 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
           isPlaying: playerState.isPlaying,
           audioMode: playerState.audioMode,
           musicVol: playerState.musicVol,
+          pitch: playerState.pitch,
           position: currentPosition(),
           serverTime: Date.now(),
         },
@@ -420,11 +699,15 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
       };
       const startCurrent = () => {
         playerState.position = 0;
+        playerState.pitch = Number(currentSong()?.key) || 0;
         if (!currentSong()) playerState.isPlaying = false;
         else if (queue.length === 1) playerState.isPlaying = true;
         if (currentSong() && playerState.audioMode === 'accompaniment' && !canPlayInstrumental(currentSong())) {
           playerState.audioMode = 'original';
           io.emit('playback_error', { message: '新歌曲沒有有效伴奏檔，已切回原唱模式。' });
+        }
+        if (currentSong()) {
+          recordSongPlay(currentSong().id);
         }
         playerState.startedAt = playerState.isPlaying ? Date.now() : null;
       };
@@ -439,6 +722,26 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
       };
 
       app.get('/health', (_req, res) => res.json({ ok: true, songs: songs.length }));
+
+      const socketRateLimits = new Map();
+      const checkSocketRateLimit = (socketId, action, limitPerSec) => {
+        const now = Date.now();
+        let entry = socketRateLimits.get(socketId);
+        if (!entry) {
+          entry = {};
+          socketRateLimits.set(socketId, entry);
+        }
+        const bucket = entry[action] || { tokens: limitPerSec, last: now };
+        const elapsed = (now - bucket.last) / 1000;
+        bucket.tokens = Math.min(limitPerSec, bucket.tokens + elapsed * limitPerSec);
+        bucket.last = now;
+        if (bucket.tokens >= 1) {
+          bucket.tokens -= 1;
+          entry[action] = bucket;
+          return true;
+        }
+        return false;
+      };
 
       io.on('connection', socket => {
         micRelay.attach(socket);
@@ -507,6 +810,25 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
           queue.splice(1, 0, item);
           emitState();
         });
+        socket.on('move_queue_item', ({ queueId, direction } = {}) => {
+          const index = queue.findIndex(item => item.queueId === queueId);
+          if (index <= 0) return;
+          if (direction === 'up' && index > 1) {
+            [queue[index - 1], queue[index]] = [queue[index], queue[index - 1]];
+            emitState();
+          } else if (direction === 'down' && index < queue.length - 1) {
+            [queue[index], queue[index + 1]] = [queue[index + 1], queue[index]];
+            emitState();
+          }
+        });
+        socket.on('swap_queue_items', ({ fromIndex, toIndex } = {}) => {
+          const from = Number(fromIndex);
+          const to = Number(toIndex);
+          if (from > 0 && to > 0 && from < queue.length && to < queue.length && from !== to) {
+            [queue[from], queue[to]] = [queue[to], queue[from]];
+            emitState();
+          }
+        });
         socket.on('shuffle_queue', () => {
           for (let index = queue.length - 1; index > 1; index--) {
             const target = 1 + Math.floor(Math.random() * index);
@@ -562,32 +884,74 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
               playerState[key] = Math.max(0, Math.min(1, Number(command[key])));
             }
           }
+          if (command.pitch !== undefined && Number.isFinite(Number(command.pitch))) {
+            playerState.pitch = Math.max(-6, Math.min(6, Math.round(Number(command.pitch))));
+          }
           playerState.serverTime = Date.now();
           io.emit('execute_command', command);
           emitState();
         });
+        socket.on('play_sfx', payload => {
+          const type = String(payload?.type || payload || '');
+          if (['applause', 'cheer', 'laughter', 'horn', 'drum'].includes(type)) {
+            if (!checkSocketRateLimit(socket.id, 'sfx', 5)) return;
+            io.emit('play_sfx', { type, serverTime: Date.now() });
+          }
+        });
         socket.on('report_score', scorePayload => socket.broadcast.emit('score_updated', scorePayload));
+        socket.on('pitch_data', payload => {
+          if (payload && typeof payload === 'object') {
+            socket.broadcast.emit('remote_pitch', {
+              ...payload,
+              serverTime: Date.now(),
+            });
+          }
+        });
         socket.on('crowd_interaction', payload => {
-          if (!payload || !['applause', 'cheer', 'message'].includes(payload.type)) return;
+          if (!payload) return;
+          const allowedTypes = ['applause', 'cheer', 'laughter', 'horn', 'drum', 'message', 'danmaku', 'sticker', 'sfx'];
+          const type = allowedTypes.includes(payload.type) ? payload.type : 'danmaku';
+          const rateLimit = (type === 'danmaku' || type === 'message' || type === 'sticker') ? 3 : 5;
+          if (!checkSocketRateLimit(socket.id, 'interaction', rateLimit)) return;
+
           const text = String(payload.text || '').trim().slice(0, 100);
-          if (payload.type === 'message' && !text) return;
+          if ((type === 'message' || type === 'danmaku') && !text) return;
+
+          if (['applause', 'cheer', 'laughter', 'horn', 'drum'].includes(type)) {
+            io.emit('play_sfx', { type, serverTime: Date.now() });
+          }
+
+          const safeColors = ['#ffffff', '#ffd700', '#00f0ff', '#ff3366', '#00ff88', '#b537f2'];
+          const color = safeColors.includes(payload.color) ? payload.color : '#ffffff';
+          const danmakuType = ['scroll', 'top', 'sticker'].includes(payload.danmakuType) ? payload.danmakuType : 'scroll';
+          const stickerIcon = String(payload.stickerIcon || '').slice(0, 10);
+
           io.emit('crowd_interaction', {
-            type: payload.type,
+            type,
             text,
             user: String(payload.user || '來賓').trim().slice(0, 24),
+            color,
+            danmakuType,
+            stickerIcon,
             serverTime: Date.now(),
           });
+        });
+        socket.on('disconnect', () => {
+          socketRateLimits.delete(socket.id);
         });
       });
 
       setInterval(async () => {
         try {
-          const stat = fs.existsSync(catalogPath) ? fs.statSync(catalogPath) : null;
-          if (stat && stat.mtimeMs !== catalogMtime) {
-            songs = await readCatalog(catalogPath);
+          const dbStat = fs.existsSync(dbPath) ? fs.statSync(dbPath) : null;
+          const csvStat = fs.existsSync(catalogPath) ? fs.statSync(catalogPath) : null;
+          const currentMtime = Math.max(dbStat?.mtimeMs || 0, csvStat?.mtimeMs || 0);
+          if (currentMtime && currentMtime !== catalogMtime) {
+            songs = await loadSongs();
             miniSearch = createSearchIndex(songs);
             inverseIndex = createInverseIndex(songs);
-            catalogMtime = stat.mtimeMs;
+            catalogMtime = currentMtime;
+            io.emit('catalog_updated', { songCount: songs.length });
           }
         } catch (error) {
           console.error('[Database] Catalog reload failed:', error.message);
@@ -595,7 +959,10 @@ export function startServer(port = Number(process.env.KTV_NODE_PORT) || 3000) {
         if (currentSong()) emitState();
       }, 1000).unref();
 
-      let catalogMtime = fs.existsSync(catalogPath) ? fs.statSync(catalogPath).mtimeMs : 0;
+      let catalogMtime = Math.max(
+        fs.existsSync(dbPath) ? fs.statSync(dbPath).mtimeMs : 0,
+        fs.existsSync(catalogPath) ? fs.statSync(catalogPath).mtimeMs : 0
+      );
       httpServer.once('error', reject);
       httpServer.listen(port, '0.0.0.0', () => {
         const httpsPort = Number(process.env.KTV_HTTPS_PORT) || 3443;

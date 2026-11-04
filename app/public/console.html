@@ -7,181 +7,2896 @@
   <title>OpenKTV Master｜中控操作端</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    :root{color-scheme:dark;--bg:#10131b;--panel:#191f2a;--panel2:#222b39;--line:#303b4c;--text:#f4f6fa;--muted:#9ba7b8;--mint:#76edce;--blue:#83a7ff;--red:#ff8290;--orange:#ffc078}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;height:100vh;overflow:hidden}button,input,select,textarea{font:inherit}button{cursor:pointer;color:inherit}button:disabled{opacity:.4;cursor:not-allowed}.app{height:100vh;display:grid;grid-template-rows:58px minmax(0,1fr) 74px}.topbar{background:#000;display:flex;align-items:center;gap:16px;padding:0 22px;border-bottom:1px solid #292929;z-index:5}.brand{font-weight:900;letter-spacing:.08em;white-space:nowrap}.brand i{font-style:normal;color:var(--mint)}.system-status{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;white-space:nowrap}.dot{width:8px;height:8px;background:var(--mint);border-radius:50%}.offline .dot{background:var(--orange)}.spacer{flex:1}.top-actions{display:flex;gap:7px;align-items:center}.top-actions button,.secondary{border:1px solid #30333a;border-radius:9px;background:#151515;padding:8px 11px;font-size:12px}.top-actions button.active{color:var(--mint);border-color:#427668}.work-area{min-width:0;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:14px 16px}.page{min-width:0;min-height:0;background:var(--panel);border:1px solid #ffffff12;border-radius:15px;overflow:auto;padding:20px}.page[hidden]{display:none}.bottom-nav{display:grid;grid-template-columns:repeat(6,1fr);background:#08090c;border-top:1px solid var(--line);padding:6px max(10px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));z-index:5}.bottom-nav button{border:0;background:none;color:var(--muted);font-size:11px;font-weight:750;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:10px}.bottom-nav button span{font-size:19px}.bottom-nav button.active{color:var(--mint);background:#76edce12}
-    h1,h2,h3,p{margin-top:0}.section-head{margin-bottom:14px}.section-head h1,.section-head h2{font-size:20px;margin:0}.muted{color:var(--muted)}.eyebrow{color:var(--mint);font-size:10px;letter-spacing:.15em;font-weight:850}.card{background:#ffffff05;border:1px solid #ffffff10;border-radius:13px;padding:16px;margin-bottom:13px}.current-title{font-size:24px;font-weight:850;margin:4px 0}.current-sub{color:var(--muted)}.play-controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:16px 0}.play-controls button,.action{border:1px solid var(--line);border-radius:10px;background:#ffffff08;padding:10px 14px;font-weight:750}.play-controls .primary,.action.primary{background:var(--mint);color:#10221d;border-color:var(--mint)}.play-controls .next{color:var(--orange)}.seek-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}.seek-row input,.slider input{width:100%;accent-color:var(--mint)}.controller-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}.slider{padding:9px 0}.slider label{display:flex;justify-content:space-between;font-size:12px;font-weight:700}.slider output{color:var(--mint)}.button-row{display:flex;gap:8px;flex-wrap:wrap}.song-list,.queue-list,.history-list,.library-list{display:grid;gap:8px;overflow:auto}.song-row,.queue-row{background:#ffffff05;border:1px solid #ffffff0e;border-radius:11px;padding:11px}.song-info{min-width:0}.song-title{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.song-sub{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.song-actions{display:flex;gap:5px;flex-shrink:0}.small{border:1px solid var(--line);border-radius:8px;background:#ffffff08;padding:7px 9px;font-size:11px;font-weight:750}.small.add{color:var(--mint)}.small.remove{color:var(--red)}.search-tools{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-bottom:10px}.search-tools input,.search-tools select,.settings input,.settings select,.manual textarea{min-width:0;border:1px solid var(--line);border-radius:9px;background:#10151e;color:var(--text);padding:10px}.mode-tabs,.filter-chips,.keyboard{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.mode-tabs button,.chip,.key{border:1px solid var(--line);background:#ffffff06;border-radius:9px;padding:8px 10px;font-size:11px}.mode-tabs button.active,.chip.active{color:var(--mint);border-color:#76edce88}.keyboard{max-width:420px}.key{min-width:38px}.paging{display:flex;align-items:center;justify-content:space-between;margin-top:10px}.status-note{font-size:12px;color:var(--muted)}.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}.settings-tabs{justify-content:flex-start;flex-direction:column;align-items:stretch;min-width:185px}.settings-tabs button{text-align:left;border:1px solid transparent;background:none;color:var(--muted);padding:10px;border-radius:9px}.settings-tabs button.active{color:var(--mint);background:#76edce10;border-color:#76edce30}.setting-layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px}.setting-row{padding:13px 0;border-bottom:1px solid #ffffff10}.setting-row label{font-weight:750}.setting-row p{font-size:11px;color:var(--muted);margin:4px 0}.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 8px;color:var(--muted);font-size:10px}.table-wrap{overflow:auto}    .library-table{border-collapse:collapse;width:100%;table-layout:fixed;min-width:0;font-size:12px}.library-table th,.library-table td{text-align:left;padding:7px 5px;border-bottom:1px solid #ffffff12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.library-table th{color:var(--muted);position:sticky;top:0;background:var(--panel)}.library-table th:nth-child(1){width:8%}.library-table th:nth-child(2){width:15%}.library-table th:nth-child(3){width:10%}.library-table th:nth-child(4){width:10%}.library-table th:nth-child(5){width:5%}.library-table th:nth-child(6){width:6%}.library-table th:nth-child(7){width:7%}.library-table th:nth-child(8){width:12%}.library-table th:nth-child(9){width:9%}.library-table th:nth-child(10){width:18%}.library-table td:last-child{white-space:normal}.marquee{display:block;overflow:hidden;white-space:nowrap}.marquee span{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}.marquee:hover span{max-width:none;overflow:visible;text-overflow:clip;animation:marquee 7s linear infinite}@keyframes marquee{to{transform:translateX(min(0px,calc(100% - 100%)))}}.library-toolbar{margin-bottom:11px}.ingest{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.ingest input{min-width:0;background:#10151e;border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--text)}.progress{height:8px;background:#080b11;border-radius:99px;overflow:hidden;margin:8px 0}.progress i{display:block;height:100%;width:0;background:var(--mint);transition:width .2s}.message{padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:12px}.overlay{position:fixed;inset:0;background:#000b;z-index:20;display:grid;place-items:center;padding:18px}.modal{width:min(540px,100%);max-height:90vh;overflow:auto;background:#171d27;border:1px solid var(--line);border-radius:16px;padding:18px}.modal-head{display:flex;justify-content:space-between;align-items:center}.qr{display:block;width:220px;height:220px;margin:14px auto;background:white;border-radius:8px}.manual-layout{display:grid;grid-template-columns:minmax(250px,.85fr) minmax(0,1.15fr);gap:12px}.manual video{width:100%;background:#000;border-radius:10px}.tokens{display:flex;flex-wrap:wrap;gap:5px}.token{display:flex;flex-direction:column;gap:5px;background:#222d3c;border:1px solid #60718a;border-radius:7px;padding:7px;font-size:11px}.token input{width:90px;background:#111;color:var(--text);border:1px solid var(--line);padding:4px}.wave{width:100%;height:110px;background:#0b1017;border-radius:8px}.toast{position:fixed;right:18px;top:72px;z-index:30;padding:12px 16px;border-radius:10px;background:#203c34;color:var(--mint);display:none}.toast.show{display:block}
-    @media(max-width:900px){.work-area{grid-template-columns:1fr}.controller-grid,.split,.manual-layout{grid-template-columns:1fr}.setting-layout{grid-template-columns:1fr}.settings-tabs{flex-direction:row;overflow:auto}.topbar{padding:0 10px;gap:8px}.top-actions button{padding:7px;font-size:10px}.system-status{font-size:10px}.page{padding:13px}.app{grid-template-rows:55px minmax(0,1fr) 68px}}@media(max-width:520px){.brand{font-size:11px}#playerStatus{display:none}.system-status{max-width:90px;overflow:hidden}.bottom-nav button{font-size:9px}.bottom-nav button span{font-size:16px}.song-actions{flex-direction:column}.search-tools{grid-template-columns:1fr auto}.search-tools select:last-child{grid-column:1/-1}.section-head h1,.section-head h2{font-size:17px}}
-  </style>
-  <style>
-    .overlay[hidden]{display:none}.library-table th,.library-table td{max-width:0}.library-table td:last-child{max-width:none}.library-table td:last-child .small{padding:5px 6px;margin:2px;font-size:10px}.marquee:hover span{animation:catalogMarquee 7s linear infinite}.marquee:not(.overflowing):hover span{animation:none!important;transform:none}@keyframes catalogMarquee{to{transform:translateX(-50%)}}@media(max-width:1200px){.library-table th:nth-child(1),.library-table td:nth-child(1),.library-table th:nth-child(4),.library-table td:nth-child(4),.library-table th:nth-child(5),.library-table td:nth-child(5),.library-table th:nth-child(8),.library-table td:nth-child(8){display:none}.library-table th:nth-child(2){width:20%}.library-table th:nth-child(10){width:23%}}@media(max-width:900px){.topbar{padding:0 10px;gap:8px}.top-actions button{padding:7px;font-size:10px}.system-status{font-size:10px}.library-table th:nth-child(7),.library-table td:nth-child(7){display:none}.library-table th:nth-child(2){width:25%}.library-table th:nth-child(10){width:28%}}
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel2: #21262d;
+      --line: #30363d;
+      --text: #f0f6fc;
+      --muted: #8b949e;
+      --mint: #58a6ff;
+      --mint-glow: #388bfd;
+      --cyan: #39c5bb;
+      --blue: #58a6ff;
+      --red: #f85149;
+      --orange: #f0883e;
+      --green: #3fb950;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; color: inherit; touch-action: manipulation; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Main App Layout */
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-rows: 58px minmax(0, 1fr) 74px;
+      overflow: hidden;
+    }
+
+    /* Topbar */
+    .topbar {
+      background: #090d13;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      z-index: 5;
+    }
+    .brand {
+      font-weight: 900;
+      letter-spacing: .08em;
+      white-space: nowrap;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 15px;
+    }
+    .brand i { font-style: normal; color: var(--cyan); }
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+    }
+    .offline .dot { background: var(--orange); }
+    .spacer { flex: 1; }
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .top-actions button, .secondary {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #1f242c;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .top-actions button:hover, .secondary:hover {
+      background: #2a313c;
+      border-color: #485464;
+    }
+    .top-actions button.active {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: rgba(57, 197, 187, 0.12);
+    }
+
+    /* 2-Column Work Area */
+    .work-area {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 370px minmax(0, 1fr);
+      gap: 14px;
+      padding: 12px 16px;
+      overflow: hidden;
+      transition: grid-template-columns 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .work-area.hide-preview {
+      grid-template-columns: 0px minmax(0, 1fr);
+      gap: 0;
+      padding-left: 12px;
+    }
+    .work-area.hide-preview .preview-panel {
+      display: none;
+    }
+
+    /* Left 35% Live Preview Panel */
+    .preview-panel {
+      min-width: 0;
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .preview-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(248, 81, 73, 0.16);
+      color: #ff7b72;
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      border-radius: 99px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ff7b72;
+      animation: liveBlink 1.4s infinite ease-in-out;
+    }
+    @keyframes liveBlink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.85); } }
+    .preview-screen-badge {
+      font-size: 11px;
+      color: var(--muted);
+      background: #ffffff0a;
+      padding: 3px 9px;
+      border-radius: 99px;
+      border: 1px solid var(--line);
+    }
+    .preview-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preview-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    .preview-subtitles {
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      right: 10px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 15px;
+      color: #fff;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.8);
+      pointer-events: none;
+      min-height: 24px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preview-idle-hud {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #1b2432 0%, #090c12 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .preview-idle-hud.hidden { display: none; }
+    .idle-brand {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      color: #fff;
+    }
+    .idle-brand i { color: var(--cyan); font-style: normal; }
+    .idle-text { font-size: 12px; color: var(--muted); }
+
+    .preview-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .preview-song-title {
+      font-size: 16px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preview-song-artist {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preview-quick-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .preview-quick-controls button {
+      min-height: 38px;
+      padding: 6px 4px;
+      font-size: 12px;
+      font-weight: 750;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #1f242c;
+      text-align: center;
+    }
+    .preview-quick-controls button.primary {
+      background: var(--cyan);
+      color: #071918;
+      border-color: var(--cyan);
+    }
+    .preview-quick-controls button.next {
+      color: var(--orange);
+    }
+    .preview-key-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 6px;
+    }
+    .preview-key-grid button {
+      min-height: 36px;
+      font-size: 12px;
+      font-weight: 750;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #1f242c;
+    }
+    .preview-progress {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .preview-bar-track {
+      height: 6px;
+      background: #ffffff14;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .preview-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--cyan);
+      border-radius: 99px;
+      transition: width 0.25s linear;
+    }
+
+    /* Right 65% Main Workspace */
+    .main-panel {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .page {
+      flex: 1;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .page[hidden] { display: none; }
+
+    /* Page 1: Single Screen Singing Mode */
+    .page-fullscreen {
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .sing-canvas-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sing-canvas-container video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    .fs-top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 24px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 5;
+      transition: opacity 0.35s ease;
+    }
+    .fs-song-info {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .fs-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+    .fs-artist {
+      font-size: 15px;
+      color: var(--muted);
+    }
+    .fs-lyrics-display {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: 96px;
+      pointer-events: none;
+      text-align: center;
+    }
+    .fs-line {
+      margin: 8px 16px;
+      font-weight: 850;
+      letter-spacing: 0.05em;
+      transition: all 0.2s ease;
+    }
+    .fs-line.current {
+      font-size: clamp(24px, 3.8vw, 42px);
+      color: #fff;
+      text-shadow: 0 0 18px rgba(57, 197, 187, 0.7), 0 3px 8px #000;
+    }
+    .fs-line.next {
+      font-size: clamp(17px, 2.6vw, 26px);
+      color: rgba(255, 255, 255, 0.45);
+      text-shadow: 0 2px 6px #000;
+    }
+    .fs-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 24px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      z-index: 5;
+      transition: opacity 0.35s ease;
+    }
+    .fs-hide-hud .fs-top-bar, .fs-hide-hud .fs-bottom-bar {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Bottom Dock Navigation */
+    .bottom-nav {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      background: #090d13;
+      border-top: 1px solid var(--line);
+      padding: 6px max(10px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+      z-index: 5;
+    }
+    .bottom-nav button {
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border-radius: 10px;
+      min-height: 58px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .bottom-nav button span { font-size: 20px; }
+    .bottom-nav button:hover { background: rgba(255,255,255,0.04); }
+    .bottom-nav button.active {
+      color: var(--cyan);
+      background: rgba(57, 197, 187, 0.12);
+    }
+
+    /* Headings & Cards */
+    h1, h2, h3, p { margin-top: 0; }
+    .section-head { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .section-head h1, .section-head h2 { font-size: 20px; margin: 0; }
+    .muted { color: var(--muted); }
+    .eyebrow { color: var(--cyan); font-size: 11px; letter-spacing: .15em; font-weight: 850; }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 13px; padding: 16px; margin-bottom: 14px; }
+    .current-title { font-size: 24px; font-weight: 850; margin: 4px 0; }
+    .current-sub { color: var(--muted); }
+
+    /* Touch-Friendly Playback Controls (min 48px) */
+    .play-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+    .play-controls button, .action {
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #1f242c;
+      padding: 12px 18px;
+      min-height: 48px;
+      font-size: 14px;
+      font-weight: 750;
+      transition: background 0.15s, transform 0.05s;
+    }
+    .play-controls button:active, .action:active { transform: scale(0.98); }
+    .play-controls .primary, .action.primary {
+      background: var(--cyan);
+      color: #071918;
+      border-color: var(--cyan);
+      font-size: 15px;
+    }
+    .play-controls .next { color: var(--orange); }
+    .seek-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+    .seek-row input, .slider input { width: 100%; accent-color: var(--cyan); cursor: pointer; }
+    .controller-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; }
+    .slider { padding: 9px 0; }
+    .slider label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    .slider output { color: var(--cyan); font-weight: 800; }
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Lists & Tables */
+    .song-list, .queue-list, .history-list, .library-list { display: grid; gap: 8px; overflow: auto; }
+    .song-row, .queue-row { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 11px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .song-info { min-width: 0; flex: 1; }
+    .song-title { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-sub { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .small {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #1f242c;
+      padding: 9px 12px;
+      min-height: 38px;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .small.add { color: var(--cyan); border-color: rgba(57, 197, 187, 0.4); }
+    .small.remove { color: var(--red); }
+
+    /* Procedural Avatar & Badges */
+    .song-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 17px;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .badge-fire {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #ff9248;
+      background: rgba(255,146,72,0.14);
+      border: 1px solid rgba(255,146,72,0.35);
+      border-radius: 99px;
+      padding: 1px 7px;
+      margin-left: 6px;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--cyan);
+      background: rgba(57,197,187,0.12);
+      border: 1px solid rgba(57,197,187,0.3);
+      border-radius: 99px;
+      padding: 1px 6px;
+      margin-left: 6px;
+    }
+    /* Explore Section */
+    .explore-container {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      margin-bottom: 20px;
+    }
+    .explore-block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .explore-title {
+      font-size: 16px;
+      font-weight: 850;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .trending-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 10px;
+    }
+    .trending-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .trending-card:hover {
+      background: rgba(255,255,255,0.08);
+      transform: translateY(-2px);
+    }
+    .trending-rank {
+      font-size: 16px;
+      font-weight: 900;
+      width: 26px;
+      text-align: center;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .trending-card:nth-child(1) .trending-rank { color: #ffd700; font-size: 19px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    .trending-card:nth-child(2) .trending-rank { color: #e0e0e0; font-size: 19px; }
+    .trending-card:nth-child(3) .trending-rank { color: #cd7f32; font-size: 19px; }
+    .trending-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .trending-title {
+      font-weight: 800;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .trending-artist {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .trending-actions {
+      display: flex;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .artists-scroll {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+    }
+    .artist-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      flex-shrink: 0;
+      width: 78px;
+      text-align: center;
+      transition: transform 0.15s;
+    }
+    .artist-chip:hover {
+      transform: scale(1.05);
+    }
+    .artist-avatar-lg {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+    }
+    .artist-name {
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .queue-tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .queue-task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 12px;
+    }
+
+    /* Search & Filter Tools */
+    .search-tools { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-bottom: 12px; }
+    .search-tools input, .search-tools select, .settings input, .settings select, .manual textarea {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0d1117;
+      color: var(--text);
+      padding: 11px 14px;
+      font-size: 14px;
+    }
+    .mode-tabs, .filter-chips, .keyboard { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+    .mode-tabs button, .chip, .key {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      border-radius: 9px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .mode-tabs button.active, .chip.active { color: var(--cyan); border-color: var(--cyan); background: rgba(57, 197, 187, 0.12); }
+    .keyboard { max-width: 440px; }
+    .key { min-width: 40px; text-align: center; }
+    .paging { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+    .status-note { font-size: 12px; color: var(--muted); }
+
+    /* Settings Layout */
+    .setting-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 16px; }
+    .settings-tabs { display: flex; flex-direction: column; gap: 6px; }
+    .settings-tabs button {
+      text-align: left;
+      border: 1px solid transparent;
+      background: none;
+      color: var(--muted);
+      padding: 12px 14px;
+      border-radius: 9px;
+      font-weight: 750;
+    }
+    .settings-tabs button.active { color: var(--cyan); background: rgba(57, 197, 187, 0.12); border-color: rgba(57, 197, 187, 0.3); }
+    .setting-row { padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .setting-row label { font-weight: 750; font-size: 14px; }
+    .setting-row p { font-size: 12px; color: var(--muted); margin: 4px 0; }
+    .pill { display: inline-block; border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px; color: var(--muted); font-size: 11px; }
+
+    /* Library Table */
+    .table-wrap { overflow: auto; }
+    .library-table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 0; font-size: 12px; }
+    .library-table th, .library-table td { text-align: left; padding: 9px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .library-table th { color: var(--muted); position: sticky; top: 0; background: var(--panel); }
+    .library-table th:nth-child(1) { width: 4%; }
+    .library-table th:nth-child(2) { width: 8%; }
+    .library-table th:nth-child(3) { width: 15%; }
+    .library-table th:nth-child(4) { width: 11%; }
+    .library-table th:nth-child(5) { width: 9%; }
+    .library-table th:nth-child(6) { width: 5%; }
+    .library-table th:nth-child(7) { width: 6%; }
+    .library-table th:nth-child(8) { width: 6%; }
+    .library-table th:nth-child(9) { width: 10%; }
+    .library-table th:nth-child(10) { width: 8%; }
+    .library-table th:nth-child(11) { width: 18%; }
+    .library-table td:last-child { white-space: normal; }
+    .marquee { display: block; overflow: hidden; white-space: nowrap; }
+    .marquee span { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+    .marquee:hover span { max-width: none; overflow: visible; text-overflow: clip; animation: marquee 7s linear infinite; }
+    @keyframes marquee { to { transform: translateX(min(0px, calc(100% - 100%))); } }
+    .library-toolbar { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+    /* Health Card & Metrics */
+    .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .health-stat { background: #0d1117; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+    .health-label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+    .health-stat strong { font-size: 1.15rem; color: var(--cyan); }
+
+    /* Drop Zone */
+    .drop-zone { border: 2px dashed var(--line); border-radius: 12px; padding: 24px; text-align: center; background: rgba(13, 17, 23, 0.6); transition: border-color .2s, background-color .2s; }
+    .drop-zone.dragover { border-color: var(--cyan); background: rgba(57, 197, 187, 0.08); }
+
+    /* Bulk Action Toolbar */
+    .bulk-bar { display: none; align-items: center; justify-content: space-between; background: #1f2733; border: 1px solid var(--cyan); border-radius: 10px; padding: 10px 16px; margin-bottom: 12px; animation: slideDown 0.2s ease; }
+    .bulk-bar.active { display: flex; }
+    @keyframes slideDown { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Library Card Grid */
+    .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .lib-card { background: #161b22; border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.15s, border-color 0.15s; position: relative; }
+    .lib-card:hover { border-color: rgba(57, 197, 187, 0.4); transform: translateY(-2px); }
+    .lib-card-head { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+    .lib-card-avatar { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 18px; flex-shrink: 0; }
+    .lib-card-title { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lib-card-artist { font-size: 12px; color: var(--muted); }
+    .lib-card-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .lib-badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: #21262d; border: 1px solid var(--line); color: var(--muted); }
+    .lib-badge.active { border-color: rgba(57,197,187,0.4); color: var(--cyan); }
+    .lib-card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; }
+
+    /* Ingest & Progress */
+    .ingest { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .ingest input { min-width: 0; background: #0d1117; border: 1px solid var(--line); border-radius: 9px; padding: 11px 14px; color: var(--text); }
+    .progress { height: 8px; background: #080b11; border-radius: 99px; overflow: hidden; margin: 8px 0; }
+    .progress i { display: block; height: 100%; width: 0; background: var(--cyan); transition: width .2s; }
+    .message { padding: 14px; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); font-size: 13px; text-align: center; }
+
+    /* Modal & Overlay */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); z-index: 20; display: grid; place-items: center; padding: 18px; }
+    .overlay[hidden] { display: none; }
+    .modal { width: min(560px, 100%); max-height: 90vh; overflow: auto; background: #161b22; border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .qr { display: block; width: 220px; height: 220px; margin: 16px auto; background: white; border-radius: 8px; }
+
+    /* Manual Studio */
+    .manual-layout { display: grid; grid-template-columns: minmax(260px, .85fr) minmax(0, 1.15fr); gap: 14px; }
+    .manual video { width: 100%; background: #000; border-radius: 10px; }
+    .tokens { display: flex; flex-wrap: wrap; gap: 6px; }
+    .token { display: flex; flex-direction: column; gap: 5px; background: #21262d; border: 1px solid #485464; border-radius: 8px; padding: 8px; font-size: 11px; }
+    .token input { width: 90px; background: #0d1117; color: var(--text); border: 1px solid var(--line); padding: 5px; border-radius: 6px; }
+    .wave { width: 100%; height: 110px; background: #0b1017; border-radius: 8px; }
+
+    /* Toast */
+    .toast { position: fixed; right: 20px; top: 72px; z-index: 30; padding: 12px 18px; border-radius: 10px; background: #1f3733; color: var(--cyan); border: 1px solid rgba(57, 197, 187, 0.4); box-shadow: 0 8px 24px rgba(0,0,0,0.5); display: none; font-weight: 700; }
+    .toast.show { display: block; }
+
+    /* Responsive Queries */
+    @media (max-width: 1024px) {
+      .work-area { grid-template-columns: 1fr; }
+      .preview-panel { display: none; }
+      .controller-grid, .split, .manual-layout { grid-template-columns: 1fr; }
+      .setting-layout { grid-template-columns: 1fr; }
+      .settings-tabs { flex-direction: row; overflow: auto; }
+      .topbar { padding: 0 12px; gap: 10px; }
+    }
+    @media (max-width: 600px) {
+      .brand { font-size: 13px; }
+      #playerStatus { display: none; }
+      .system-status { max-width: 95px; overflow: hidden; }
+      .bottom-nav button { font-size: 10px; min-height: 52px; }
+      .bottom-nav button span { font-size: 18px; }
+      .song-actions { flex-direction: column; }
+      .search-tools { grid-template-columns: 1fr auto; }
+      .search-tools select:last-child { grid-column: 1/-1; }
+      .section-head h1, .section-head h2 { font-size: 17px; }
+    }
   </style>
 </head>
 <body>
   <div class="app" id="app">
+    <!-- Topbar -->
     <header class="topbar">
       <a class="brand" href="/">🎤 OPEN<i>KTV</i> MASTER</a>
       <span id="networkStatus" class="system-status"><i class="dot"></i><span>區域網路連線中</span></span>
       <span id="clientStatus" class="system-status"><i class="dot"></i><span>等待播放服務</span></span>
       <span class="spacer"></span>
       <div class="top-actions">
+        <button id="togglePreview" class="top-btn" title="顯示或隱藏即時預覽面板">👁️ 預覽: 開</button>
         <button id="qrOpen">📱 QR Code</button>
+        <button id="playerToggleFullscreen" title="切換電視播放器全螢幕">🖥️ 全螢幕</button>
         <button id="playerOpen">🖥️ 開啟播放器</button>
+        <button id="playerClose" class="remove" style="display:none">❌ 關閉播放器</button>
+        <span id="displayCountBadge" class="pill">偵測螢幕中…</span>
         <span id="playerStatus" class="system-status">App 內建播放器</span>
       </div>
     </header>
+
+    <!-- 2-Column Work Area -->
     <main class="work-area" id="workArea">
-      <section class="page" id="view-controller" data-view="controller">
-        <div class="section-head"><div><div class="eyebrow">MASTER CONTROLLER</div><h1>🎛️ 控制器主控台</h1></div><span id="serviceBadge" class="pill">Python 處理服務檢查中</span></div>
-        <div class="controller-grid">
-          <article class="card"><div class="eyebrow">NOW PLAYING</div><div class="current-title" id="currentTitle">尚未點歌</div><div class="current-sub" id="currentSub">選一首歌開始今晚的演出</div>
-            <div class="seek-row"><span id="elapsed">0:00</span><input id="seek" type="range" min="0" max="100" value="0" step=".1" aria-label="播放位置"><span id="duration">0:00</span></div>
-            <div class="play-controls"><button id="replay" title="重新開始">⏮ 重新開始</button><button id="togglePlay" class="primary">▶ 播放</button><button id="next" class="next">⏭ 切歌</button><button id="audioMode">🎤 原唱模式</button></div>
-            <p class="status-note" id="nowQueue">目前佇列 0 首</p>
-          </article>
-          <article class="card"><div class="eyebrow">SOUND CONTROL</div>
-            <div class="slider"><label for="music"><span>🎵 歌曲音量</span><output id="musicOut">80%</output></label><input id="music" type="range" min="0" max="1" step=".05" value=".8"></div>
-            <div class="button-row"><button class="secondary" disabled title="目前沒有可用升降調音訊處理器">➖ 降 Key</button><span class="pill">Key 0 · 尚未啟用</span><button class="secondary" disabled>➕ 升 Key</button></div>
-            <p class="status-note">此處只控制歌曲音量與原唱／伴奏音軌；播放器不擷取麥克風，也不提供即時混響。</p>
-          </article>
+      <!-- Left 35% Live Preview Panel -->
+      <aside class="preview-panel" id="previewPanel">
+        <div class="preview-header">
+          <span class="preview-live-badge"><i class="live-dot"></i>LIVE 鏡像預覽</span>
+          <span class="preview-screen-badge" id="previewDisplayTarget">單螢幕模式</span>
         </div>
-        <article class="card"><div class="section-head"><h2>現場氣氛音效</h2><span class="pill">尚未設定音效素材</span></div><div class="button-row"><button class="secondary" disabled>👏 掌聲</button><button class="secondary" disabled>🎉 歡呼</button><button class="secondary" disabled>🥁 綜藝音效</button></div></article>
-      </section>
-      <section class="page" id="view-queue" data-view="queue" hidden>
-        <div class="section-head"><div><div class="eyebrow">PLAYLIST</div><h1>📋 管理佇列</h1></div><div class="history-switch"><button class="small active" data-queue-tab="upcoming">🎵 待播清單</button><button class="small" data-queue-tab="history">🕒 已播歷史</button></div></div>
-        <div id="upcomingPane"><div class="card"><div class="library-toolbar"><span id="queueSummary">待播 0 首</span><div class="button-row"><button id="shuffleQueue" class="small">🔀 隨機打亂</button><button id="clearQueue" class="small remove">清空待播</button></div></div><div id="queueList" class="queue-list"></div></div></div>
-        <div id="historyPane" hidden><div id="historyList" class="history-list"></div></div>
-      </section>
-      <section class="page" id="view-search" data-view="search" hidden>
-        <div class="section-head"><div><div class="eyebrow">SONG BROWSER</div><h1>🔍 點播歌曲</h1></div><span id="resultCount" class="pill">曲庫載入中</span></div>
-        <div class="mode-tabs" id="searchModes"><button class="active" data-mode="keyword">🔤 關鍵字</button><button data-mode="zhuyin">ㄅ 注音首字</button><button data-mode="pinyin">🅰️ 拼音首字</button><button data-mode="lyrics">📝 歌詞片段</button><button data-mode="artist">🧑‍🎤 歌手分類</button></div>
-        <div class="search-tools"><input id="query" type="search" placeholder="搜尋歌名、歌手、拼音、注音或歌詞" autocomplete="off" aria-label="搜尋曲庫"><button id="voiceSearch" class="small">🎤 語音</button><button id="clearSearch" class="small">✖ 清除</button></div>
-        <div class="filter-chips" id="languageFilters"><button class="chip active" data-language="">全部語種</button><button class="chip" data-language="國語">華語流行</button><button class="chip" data-language="台語">台語經典</button><button class="chip" data-language="粵語">粵語</button><button class="chip" data-language="韓語">K-POP</button><button class="chip" data-language="英語">英語流行</button><button class="chip" data-language="日語">日本動漫</button><select id="sortSongs" class="small" aria-label="排序"><option value="relevance">相關度排序</option><option value="title">歌名排序</option><option value="artist">歌手排序</option><option value="duration">時長排序</option></select></div>
-        <div id="keyboard" class="keyboard" hidden></div>
-        <div id="searchResults" class="song-list"><div class="message">正在載入曲庫…</div></div>
-        <div class="paging"><span id="pageLabel" class="status-note"></span><button id="loadMoreSongs" class="action">載入更多</button></div>
-      </section>
-      <section class="page" id="view-settings" data-view="settings" hidden>
-        <div class="section-head"><div><div class="eyebrow">SYSTEM PREFERENCES</div><h1>⚙️ 系統設定</h1></div><span class="pill">未支援的設定會標示為停用</span></div>
-        <div class="setting-layout"><nav class="settings-tabs" aria-label="設定分類"><button class="active" data-setting="output">🖥️ 播放器輸出</button><button data-setting="processing">📥 下載與曲庫處理</button><button data-setting="network">🌐 網路與遙控端</button></nav>
-          <div class="card settings">
-            <section data-setting-pane="output"><h2>播放器輸出設定</h2><div class="setting-row"><label>App 內建播放器</label><p>播放視窗使用內建影片與 KTV 歌詞；關閉視窗後可從中控重新開啟。</p><button id="settingsPlayerOpen" class="action">重新開啟播放器</button></div><div class="setting-row"><label><input id="settingQr" type="checkbox" checked> 電視端顯示點歌 QR 提示</label><p>播放器 HUD 是否顯示 QR 由播放器現有功能決定。</p></div></section>
-            <section data-setting-pane="processing" hidden><h2>下載與曲庫處理</h2><div class="setting-row"><label><input id="enableIngest" type="checkbox" checked> 顯示新增歌曲面板</label><p>關閉後會隱藏曲庫頁的入庫區域，不會停止正在處理的工作。</p></div><div class="setting-row"><label>處理後端</label><p>Python 僅提供處理 API；處理模式、模型與資料路徑沿用既有環境設定，不在此開啟 Flask 管理頁。</p></div><div class="setting-row"><label>遠端處理伺服器</label><p>跨機工作派送尚無協定，設定入口保留停用。</p><input disabled placeholder="未實作遠端工作派送"></div><div class="setting-row"><label>曲庫實體路徑</label><p id="catalogPath">由現有 KTV_SONGS_DIR 設定決定。</p></div></section>
-            <section data-setting-pane="network" hidden><h2>網路與遙控端設定</h2><div class="setting-row"><label>此裝置可連線網址</label><p id="remoteAddress">讀取目前瀏覽器網址…</p><button id="copyRemote" class="small">複製遙控網址</button></div><div class="setting-row"><label>Socket.IO 服務</label><p id="socketStatus">連線中</p></div><div class="setting-row"><label><input id="allowRemoteNext" type="checkbox" checked> 遙控端允許切歌</label><p>目前既有伺服器控制權限設定不由此 UI 改寫；此選項僅作本機偏好提示。</p></div><div class="setting-row"><label>網卡綁定與連接埠</label><p>中控與播放器頁僅限本機存取；區域網路可開啟遙控器，連接埠由 KTV_NODE_PORT 設定。</p></div></section>
+        <div class="preview-viewport">
+          <video id="previewVideo" muted playsinline preload="auto"></video>
+          <div id="previewSubtitleBox" class="preview-subtitles"></div>
+          <div id="previewIdleHud" class="preview-idle-hud">
+            <div class="idle-brand">OPEN<i>KTV</i></div>
+            <div class="idle-text" id="previewIdleText">大螢幕播放器就緒 · 等待點播</div>
           </div>
         </div>
+        <div class="preview-meta">
+          <div class="preview-song-title" id="previewTitle">尚未點歌</div>
+          <div class="preview-song-artist" id="previewArtist">選一首歌開始今晚的演出</div>
+        </div>
+        <div class="preview-quick-controls">
+          <button id="prevReplay" title="重新開始">⏮</button>
+          <button id="prevTogglePlay" class="primary" title="播放 / 暫停">▶</button>
+          <button id="prevNext" class="next" title="切歌">⏭</button>
+          <button id="prevAudioMode" title="原唱 / 伴唱">🎤 原唱</button>
+        </div>
+        <div class="preview-key-grid">
+          <button id="prevKeyDown" title="降半音">➖ Key</button>
+          <button id="prevKeyReset" class="pill" title="重置為原調">Key 0</button>
+          <button id="prevKeyUp" title="升半音">➕ Key</button>
+        </div>
+        <div class="preview-progress">
+          <div class="seek-row">
+            <span id="prevElapsed">0:00</span>
+            <div class="preview-bar-track"><div id="previewBarFill" class="preview-bar-fill"></div></div>
+            <span id="prevDuration">0:00</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right 65% Main Panel -->
+      <section class="main-panel" id="mainPanel">
+        <!-- Page 1: Single Screen Laptop Singing Mode -->
+        <section class="page page-fullscreen" id="view-fullscreen" data-view="fullscreen" hidden>
+          <div class="sing-canvas-container" id="singContainer">
+            <video id="fsVideo" muted playsinline preload="auto"></video>
+            <div class="fs-top-bar" id="fsTopBar">
+              <div class="fs-song-info">
+                <span class="fs-title" id="fsTitle">OPENKTV</span>
+                <span class="fs-artist" id="fsArtist">筆電歡唱模式</span>
+              </div>
+              <div><button id="fsExit" class="small">✕ 返回主控台 (ESC)</button></div>
+            </div>
+            <div class="fs-lyrics-display" id="fsLyricsDisplay">
+              <div class="fs-line current" id="fsLineCurrent">等待點播歌曲…</div>
+              <div class="fs-line next" id="fsLineNext"></div>
+            </div>
+            <div class="fs-bottom-bar" id="fsBottomBar">
+              <button id="fsReplay" class="action">⏮ 重新開始</button>
+              <button id="fsTogglePlay" class="action primary">▶ 播放</button>
+              <button id="fsNext" class="action next">⏭ 切歌</button>
+              <button id="fsAudioMode" class="action">🎤 原唱模式</button>
+              <button id="fsKeyDown" class="action">➖ Key</button>
+              <span id="fsKeyBadge" class="pill" style="font-size:13px;padding:8px 14px">Key 0</span>
+              <button id="fsKeyUp" class="action">➕ Key</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Page 2: Master Controller -->
+        <section class="page" id="view-controller" data-view="controller">
+          <div class="section-head">
+            <div><div class="eyebrow">MASTER CONTROLLER</div><h1>🎛️ 控制器主控台</h1></div>
+            <span id="serviceBadge" class="pill">Python 處理服務檢查中</span>
+          </div>
+          <div class="controller-grid">
+            <article class="card">
+              <div class="eyebrow">NOW PLAYING</div>
+              <div class="current-title" id="currentTitle">尚未點歌</div>
+              <div class="current-sub" id="currentSub">選一首歌開始今晚的演出</div>
+              <div class="seek-row">
+                <span id="elapsed">0:00</span>
+                <input id="seek" type="range" min="0" max="100" value="0" step=".1" aria-label="播放位置">
+                <span id="duration">0:00</span>
+              </div>
+              <div class="play-controls">
+                <button id="replay" title="重新開始">⏮ 重新開始</button>
+                <button id="togglePlay" class="primary">▶ 播放</button>
+                <button id="next" class="next">⏭ 切歌</button>
+                <button id="audioMode">🎤 原唱模式</button>
+              </div>
+              <p class="status-note" id="nowQueue">目前佇列 0 首</p>
+            </article>
+            <article class="card">
+              <div class="eyebrow">SOUND CONTROL</div>
+              <div class="slider">
+                <label for="music"><span>🎵 歌曲音量</span><output id="musicOut">80%</output></label>
+                <input id="music" type="range" min="0" max="1" step=".05" value=".8">
+              </div>
+              <div class="button-row">
+                <button id="keyPitchDown" class="secondary" title="降低半音">➖ 降 Key</button>
+                <button id="keyPitchReset" class="pill" style="cursor:pointer" title="點擊重置原調">Key 0</button>
+                <button id="keyPitchUp" class="secondary" title="升高半音">➕ 升 Key</button>
+              </div>
+              <p class="status-note" style="margin-top:10px">此處控制歌曲音量、升降調（-6 ~ +6）與原唱／伴奏音軌切換。</p>
+            </article>
+          </div>
+          <article class="card">
+            <div class="section-head"><h2>現場氣氛音效</h2><span class="pill" style="color:var(--cyan)">大螢幕音響混音</span></div>
+            <div class="button-row">
+              <button class="secondary" data-sfx="applause">👏 掌聲</button>
+              <button class="secondary" data-sfx="cheer">🎉 歡呼</button>
+              <button class="secondary" data-sfx="laughter">🥁 綜藝笑點</button>
+              <button class="secondary" data-sfx="drum">🎺 現場音效</button>
+            </div>
+          </article>
+        </section>
+
+        <!-- Page 3: Queue Management -->
+        <section class="page" id="view-queue" data-view="queue" hidden>
+          <div class="section-head">
+            <div><div class="eyebrow">PLAYLIST</div><h1>📋 管理佇列</h1></div>
+            <div class="history-switch">
+              <button class="small active" data-queue-tab="upcoming">🎵 待播清單</button>
+              <button class="small" data-queue-tab="history">🕒 已播歷史</button>
+            </div>
+          </div>
+          <div id="upcomingPane">
+            <div class="card">
+              <div class="library-toolbar">
+                <span id="queueSummary">待播 0 首</span>
+                <div class="button-row">
+                  <button id="shuffleQueue" class="small">🔀 隨機打亂</button>
+                  <button id="clearQueue" class="small remove">清空待播</button>
+                </div>
+              </div>
+              <div id="queueList" class="queue-list"></div>
+            </div>
+          </div>
+          <div id="historyPane" hidden><div id="historyList" class="history-list"></div></div>
+        </section>
+
+        <!-- Page 4: Song Browser & Search -->
+        <section class="page" id="view-search" data-view="search" hidden>
+          <div class="section-head">
+            <div><div class="eyebrow">SONG BROWSER</div><h1>🔍 點播歌曲</h1></div>
+            <span id="resultCount" class="pill">曲庫載入中</span>
+          </div>
+          <div class="mode-tabs" id="searchModes">
+            <button class="active" data-mode="keyword">🔤 關鍵字</button>
+            <button data-mode="zhuyin">ㄅ 注音首字</button>
+            <button data-mode="pinyin">🅰️ 拼音首字</button>
+            <button data-mode="lyrics">📝 歌詞片段</button>
+            <button data-mode="artist">🧑‍🎤 歌手分類</button>
+          </div>
+          <div class="search-tools">
+            <input id="query" type="search" placeholder="搜尋歌名、歌手、拼音、注音或歌詞" autocomplete="off" aria-label="搜尋曲庫">
+            <button id="voiceSearch" class="small">🎤 語音</button>
+            <button id="clearSearch" class="small">✖ 清除</button>
+          </div>
+          <div class="filter-chips" id="languageFilters">
+            <button class="chip active" data-language="">全部語種</button>
+            <button class="chip" data-language="國語">華語流行</button>
+            <button class="chip" data-language="台語">台語經典</button>
+            <button class="chip" data-language="粵語">粵語</button>
+            <button class="chip" data-language="韓語">K-POP</button>
+            <button class="chip" data-language="英語">英語流行</button>
+            <button class="chip" data-language="日語">日本動漫</button>
+            <select id="sortSongs" class="small" aria-label="排序">
+              <option value="relevance">相關度排序</option>
+              <option value="trending">🔥 熱門點播排行</option>
+              <option value="newest">🆕 最新入庫</option>
+              <option value="title">歌名排序</option>
+              <option value="artist">歌手排序</option>
+              <option value="duration">時長排序</option>
+            </select>
+          </div>
+          <div id="keyboard" class="keyboard" hidden></div>
+          <div id="searchExplore" class="explore-container">
+            <div class="explore-block">
+              <div class="explore-title">
+                <span>🔥 熱門點播排行</span>
+                <span class="pill" style="font-size:10px">本機歡唱榜</span>
+              </div>
+              <div class="trending-grid" id="trendingGrid">
+                <div class="message">正在載入熱門點播榜…</div>
+              </div>
+            </div>
+            <div class="explore-block">
+              <div class="explore-title">
+                <span>🧑‍🎤 熱門巨星專區</span>
+                <span class="muted" style="font-size:11px">點擊歌手快速找歌</span>
+              </div>
+              <div class="artists-scroll" id="artistsScroll">
+                <div class="message">正在載入歌手清單…</div>
+              </div>
+            </div>
+            <div class="explore-block">
+              <div class="explore-title">
+                <span>🏷️ 推薦語種與分類</span>
+              </div>
+              <div class="filter-chips">
+                <button class="chip" data-quick-lang="國語">華語流行</button>
+                <button class="chip" data-quick-lang="台語">台語經典</button>
+                <button class="chip" data-quick-lang="粵語">粵語金曲</button>
+                <button class="chip" data-quick-lang="英語">西洋排行</button>
+                <button class="chip" data-quick-lang="日語">日本動漫</button>
+                <button class="chip" data-quick-lang="韓語">K-POP</button>
+              </div>
+            </div>
+          </div>
+          <div id="searchResults" class="song-list" hidden><div class="message">正在載入曲庫…</div></div>
+          <div class="paging" id="pagingWrap" hidden><span id="pageLabel" class="status-note"></span><button id="loadMoreSongs" class="action">載入更多</button></div>
+        </section>
+
+        <!-- Page 5: System Settings -->
+        <section class="page" id="view-settings" data-view="settings" hidden>
+          <div class="section-head">
+            <div><div class="eyebrow">SYSTEM PREFERENCES</div><h1>⚙️ 系統設定</h1></div>
+            <span class="pill">未支援的設定會標示為停用</span>
+          </div>
+          <div class="setting-layout">
+            <nav class="settings-tabs" aria-label="設定分類">
+              <button class="active" data-setting="output">🖥️ 播放器與多螢幕</button>
+              <button data-setting="processing">📥 下載與曲庫處理</button>
+              <button data-setting="network">🌐 網路與遙控端</button>
+            </nav>
+            <div class="card settings">
+              <section data-setting-pane="output">
+                <h2>大螢幕播放器設定</h2>
+                <div class="setting-row">
+                  <label>電視播放器視窗控制</label>
+                  <p>關閉播放器後可在此重新開啟，或切換大螢幕全螢幕模式。</p>
+                  <div class="button-row" style="margin-top:8px">
+                    <button id="settingsPlayerOpen" class="action primary">重新開啟播放器</button>
+                    <button id="settingsPlayerFullscreen" class="action">🖥️ 切換全螢幕</button>
+                  </div>
+                </div>
+                <div class="setting-row">
+                  <label><input id="settingQr" type="checkbox" checked> 電視端顯示點歌 QR 提示</label>
+                  <p>播放器右上角 HUD 是否常駐顯示手機掃碼 QR Code。</p>
+                </div>
+                <div class="setting-row">
+                  <label>多螢幕偵測資訊</label>
+                  <p id="settingsDisplayInfo">讀取螢幕資訊中…</p>
+                </div>
+              </section>
+              <section data-setting-pane="processing" hidden>
+                <h2>下載與曲庫處理</h2>
+                <div class="setting-row">
+                  <label><input id="enableIngest" type="checkbox" checked> 顯示新增歌曲面板</label>
+                  <p>關閉後會隱藏曲庫頁的入庫區域，不會停止正在處理的工作。</p>
+                </div>
+                <div class="setting-row">
+                  <label>處理後端</label>
+                  <p>Python 僅提供處理 API；處理模式、模型與資料路徑沿用既有環境設定。</p>
+                </div>
+                <div class="setting-row">
+                  <label>遠端處理伺服器</label>
+                  <p>跨機工作派送尚無協定，設定入口保留停用。</p>
+                  <input disabled placeholder="未實作遠端工作派送">
+                </div>
+                <div class="setting-row">
+                  <label>曲庫實體路徑</label>
+                  <p id="catalogPath">由現有 KTV_SONGS_DIR 設定決定。</p>
+                </div>
+              </section>
+              <section data-setting-pane="network" hidden>
+                <h2>網路與遙控端設定</h2>
+                <div class="setting-row">
+                  <label>此裝置可連線網址</label>
+                  <p id="remoteAddress">讀取目前瀏覽器網址…</p>
+                  <button id="copyRemote" class="small">複製遙控網址</button>
+                </div>
+                <div class="setting-row">
+                  <label>Socket.IO 服務</label>
+                  <p id="socketStatus">連線中</p>
+                </div>
+                <div class="setting-row">
+                  <label><input id="allowRemoteNext" type="checkbox" checked> 遙控端允許切歌</label>
+                  <p>目前既有伺服器控制權限設定不由此 UI 改寫；此選項僅作本機偏好提示。</p>
+                </div>
+                <div class="setting-row">
+                  <label>網卡綁定與連接埠</label>
+                  <p>中控與播放器頁僅限本機存取；區域網路可開啟遙控器，連接埠由 KTV_NODE_PORT 設定。</p>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <!-- Page 6: Catalog Management -->
+        <section class="page" id="view-library" data-view="library" hidden>
+          <div class="section-head">
+            <div><div class="eyebrow">CANONICAL CATALOG</div><h1>🗂️ 管理曲庫</h1></div>
+            <span id="libraryCount" class="pill">0 首</span>
+          </div>
+
+          <!-- Health Audit Card -->
+          <article class="card" id="libraryHealthCard" style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+              <h2 style="margin:0">📊 曲庫資產健康度與磁碟概況</h2>
+              <div class="button-row">
+                <button id="btnRefreshHealth" class="small">🔄 重新整理</button>
+                <button id="btnCleanupOrphans" class="small remove">🧹 一鍵釋放孤兒檔案</button>
+              </div>
+            </div>
+            <div class="health-grid">
+              <div class="health-stat"><span class="health-label">💽 實體磁碟佔用</span><strong id="healthDiskUsage">—</strong></div>
+              <div class="health-stat"><span class="health-label">🎵 曲庫收錄總數</span><strong id="healthTotalSongs">—</strong></div>
+              <div class="health-stat"><span class="health-label">⚠️ 缺伴奏／檔案異常</span><strong id="healthMissingMedia">—</strong></div>
+              <div class="health-stat"><span class="health-label">🧹 可清理孤兒檔案</span><strong id="healthOrphans">—</strong></div>
+            </div>
+            <div id="healthAuditNote" class="status-note" style="margin-top:8px"></div>
+          </article>
+
+          <article class="card" id="ingestCard">
+            <h2>➕ 添加新歌曲至曲庫</h2>
+            <div style="display:flex;gap:8px;margin:8px 0 12px 0">
+              <button id="tabIngestUrl" class="small" style="color:var(--cyan);border-color:var(--cyan)">🌐 YouTube 網址加入</button>
+              <button id="tabIngestLocal" class="small">📁 本機影音／歌詞匯入</button>
+            </div>
+            <div id="paneIngestUrl">
+              <p class="status-note">由本處提交工作並查看排程隊列；影片處理交由 Python API 背景執行。支援同時貼上多個 YouTube 網址（以換行分隔）。</p>
+              <div class="ingest">
+                <textarea id="ingestUrl" rows="2" placeholder="貼上 YouTube 影片網址（支援多個網址換行批次加入）" style="width:100%;background:#0d1117;border:1px solid var(--line);border-radius:9px;padding:10px;color:var(--text);font:inherit"></textarea>
+                <button id="startIngest" class="action primary">🚀 加入隊列</button>
+              </div>
+            </div>
+            <div id="paneIngestLocal" style="display:none">
+              <div id="localDropZone" class="drop-zone">
+                <p style="font-size:1.05rem;margin:0 0 6px 0">📥 拖曳本機影音檔至此，或點擊選擇檔案</p>
+                <span class="status-note">支援 .mp4, .mkv, .mp3, .m4a 及配對之 .lrc 歌詞</span>
+                <input type="file" id="localMediaInput" accept=".mp4,.mkv,.webm,.mp3,.m4a,.wav,.flac" style="display:none">
+                <input type="file" id="localLyricsInput" accept=".lrc" style="display:none">
+                <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+                  <button type="button" id="btnPickMedia" class="small">選擇影音檔</button>
+                  <button type="button" id="btnPickLyrics" class="small">選擇配對歌詞 (選填)</button>
+                </div>
+                <div id="localSelectedInfo" style="margin-top:8px;font-size:0.85rem;color:var(--cyan)"></div>
+                <button type="button" id="btnConfirmUpload" class="action primary" style="margin-top:10px;display:none">🚀 確認匯入曲庫</button>
+              </div>
+            </div>
+            <div class="progress"><i id="ingestProgress"></i></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0">
+              <p id="ingestStatus" class="status-note" style="margin:0">等待新工作</p>
+              <button id="cancelIngest" class="small remove" style="display:none">🛑 取消所有任務</button>
+            </div>
+            <div id="queueTasksList" class="queue-tasks"></div>
+          </article>
+
+          <article class="card">
+            <div class="library-toolbar">
+              <h2>📚 曲庫歌曲總覽</h2>
+              <div class="button-row">
+                <div style="display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:6px">
+                  <button id="btnViewTable" class="small" style="border-radius:0;background:rgba(57,197,187,0.15);color:var(--cyan)">📄 表格</button>
+                  <button id="btnViewGrid" class="small" style="border-radius:0">📇 卡片</button>
+                </div>
+                <input id="libraryQuery" type="search" placeholder="搜尋歌名／歌手／ID" class="small">
+                <button id="exportCatalog" class="small">📤 匯出 CSV</button>
+              </div>
+            </div>
+
+            <!-- Bulk Action Toolbar -->
+            <div id="bulkActionBar" class="bulk-bar">
+              <span style="font-weight:700">已選取 <span id="bulkSelectedCount">0</span> 首歌曲</span>
+              <div class="button-row">
+                <button id="btnBulkTag" class="small">🏷️ 批次修改標籤</button>
+                <button id="btnBulkExport" class="small">📤 批次匯出 CSV</button>
+                <button id="btnBulkDelete" class="small remove">🗑️ 批次刪除</button>
+                <button id="btnBulkClear" class="small">✕ 取消選取</button>
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <label for="catalogTokenInput">曲庫管理權杖</label>
+              <p>在專案 `.env` 設定 `KTV_LIBRARY_ADMIN_TOKEN` 並重啟，再於此輸入。此權杖只保存在瀏覽器分頁；刪除時可勾選是否連同實體檔案一併清除。</p>
+              <div class="button-row">
+                <input id="catalogTokenInput" type="password" autocomplete="off" placeholder="管理權杖">
+                <button id="saveCatalogToken" class="small">暫存權杖</button>
+                <span id="catalogTokenStatus" class="status-note"></span>
+              </div>
+            </div>
+
+            <div class="table-wrap" id="libraryTableWrap">
+              <table class="library-table">
+                <thead><tr><th><input type="checkbox" id="selectAllCheckbox" title="全選/取消全選"></th><th>ID</th><th>歌曲名稱</th><th>歌手</th><th>專輯</th><th>年份</th><th>時長</th><th>語種</th><th>分離／對齊</th><th>影音狀態</th><th>操作</th></tr></thead>
+                <tbody id="libraryRows"></tbody>
+              </table>
+            </div>
+
+            <div id="libraryGridView" class="library-grid" style="display:none;margin-top:12px"></div>
+
+            <div class="paging"><span id="libraryPageLabel" class="status-note"></span><button id="libraryMore" class="small">載入更多</button></div>
+          </article>
+        </section>
+
+        <!-- Page Manual Studio -->
+        <section class="page manual" id="view-manual" hidden>
+          <div class="section-head">
+            <div><div class="eyebrow">MANUAL LYRICS STUDIO</div><h1 id="manualTitle">🎯 人工對齊歌詞工作台</h1></div>
+            <div class="button-row">
+              <button id="manualBack" class="small">⬅ 返回曲庫</button>
+              <button id="manualSaveCatalog" class="action primary">💾 儲存並套用至曲庫</button>
+              <button id="manualExport" class="small">📥 匯出 LRC 草稿</button>
+            </div>
+          </div>
+          <div class="message">工作台支援逐字時間軸微調、波形試聽與空白鍵打點。點擊「儲存並套用至曲庫」將直接更新正式曲庫檔案並即時套用至 TV 投影視窗。</div>
+          <div class="manual-layout">
+            <article class="card">
+              <video id="manualVideo" controls preload="metadata"></video>
+              <div class="button-row" style="margin-top:10px">
+                <button data-rate=".5" class="small">0.5×</button>
+                <button data-rate=".75" class="small">0.75×</button>
+                <button data-rate="1" class="small">1.0×</button>
+                <button id="loopLine" class="small">🔁 單句循環：關</button>
+              </div>
+              <p id="manualLineText" class="status-note" style="margin-top:8px">先選擇一行歌詞</p>
+            </article>
+            <article class="card">
+              <div class="button-row">
+                <button id="newLine" class="small">＋ 新增句</button>
+                <button id="splitLine" class="small">✂️ 拆分句</button>
+                <button id="mergeLine" class="small">🔗 合併下一句</button>
+                <button id="editLine" class="small">📝 純文字編輯</button>
+              </div>
+              <textarea id="manualText" hidden rows="3" style="width:100%;margin:8px 0;background:#0d1117;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px"></textarea>
+              <div id="lineNavigator" class="library-list" style="margin:10px 0;max-height:160px"></div>
+              <div class="tokens" id="tokenEditor"></div>
+              <div class="button-row" style="margin-top:10px">
+                <button id="tapToken" class="action">SPACE｜記錄字詞起點</button>
+                <button id="tokenEnd" class="small">設定選中字詞尾</button>
+              </div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>人聲波形與字詞時間微調</h3>
+            <canvas id="waveCanvas" class="wave"></canvas>
+            <p class="status-note" style="margin-top:8px">拖曳波形中的字詞邊界微調時間；精度為 10ms。無可用人聲 WAV 時可直接編輯起訖時間。</p>
+          </article>
+        </section>
       </section>
-      <section class="page" id="view-library" data-view="library" hidden>
-        <div class="section-head"><div><div class="eyebrow">CANONICAL CATALOG</div><h1>🗂️ 管理曲庫</h1></div><span id="libraryCount" class="pill">0 首</span></div>
-        <article class="card" id="ingestCard"><h2>➕ 添加新歌曲至曲庫</h2><p class="status-note">由此頁提交工作並查看處理進度；影片處理仍交由 Python API 執行。</p><div class="ingest"><input id="ingestUrl" type="url" placeholder="貼上 YouTube 影片網址"><button id="startIngest" class="action primary">🚀 開始入庫</button></div><div class="progress"><i id="ingestProgress"></i></div><p id="ingestStatus" class="status-note">等待新工作</p></article>
-        <article class="card"><div class="library-toolbar"><h2>📚 曲庫歌曲總覽</h2><div class="button-row"><input id="libraryQuery" type="search" placeholder="搜尋歌名／歌手／ID" class="small"><button id="exportCatalog" class="small">📤 匯出完整 CSV</button></div></div><div class="setting-row"><label for="catalogTokenInput">曲庫管理權杖</label><p>先在專案 `.env` 設定 `KTV_LIBRARY_ADMIN_TOKEN` 並重啟，再於此輸入。此權杖只保存在目前瀏覽器分頁工作階段；刪除歌曲只移除 CSV 記錄，不刪除磁碟檔案。</p><div class="button-row"><input id="catalogTokenInput" type="password" autocomplete="off" placeholder="管理權杖"><button id="saveCatalogToken" class="small">暫存權杖</button><span id="catalogTokenStatus" class="status-note"></span></div></div><div class="table-wrap"><table class="library-table"><thead><tr><th>ID</th><th>歌曲名稱</th><th>歌手</th><th>專輯</th><th>年份</th><th>時長</th><th>語種</th><th>分離／對齊</th><th>影音狀態</th><th>操作</th></tr></thead><tbody id="libraryRows"></tbody></table></div><div class="paging"><span id="libraryPageLabel" class="status-note"></span><button id="libraryMore" class="small">載入更多</button></div></article>
-      </section>
-      <section class="page manual" id="view-manual" hidden><div class="section-head"><div><div class="eyebrow">MANUAL LYRICS STUDIO</div><h1 id="manualTitle">🎯 人工對齊歌詞工作台</h1></div><div class="button-row"><button id="manualBack" class="small">⬅ 返回曲庫</button><button id="manualExport" class="action primary">💾 匯出 LRC 草稿</button></div></div><div class="message">此工作台只產生獨立 LRC 草稿，不修改自動辨識／對齊流程，也不會覆寫正式曲庫。匯出後由管理者自行審核。</div><div class="manual-layout"><article class="card"><video id="manualVideo" controls preload="metadata"></video><div class="button-row"><button data-rate=".5" class="small">0.5×</button><button data-rate=".75" class="small">0.75×</button><button data-rate="1" class="small">1.0×</button><button id="loopLine" class="small">🔁 單句循環：關</button></div><p id="manualLineText" class="status-note">先選擇一行歌詞</p></article><article class="card"><div class="button-row"><button id="newLine" class="small">＋ 新增句</button><button id="splitLine" class="small">✂️ 拆分句</button><button id="mergeLine" class="small">🔗 合併下一句</button><button id="editLine" class="small">📝 純文字編輯</button></div><textarea id="manualText" hidden rows="3" style="width:100%;margin:8px 0;background:#10151e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px"></textarea><div id="lineNavigator" class="library-list"></div><div class="tokens" id="tokenEditor"></div><div class="button-row"><button id="tapToken" class="action">SPACE｜記錄字詞起點</button><button id="tokenEnd" class="small">設定選中字詞尾</button></div></article></div><article class="card"><h3>人聲波形與字詞時間微調</h3><canvas id="waveCanvas" class="wave"></canvas><p class="status-note">拖曳波形中的字詞邊界微調時間；精度為 10ms。無可用人聲 WAV 時可直接編輯起訖時間。</p></article></section>
     </main>
+
+    <!-- Bottom Dock Navigation (6 Tabs) -->
     <nav class="bottom-nav" id="bottomNav" aria-label="主要功能">
-      <button id="showPlayer"><span>🖥️</span>開啟播放器</button><button class="active" data-view-button="controller"><span>🎛️</span>控制器主控台</button><button data-view-button="queue"><span>📋</span>管理佇列</button><button data-view-button="search"><span>🔍</span>點播歌曲</button><button data-view-button="settings"><span>⚙️</span>系統設定</button><button data-view-button="library"><span>🗂️</span>管理曲庫</button>
+      <button data-view-button="fullscreen"><span>📺</span>歡唱模式</button>
+      <button class="active" data-view-button="controller"><span>🎛️</span>主控台</button>
+      <button data-view-button="queue"><span>📋</span>管理佇列</button>
+      <button data-view-button="search"><span>🔍</span>點播歌曲</button>
+      <button data-view-button="settings"><span>⚙️</span>系統設定</button>
+      <button data-view-button="library"><span>🗂️</span>管理曲庫</button>
     </nav>
   </div>
-  <div id="overlay" class="overlay" hidden><div class="modal"><div class="modal-head"><h2 id="modalTitle">QR Code</h2><button id="modalClose" class="small">✕ 關閉</button></div><div id="modalContent"></div></div></div>
-  <style>.overlay[hidden]{display:none}</style>
+
+  <!-- QR Modal Overlay -->
+  <div id="overlay" class="overlay" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modalTitle">QR Code</h2>
+        <button id="modalClose" class="small">✕ 關閉</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
   <div id="toast" class="toast" role="status"></div>
+
   <script>
-    const socket = io({query:{role:'admin'}}), $ = id => document.getElementById(id);
+    const socket = io({ query: { role: 'admin' } });
+    const $ = id => document.getElementById(id);
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const fmt = value => {const s=Math.max(0,Math.floor(Number(value)||0));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`};
-    const fmtClock = value => {const n=Math.max(0,Number(value)||0),m=Math.floor(n/60),s=(n%60).toFixed(2).padStart(5,'0');return `[${String(m).padStart(2,'0')}:${s}]`};
-    let songs=[],queue=[],history=[],state={},searchOffset=0,searchTotal=0,libraryOffset=0,libraryTotal=0;
-    let searchTimer,searchMode='keyword',searchLanguage='',searchRequest=0,searchBusy=false,libraryBusy=false,duration=0,position=0,dragging=false;
-    let manualSong=null,manualLines=[],selectedLine=0,loopEnabled=false,loopTimer=null;
-    const PAGE=50;
-    function toast(message){$('toast').textContent=message;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2300)}
-    function showView(name){document.querySelectorAll('[data-view]').forEach(el=>el.hidden=el.dataset.view!==name);document.querySelectorAll('[data-view-button]').forEach(el=>el.classList.toggle('active',el.dataset.viewButton===name));if(name==='library')loadLibrary(true)}
-    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('overlay').hidden){event.preventDefault();$('overlay').hidden=true}});
-    document.querySelectorAll('[data-view-button]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.viewButton)));
-    $('showPlayer').onclick=()=>desktopAction('openPlayer');
-    $('qrOpen').onclick=async()=>{ $('modalTitle').textContent='📱 手機掃碼點歌';$('modalContent').innerHTML='<p class="status-note">正在產生遙控器 QR Code…</p>';$('overlay').hidden=false;try{const response=await fetch('/api/qr');const data=await response.json();if(!response.ok)throw Error(data.error||'QR Code 服務無法使用');$('modalContent').innerHTML=`<img class="qr" alt="手機遙控器 QR Code" src="${esc(data.dataUrl)}"><p class="status-note" style="text-align:center">請讓手機連上同一個 Wi-Fi／熱點，再掃描或開啟：<br><a href="${esc(data.url)}">${esc(data.url)}</a></p>`}catch(error){$('modalContent').innerHTML=`<div class="message">${esc(error.message)}<br>請確認手機與主機連線至同一個 Wi-Fi／熱點，並嘗試重新開啟 QR Code。</div>`}};
-    $('modalClose').onclick=()=>{$('overlay').hidden=true};$('overlay').onclick=e=>{if(e.target===$('overlay'))$('overlay').hidden=true};
-    async function desktopAction(name){if(!window.ktvDesktop?.[name]){toast('內建播放器只能從 Electron 桌面 App 開啟');return}try{const result=await window.ktvDesktop[name]();if(result?.ok===false)throw Error(result.error);$('playerStatus').textContent='播放器已開啟'}catch(error){$('playerStatus').textContent='播放器無法開啟';toast(error.message||'播放器無法開啟')}}
-    window.ktvDesktop?.onPlayerClosed?.(()=>{$('playerStatus').textContent='播放器已關閉，可由中控重新開啟'});
-    $('playerOpen').onclick=$('settingsPlayerOpen').onclick=()=>desktopAction('openPlayer');
-    let processingSocket=null;
-    function requestSearch(reset=false){if(reset){searchOffset=0;searchTotal=0;searchBusy=false;searchRequest++;$('searchResults').innerHTML='<div class="message">搜尋中…</div>'}if(searchBusy)return;searchBusy=true;$('loadMoreSongs').disabled=true;socket.emit('search_songs',{query:$('query').value.trim(),language:searchLanguage,mode:searchMode,sort:$('sortSongs').value,offset:searchOffset,limit:PAGE,paginated:true,requestId:searchRequest})}
-    $('query').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>requestSearch(true),180)};
-    $('clearSearch').onclick=()=>{$('query').value='';searchLanguage='';document.querySelectorAll('[data-language]').forEach(b=>b.classList.toggle('active',!b.dataset.language));requestSearch(true)};
-    $('loadMoreSongs').onclick=()=>requestSearch();
-    $('sortSongs').onchange=()=>requestSearch(true);
-    document.querySelectorAll('[data-language]').forEach(button=>button.onclick=()=>{searchLanguage=button.dataset.language;document.querySelectorAll('[data-language]').forEach(b=>b.classList.toggle('active',b===button));requestSearch(true)});
-    document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{searchMode=button.dataset.mode;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===button));$('query').placeholder=({keyword:'搜尋歌名、歌手、拼音或注音',zhuyin:'輸入注音首字，例如 ㄓㄐㄌ',pinyin:'輸入拼音首字，例如 ZJL',lyrics:'輸入記得的歌詞片段',artist:'搜尋歌手姓名'})[searchMode];$('keyboard').hidden=searchMode!=='zhuyin';requestSearch(true)});
-    const zhuyinKeys='ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ';
-    $('keyboard').innerHTML=[...zhuyinKeys].map(char=>`<button class="key" data-key="${char}">${char}</button>`).join('');
-    $('keyboard').onclick=e=>{const key=e.target.closest('[data-key]');if(key){$('query').value+=key.dataset.key;requestSearch(true)}};
-    $('voiceSearch').onclick=()=>{const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Speech){toast('此瀏覽器不支援語音搜尋');return}const recognition=new Speech();recognition.lang='zh-TW';recognition.onresult=e=>{$('query').value=e.results[0][0].transcript;requestSearch(true)};recognition.onerror=()=>toast('無法辨識語音，請檢查麥克風權限');recognition.start()};
-    function songMarkup(song,library=false){return `<article class="song-row"><div class="song-info"><div class="song-title">${esc(song.title||'未命名歌曲')}</div><div class="song-sub">${esc(song.artist||'未知歌手')} · ${esc(song.language||'未標語種')} · ${esc(song.duration_seconds?fmt(song.duration_seconds):'時長未知')}</div></div><div class="song-actions"><button class="small add" data-add="${esc(song.id)}">＋ 點歌</button><button class="small" data-insert="${esc(song.id)}">⬆ 插播</button>${library?`<button class="small" data-manual="${esc(song.id)}">🎯 歌詞工作台</button>`:''}</div></article>`}
-    function renderSongs(rows,append=false){const target=$('searchResults');if(!append)target.innerHTML='';if(rows.length)target.insertAdjacentHTML('beforeend',rows.map(row=>songMarkup(row)).join(''));else if(!append)target.innerHTML='<div class="message">沒有找到歌曲，試試其他搜尋模式或關鍵字。</div>';target.querySelectorAll('[data-add]').forEach(btn=>btn.onclick=()=>{const song=songs.find(item=>item.id===btn.dataset.add);if(song)socket.emit('add_to_queue',song);toast('已加入待播清單')});target.querySelectorAll('[data-insert]').forEach(btn=>btn.onclick=()=>{const song=songs.find(item=>item.id===btn.dataset.insert);if(song)socket.emit('insert_to_top',song);toast('已插入下一首');showView('queue')})}
-    socket.on('search_page_results',page=>{if(page?.requestId!==searchRequest)return;searchBusy=false;const rows=page.items||[];songs=page.offset?[...songs,...rows]:rows;searchOffset=songs.length;searchTotal=Number(page.total)||0;renderSongs(rows,Boolean(page.offset));$('resultCount').textContent=`${searchTotal.toLocaleString()} 首歌曲`;$('pageLabel').textContent=`顯示 ${searchOffset} / ${searchTotal} 首`;$('loadMoreSongs').hidden=searchOffset>=searchTotal;$('loadMoreSongs').disabled=false});
-    function loadSongsHttp(reset=false){requestSearch(reset)}
-    function renderQueue(){const pane=$('queueList');$('queueSummary').textContent=`待播 ${Math.max(0,queue.length-1)} 首`;pane.innerHTML=queue.length?queue.map((song,index)=>`<article class="queue-row"><div class="song-info"><div class="song-title">${index===0?'▶ NOW · ':`#${String(index).padStart(2,'0')} · `}${esc(song.title)}</div><div class="song-sub">${esc(song.artist||'未知歌手')} · ${index===0?'正在播放':'播放設定沿用歌曲預設'}</div></div><div class="song-actions">${index===0?'<button class="small remove" data-next>⏭ 立即切歌</button>':`<button class="small" data-top="${esc(song.queueId)}">⬆ 置頂</button><button class="small remove" data-remove="${esc(song.queueId)}">移除</button>`}</div></article>`).join(''):'<div class="message">佇列空空的，前往點歌頁加入歌曲。</div>';pane.querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>socket.emit('remove_from_queue',b.dataset.remove));pane.querySelectorAll('[data-top]').forEach(b=>b.onclick=()=>socket.emit('move_to_top',b.dataset.top));pane.querySelector('[data-next]')?.addEventListener('click',()=>socket.emit('next_song'));$('historyList').innerHTML=history.length?history.map((s,i)=>`<article class="queue-row"><div class="song-info"><div class="song-title">${i+1}. ${esc(s.title)}</div><div class="song-sub">${esc(s.artist||'未知歌手')}</div></div><button class="small add" data-replay="${esc(s.id)}">重新點播</button></article>`).join(''):'<div class="message">尚無本次執行期間的播放歷史。</div>';$('historyList').querySelectorAll('[data-replay]').forEach(b=>b.onclick=()=>{const song=history.find(s=>s.id===b.dataset.replay);if(song)socket.emit('add_to_queue',song)})}
-    document.querySelectorAll('[data-queue-tab]').forEach(button=>button.onclick=()=>{const show=button.dataset.queueTab==='history';$('upcomingPane').hidden=show;$('historyPane').hidden=!show;document.querySelectorAll('[data-queue-tab]').forEach(b=>b.classList.toggle('active',b===button))});
-    $('shuffleQueue').onclick=()=>socket.emit('shuffle_queue');$('clearQueue').onclick=()=>{if(confirm('清除所有待播歌曲？目前播放中的歌曲會繼續。'))socket.emit('clear_queue')};
-    function applyPlayback(payload){queue=payload.queue||[];history=payload.history||history;state=payload.state||{};const current=queue[0];$('currentTitle').textContent=current?.title||'尚未點歌';$('currentSub').textContent=current?`${current.artist||'未知歌手'} · 下一首：${queue[1]?.title||'無'}`:'選一首歌開始今晚的演出';$('togglePlay').textContent=state.isPlaying?'⏸ 暫停':'▶ 播放';$('audioMode').textContent=state.audioMode==='accompaniment'?'🎤 伴唱模式':'🗣️ 原唱模式';$('nowQueue').textContent=`待播 ${Math.max(0,queue.length-1)} 首${history.length?` · 已播 ${history.length} 首`:''}`;duration=Number(current?.duration_seconds)||0;position=Number(state.position)||0;$('duration').textContent=fmt(duration);if(!dragging){$('seek').max=duration||100;$('seek').value=Math.min(position,duration||100);$('elapsed').textContent=fmt(position)}if(state.musicVol!==undefined){$('music').value=state.musicVol;$('musicOut').textContent=`${Math.round(state.musicVol*100)}%`}renderQueue()}
-    socket.on('sync_state',payload=>applyPlayback(payload||{}));socket.on('playback_snapshot',applyPlayback);socket.on('queue_updated',items=>{queue=items||[];renderQueue()});socket.on('playback_error',data=>toast(data?.message||'播放錯誤'));
-    socket.on('crowd_interaction',data=>toast(`${data?.type==='message'?'💬':data?.type==='cheer'?'🎉':'👏'} ${data?.user||'來賓'}：${data?.text||'為演出加油！'}`));
-    socket.on('connect',()=>{$('clientStatus').classList.remove('offline');$('clientStatus').lastElementChild.textContent='播放服務已連線';$('socketStatus').textContent='Socket.IO 已連線';requestSearch(true);checkServices()});socket.on('disconnect',()=>{$('clientStatus').classList.add('offline');$('clientStatus').lastElementChild.textContent='播放服務重新連線中';$('socketStatus').textContent='Socket.IO 離線'});
-    $('togglePlay').onclick=()=>socket.emit('player_command',{isPlaying:!state.isPlaying});$('next').onclick=()=>socket.emit('next_song');$('replay').onclick=()=>socket.emit('replay_current');$('audioMode').onclick=()=>socket.emit('player_command',{audioMode:state.audioMode==='accompaniment'?'original':'accompaniment'});
-    $('seek').oninput=()=>{dragging=true;$('elapsed').textContent=fmt($('seek').value)};$('seek').onchange=()=>{socket.emit('seek',{position:Number($('seek').value)});dragging=false};
-    $('music').oninput=()=>{$('musicOut').textContent=`${Math.round(Number($('music').value)*100)}%`;socket.emit('player_command',{musicVol:Number($('music').value)})};
-    setInterval(()=>{if(state.isPlaying&&!dragging&&duration){position=Math.min(duration,position+.25);$('seek').value=position;$('elapsed').textContent=fmt(position)}},250);
-    async function checkServices(){try{const r=await fetch('/api/services'),data=await r.json();const ok=r.ok&&data.python?.ok;$('serviceBadge').textContent=ok?'Python 處理 API 就緒':'Python 處理 API 離線';$('serviceBadge').style.color=ok?'var(--mint)':'var(--orange)';if(ok&&!processingSocket){processingSocket=io(`${location.protocol}//${location.hostname}:${data.pythonPort}`,{query:{role:'admin'}});processingSocket.on('connect',()=>$('ingestStatus').textContent='Python 入庫服務已連線');processingSocket.on('connect_error',()=>$('ingestStatus').textContent='無法連線 Python 入庫服務');processingSocket.on('task_status',payload=>{if(payload.status==='busy')$('ingestStatus').textContent='正在處理歌曲…';else if(payload.status==='idle')$('startIngest').disabled=false});processingSocket.on('task_progress',payload=>{if(payload.phase==='done'){$('ingestProgress').style.width='100%';$('ingestStatus').textContent=`處理完成：成功 ${payload.success||0} 首，失敗 ${(payload.failed||[]).length} 首`;$('startIngest').disabled=false;setTimeout(()=>{loadLibrary(true);requestSearch(true)},1200);return}const percent=payload.total?Math.round((payload.current||0)*100/payload.total):0;$('ingestProgress').style.width=`${percent}%`;$('ingestStatus').textContent=`${payload.title||'歌曲處理中'} · ${payload.current||0}/${payload.total||1} · 第 ${payload.attempt||1} 次`});processingSocket.on('admin_log',payload=>{if(payload?.msg){const message=String(payload.msg).slice(0,240);$('ingestStatus').textContent=message;if(message.includes('正在處理其他歌曲'))$('startIngest').disabled=false}})}}catch{$('serviceBadge').textContent='Python 處理 API 離線'}}
-    async function updateNetwork(){const url=`${location.origin}/remote`;$('remoteAddress').textContent=url;try{const response=await fetch('/api/room');const room=await response.json();$('networkStatus').lastElementChild.textContent=`區域網路 ${location.host}`;$('clientStatus').lastElementChild.textContent=`${room.clientCount||0} 台裝置 · ${room.songCount||0} 首歌曲`}catch{$('networkStatus').classList.add('offline')}}
-    $('copyRemote').onclick=async()=>{try{await navigator.clipboard.writeText(`${location.origin}/remote`);toast('遙控網址已複製')}catch{toast(`${location.origin}/remote`)}};
-    $('settingQr').onchange=e=>localStorage.setItem('ktvShowQr',String(e.target.checked));$('allowRemoteNext').onchange=e=>localStorage.setItem('ktvAllowRemoteNext',String(e.target.checked));
-    $('enableIngest').onchange=e=>{$('ingestCard').hidden=!e.target.checked;localStorage.setItem('ktvEnableIngest',String(e.target.checked))};$('enableIngest').checked=localStorage.getItem('ktvEnableIngest')!=='false';$('ingestCard').hidden=!$('enableIngest').checked;
-    document.querySelectorAll('[data-setting]').forEach(button=>button.onclick=()=>{document.querySelectorAll('[data-setting]').forEach(b=>b.classList.toggle('active',b===button));document.querySelectorAll('[data-setting-pane]').forEach(p=>p.hidden=p.dataset.settingPane!==button.dataset.setting)});
-    $('ingestUrl').addEventListener('change',async()=>{const url=$('ingestUrl').value.trim();if(!url)return;try{const r=await fetch(`/api/resolve_yt_title?url=${encodeURIComponent(url)}`);const data=await r.json();$('ingestStatus').textContent=data.ok?`偵測到：${data.song} — ${data.singer}`:(data.error||'無法預覽影片標題')}catch{$('ingestStatus').textContent='無法連線至 Python 處理服務'}});
-    $('startIngest').onclick=async()=>{const url=$('ingestUrl').value.trim();if(!url){toast('請先貼上 YouTube 網址');return}if(!processingSocket?.connected){toast('Python 入庫 API 尚未連線');return}try{$('startIngest').disabled=true;$('ingestProgress').style.width='0';$('ingestStatus').textContent='正在解析 YouTube 標題…';const response=await fetch(`/api/resolve_yt_title?url=${encodeURIComponent(url)}`),metadata=await response.json();if(!response.ok||!metadata.ok)throw Error(metadata.error||'無法解析 YouTube 標題');processingSocket.emit('start_download',{url,title:metadata.song,singer:metadata.singer,singer_is_manual:false,youtube_title:metadata.raw_title});$('ingestStatus').textContent=`已提交：${metadata.song} — ${metadata.singer}`}catch(error){$('startIngest').disabled=false;$('ingestStatus').textContent=error.message}};
-    let libraryRows=[];
-    function loadLibrary(reset=false){if(libraryBusy)return;if(reset){libraryOffset=0;libraryRows=[]}libraryBusy=true;const q=$('libraryQuery').value.trim();fetch(`/api/songs?q=${encodeURIComponent(q)}&limit=${PAGE}&offset=${libraryOffset}&sort=title`).then(r=>r.json()).then(data=>{libraryRows=libraryOffset?[...libraryRows,...data.items]:data.items;libraryOffset=libraryRows.length;libraryTotal=data.total;renderLibrary();libraryBusy=false}).catch(()=>{libraryBusy=false;$('libraryRows').innerHTML='<tr><td colspan="10">無法載入正式曲庫</td></tr>'})}
-    function renderLibrary(){ $('libraryCount').textContent=`${libraryTotal.toLocaleString()} 首`; $('libraryPageLabel').textContent=`顯示 ${libraryOffset} / ${libraryTotal} 首`; $('libraryMore').hidden=libraryOffset>=libraryTotal;$('libraryRows').innerHTML=libraryRows.map(song=>`<tr><td title="${esc(song.id)}">${esc(song.id?.slice(0,10))}</td><td title="${esc(song.title)}"><span class="marquee"><span>${esc(song.title)}</span></span></td><td title="${esc(song.artist)}">${esc(song.artist)}</td><td title="${esc(song.album||'')}">${esc(song.album||'—')}</td><td>${esc(song.release_year||'—')}</td><td>${esc(song.duration_seconds?fmt(song.duration_seconds):'—')}</td><td>${esc(song.language||'—')}</td><td title="${esc([song.separator_mode||song.separator_model,song.alignment_model].filter(Boolean).join(' / '))}">${esc([song.separator_mode||song.separator_model,song.alignment_model].filter(Boolean).join(' / ')||'—')}</td><td>${song.video_filename?`🎬 ${esc(song.instrumental_filename?'原／伴':'原唱')}`:'缺影音'}</td><td><button class="small" data-edit="${esc(song.id)}">✏️ 編輯</button><button class="small" data-export="${esc(song.id)}">匯出</button><button class="small" data-manual="${esc(song.id)}">🎯 對齊</button><button class="small remove" data-delete="${esc(song.id)}">刪除記錄</button></td></tr>`).join('');$('libraryRows').querySelectorAll('[data-export]').forEach(b=>b.onclick=()=>exportSong(b.dataset.export));$('libraryRows').querySelectorAll('[data-manual]').forEach(b=>b.onclick=()=>openManual(b.dataset.manual));$('libraryRows').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openCatalogEditor(b.dataset.edit));$('libraryRows').querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>deleteCatalogSong(b.dataset.delete))}
-    $('libraryRows').addEventListener('mouseover',event=>{const ticker=event.target.closest('.marquee');if(ticker&&ticker.firstElementChild.scrollWidth>ticker.clientWidth+2)ticker.classList.add('overflowing')});
-    $('libraryQuery').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadLibrary(true),180)};$('libraryMore').onclick=()=>loadLibrary();
-    $('saveCatalogToken').onclick=()=>{const token=$('catalogTokenInput').value.trim();if(!token){sessionStorage.removeItem('ktvCatalogAdminToken');$('catalogTokenStatus').textContent='權杖已清除';return}sessionStorage.setItem('ktvCatalogAdminToken',token);$('catalogTokenInput').value='';$('catalogTokenStatus').textContent='已暫存於本分頁工作階段'};
-    function catalogToken(){return sessionStorage.getItem('ktvCatalogAdminToken')||''}
-    function openCatalogEditor(id){const song=libraryRows.find(row=>row.id===id);if(!song)return;$('modalTitle').textContent=`編輯歌曲｜${song.title}`;const fields=[['title','歌曲名稱'],['artist','歌手'],['album','專輯'],['release_year','發行年份'],['artist_gender','歌手性別'],['genre','歌曲風格'],['language','語種']];$('modalContent').innerHTML=`<form id="catalogEditForm">${fields.map(([key,label])=>`<div class="setting-row"><label for="edit-${key}">${label}</label><input id="edit-${key}" name="${key}" value="${esc(song[key]||'')}" style="width:100%"></div>`).join('')}<div class="setting-row"><label for="edit-lyrics">純文字歌詞</label><textarea id="edit-lyrics" name="lyrics" rows="5" style="width:100%;background:#10151e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px">${esc(song.lyrics||'')}</textarea></div><p class="status-note">寫入原本 Python 維護的固定欄位 CSV，ID、處理結果及檔名不變。</p><button class="action primary" type="submit">儲存 metadata</button></form>`;$('overlay').hidden=false;$('catalogEditForm').onsubmit=async event=>{event.preventDefault();const token=catalogToken();if(!token){toast('請先設定曲庫管理權杖');return}const updates=Object.fromEntries(new FormData(event.currentTarget));try{const response=await fetch(`/api/catalog/${encodeURIComponent(id)}`,{method:'PATCH',headers:{Authorization:['Bearer',token].join(' '),'Content-Type':'application/json'},body:JSON.stringify(updates)});const result=await response.json();if(!response.ok)throw Error(result.error||'儲存失敗');$('overlay').hidden=true;toast('歌曲資料已更新');loadLibrary(true)}catch(error){toast(error.message)}}}
-    async function deleteCatalogSong(id){const song=libraryRows.find(row=>row.id===id);if(!song||!confirm(`從正式 CSV 移除「${song.title} — ${song.artist}」？\n僅移除曲庫記錄，不會刪除媒體檔案。`))return;const token=catalogToken();if(!token){toast('請先設定曲庫管理權杖');return}try{const response=await fetch(`/api/catalog/${encodeURIComponent(id)}`,{method:'DELETE',headers:{Authorization:['Bearer',token].join(' ')}});const result=await response.json();if(!response.ok)throw Error(result.error||'刪除失敗');toast('已從曲庫移除記錄');loadLibrary(true)}catch(error){toast(error.message)}}
-    $('exportCatalog').onclick=async()=>{try{const rows=[],query=$('libraryQuery').value.trim();for(let offset=0;offset<libraryTotal;offset+=100){const response=await fetch(`/api/songs?q=${encodeURIComponent(query)}&limit=100&offset=${offset}&sort=title`);if(!response.ok)throw new Error('曲庫匯出失敗');rows.push(...(await response.json()).items)}const fields=['id','artist','title','album','release_year','duration_seconds','artist_gender','genre','lyrics','separator_model','separator_mode','alignment_model','video_filename','instrumental_filename','lyrics_filename','source_url','youtube_title','vocals_filename','dereverbed_vocals_filename','alignment_results_filename','processing_status','created_at','language','char_count','pinyin_abbr','zhuyin_abbr'];const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;const csvText=[fields.join(','),...rows.map(row=>fields.map(field=>quote(row[field])).join(','))].join('\r\n');download(new Blob(['\ufeff',csvText],{type:'text/csv;charset=utf-8'}),'library_index-export.csv')}catch(error){toast(error.message)}};
-    function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-    function exportSong(id){const song=libraryRows.find(row=>row.id===id);if(song)download(new Blob([JSON.stringify(song,null,2)],{type:'application/json'}),`${song.id}.json`)}
-    $('manualBack').onclick=()=>showView('library');
-    function parseLrc(text){const rows=[];let current=null;for(const raw of text.split(/\r?\n/)){const line=raw.trim();const timed=/^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\](.*)$/.exec(line);if(timed){rows.push({time:Number(timed[1])*60+Number(timed[2])+Number(`0.${timed[3]||0}`),end:null,text:timed[4].trim(),tokens:[]});current=rows.at(-1);continue}const lineMatch=/^%([\d.]+)\s+([\d.]+)\s+(.*)$/.exec(line);if(lineMatch){current={time:Number(lineMatch[1]),end:Number(lineMatch[2]),text:lineMatch[3],tokens:[]};rows.push(current);continue}const wordMatch=/^\$([\d.]+)\s+([\d.]+)\s+(.*)$/.exec(line);if(wordMatch&&current)current.tokens.push({text:wordMatch[3],start:Number(wordMatch[1]),end:Number(wordMatch[2])})}return rows.map(row=>({...row,tokens:row.tokens.length?row.tokens:tokenize(row.text).map((text,i,a)=>({text,start:row.time+(row.end?((row.end-row.time)*i/a.length):i*.3),end:row.time+(row.end?((row.end-row.time)*(i+1)/a.length):(i+1)*.3)}))}))}
-    function tokenize(text){return text.match(/[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*\s*/gu)||[]}
-    async function openManual(id){manualSong=libraryRows.find(row=>row.id===id)||songs.find(row=>row.id===id);if(!manualSong)return;showView('manual');$('manualTitle').textContent=`🎯 人工對齊｜${manualSong.title} — ${manualSong.artist}`;$('manualVideo').src=manualSong.path||'';try{if(manualSong.lyrics_filename){const response=await fetch(`/media/${encodeURIComponent(manualSong.lyrics_filename)}`);manualLines=parseLrc(await response.text())}else manualLines=parseLrc(manualSong.lyrics||'')}catch{manualLines=parseLrc(manualSong.lyrics||'')}selectedLine=0;renderManual();loadVocalWave()}
-    function renderManual(){const nav=$('lineNavigator');nav.innerHTML=manualLines.map((line,i)=>`<button class="small" data-line="${i}" style="text-align:left;color:${i===selectedLine?'var(--mint)':'var(--text)'}">${i===selectedLine?'▶ ':''}${fmtClock(line.time)} ${esc(line.text||'[間奏]')}</button>`).join('');nav.querySelectorAll('[data-line]').forEach(b=>b.onclick=()=>{selectedLine=Number(b.dataset.line);$('manualVideo').currentTime=manualLines[selectedLine]?.time||0;renderManual()});const line=manualLines[selectedLine];$('manualLineText').textContent=line?`${fmtClock(line.time)} ${line.text}`:'沒有歌詞句子';$('manualText').value=line?.text||'';$('tokenEditor').innerHTML=(line?.tokens||[]).map((token,i)=>`<label class="token" data-token-wrap="${i}"><span>${esc(token.text)}</span><span>起點</span><input data-token="${i}" data-edge="start" type="number" min="0" step=".01" value="${Number(token.start).toFixed(2)}" aria-label="${esc(token.text)} 起點"><span>終點</span><input data-token="${i}" data-edge="end" type="number" min="0" step=".01" value="${Number(token.end).toFixed(2)}" aria-label="${esc(token.text)} 終點"></label>`).join('');$('tokenEditor').querySelectorAll('[data-token-wrap]').forEach(w=>w.onclick=()=>{document.querySelectorAll('[data-token-wrap]').forEach(x=>x.style.borderColor='');w.style.borderColor='var(--mint)';selectedToken=Number(w.dataset.tokenWrap)});drawWave()}
-    $('manualVideo').onended=()=>{if(loopEnabled&&manualLines[selectedLine])$('manualVideo').currentTime=manualLines[selectedLine].time};
-    document.querySelectorAll('[data-rate]').forEach(b=>b.onclick=()=>{$('manualVideo').playbackRate=Number(b.dataset.rate);$('manualVideo').preservesPitch=true});
-    $('loopLine').onclick=()=>{loopEnabled=!loopEnabled;$('loopLine').textContent=`🔁 單句循環：${loopEnabled?'開':'關'}`;if(loopEnabled&&manualLines[selectedLine])$('manualVideo').currentTime=manualLines[selectedLine].time};
-    $('manualVideo').ontimeupdate=()=>{if(loopEnabled&&manualLines[selectedLine]){const next=manualLines[selectedLine+1]?.time||manualSong?.duration_seconds||Infinity;if($('manualVideo').currentTime>=next)$('manualVideo').currentTime=manualLines[selectedLine].time}};
-    $('newLine').onclick=()=>{const time=$('manualVideo').currentTime||0;manualLines.splice(selectedLine+1,0,{time,end:time+.5,text:'',tokens:[]});selectedLine++;renderManual()};
-    $('editLine').onclick=()=>{$('manualText').hidden=!$('manualText').hidden};
-    $('manualText').onchange=()=>{const line=manualLines[selectedLine];if(!line)return;line.text=$('manualText').value;const tokens=tokenize(line.text),end=line.end||line.tokens.at(-1)?.end||line.time+tokens.length*.3;line.tokens=tokens.map((text,i)=>({text,start:line.time+(end-line.time)*i/Math.max(1,tokens.length),end:line.time+(end-line.time)*(i+1)/Math.max(1,tokens.length)}));line.end=end;renderManual()};
-    $('splitLine').onclick=()=>{const line=manualLines[selectedLine];if(!line)return;const mid=Math.ceil(line.text.length/2),textA=line.text.slice(0,mid),textB=line.text.slice(mid),splitAt=line.time+Math.max(.1,(line.end-line.time)/2);manualLines.splice(selectedLine,1,{time:line.time,end:splitAt,text:textA,tokens:tokenize(textA).map((text,i,a)=>({text,start:line.time+(splitAt-line.time)*i/a.length,end:line.time+(splitAt-line.time)*(i+1)/a.length}))},{time:splitAt,end:line.end,text:textB,tokens:tokenize(textB).map((text,i,a)=>({text,start:splitAt+(line.end-splitAt)*i/a.length,end:splitAt+(line.end-splitAt)*(i+1)/a.length}))});renderManual()};
-    $('mergeLine').onclick=()=>{if(manualLines[selectedLine+1]){const next=manualLines.splice(selectedLine+1,1)[0];manualLines[selectedLine].text+=next.text;manualLines[selectedLine].tokens.push(...next.tokens);manualLines[selectedLine].end=next.end;renderManual()}};
-    let selectedToken=0,heldToken=null;
-    function setTokenEdge(edge,time){const line=manualLines[selectedLine],token=line?.tokens[selectedToken];if(!token)return;token[edge]=time;if(edge==='start'&&selectedToken>0)line.tokens[selectedToken-1].end=time;if(edge==='end'&&line.tokens[selectedToken+1])line.tokens[selectedToken+1].start=time;renderManual()}
-    $('tokenEditor').addEventListener('change',e=>{if(e.target.matches('[data-token]')){const i=Number(e.target.dataset.token),edge=e.target.dataset.edge;manualLines[selectedLine].tokens[i][edge]=Number(e.target.value);selectedToken=i}});
-    $('tapToken').onclick=()=>{setTokenEdge('start',$('manualVideo').currentTime);heldToken=selectedToken};
-    $('tokenEnd').onclick=()=>setTokenEdge('end',$('manualVideo').currentTime);
-    window.addEventListener('keydown',e=>{if(!$('view-manual').hidden&&e.code==='Space'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();setTokenEdge('start',$('manualVideo').currentTime);heldToken=selectedToken}});
-    window.addEventListener('keyup',e=>{if(e.code==='Space'&&heldToken!==null&&!$('view-manual').hidden){setTokenEdge('end',$('manualVideo').currentTime);heldToken=null;selectedToken=Math.min(selectedToken+1,(manualLines[selectedLine]?.tokens.length||1)-1)}});
-    $('manualExport').onclick=()=>{const rows=['@format ktv-lrc','@version 1','','@id 000000','',`@song_name ${manualSong?.title||''}, zh-tw`,`@singer ${manualSong?.artist||'Unknown'}, zh-tw`,`@duration ${Math.floor(manualSong?.duration_seconds||0)}`,'','@lyrics zh-tw','@lyric_synced word','','@lyric zh-tw',...manualLines.flatMap(line=>[`%${Number(line.time).toFixed(3)} ${Number(line.end||line.tokens.at(-1)?.end||line.time).toFixed(3)} ${line.text}`,...line.tokens.map(token=>`$${Number(token.start).toFixed(3)} ${Number(token.end).toFixed(3)} ${token.text}`),'']),'@dialogue'];download(new Blob([rows.join('\n')],{type:'text/plain;charset=utf-8'}),`${manualSong?.id||'lyrics'}-manual-draft.lrc`);toast('已匯出人工歌詞草稿；未覆寫正式曲庫')};
-    async function loadVocalWave(){const filename=manualSong?.vocals_filename;if(!filename){drawWave('曲庫沒有 vocals_filename，無法載入原始人聲波形');return}try{const response=await fetch(`/media/${encodeURIComponent(filename)}`);if(!response.ok)throw Error('人聲 WAV 無法讀取');drawWaveFromWav(await response.arrayBuffer())}catch{drawWave('無法載入人聲 WAV 波形')}}
-    function drawWaveFromWav(buffer){const view=new DataView(buffer);let offset=12,format=1,channels=1,bits=16,dataOffset=0,dataSize=0;while(offset+8<view.byteLength){const id=String.fromCharCode(view.getUint8(offset),view.getUint8(offset+1),view.getUint8(offset+2),view.getUint8(offset+3)),size=view.getUint32(offset+4,true);if(id==='fmt '){format=view.getUint16(offset+8,true);channels=view.getUint16(offset+10,true);bits=view.getUint16(offset+22,true)}if(id==='data'){dataOffset=offset+8;dataSize=size;break}offset+=8+size+(size%2)}if(!dataOffset||![16,24,32].includes(bits)||![1,3].includes(format)){drawWave('此 WAV 編碼格式目前無法繪製');return}const samples=Math.floor(dataSize/(bits/8)/channels),bins=900,values=[];for(let bin=0;bin<bins;bin++){const start=Math.floor(bin*samples/bins),end=Math.max(start+1,Math.floor((bin+1)*samples/bins));let peak=0;for(let i=start;i<end;i+=Math.max(1,Math.floor((end-start)/60))){const at=dataOffset+i*channels*(bits/8);let value;if(format===3&&bits===32)value=Math.abs(view.getFloat32(at,true));else if(bits===16)value=Math.abs(view.getInt16(at,true)/32768);else if(bits===24){let raw=view.getUint8(at)|(view.getUint8(at+1)<<8)|(view.getUint8(at+2)<<16);if(raw&0x800000)raw|=0xff000000;value=Math.abs(raw/8388608)}else value=Math.abs(view.getInt32(at,true)/2147483648);peak=Math.max(peak,value)}values.push(peak)}drawWave(null,values)}
-    let waveformValues=[],dragBoundary=null;
-    function drawWave(message='',values=waveformValues){if(values.length)waveformValues=values;const canvas=$('waveCanvas'),ctx=canvas.getContext('2d'),ratio=window.devicePixelRatio||1;canvas.width=Math.max(1,canvas.clientWidth)*ratio;canvas.height=Math.max(1,canvas.clientHeight)*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);ctx.fillStyle='#0b1017';ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);if(!waveformValues.length){ctx.fillStyle='#9ba7b8';ctx.font='11px system-ui';ctx.fillText(message||'載入 vocals.wav 後顯示實際人聲波形',8,18);return}ctx.strokeStyle='#76edce';ctx.beginPath();const mid=canvas.clientHeight/2;waveformValues.forEach((value,i)=>{const x=i/waveformValues.length*canvas.clientWidth,y=Math.max(1,value*mid);ctx.moveTo(x,mid-y);ctx.lineTo(x,mid+y)});ctx.stroke();const tokens=manualLines[selectedLine]?.tokens||[],total=Number(manualSong?.duration_seconds)||1;tokens.forEach((token,i)=>{const x=token.start/total*canvas.clientWidth,end=token.end/total*canvas.clientWidth;ctx.fillStyle=i===selectedToken?'#83a7ff42':'#76edce25';ctx.fillRect(x,0,Math.max(2,end-x),canvas.clientHeight);ctx.strokeStyle='#b8f7e5';ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.clientHeight);ctx.moveTo(end,0);ctx.lineTo(end,canvas.clientHeight);ctx.stroke()})}
-    $('waveCanvas').onpointerdown=e=>{const canvas=$('waveCanvas'),rect=canvas.getBoundingClientRect(),x=e.clientX-rect.left,total=Number(manualSong?.duration_seconds)||1,tokens=manualLines[selectedLine]?.tokens||[];let closest=null,distance=13;tokens.forEach((token,i)=>['start','end'].forEach(edge=>{const dx=Math.abs(token[edge]/total*rect.width-x);if(dx<distance){distance=dx;closest={index:i,edge}}}));if(closest){selectedToken=closest.index;dragBoundary=closest.edge;canvas.setPointerCapture(e.pointerId)}};
-    $('waveCanvas').onpointermove=e=>{if(!dragBoundary)return;const rect=$('waveCanvas').getBoundingClientRect(),time=Math.max(0,Math.min(Number(manualSong?.duration_seconds)||Infinity,(e.clientX-rect.left)/rect.width*(Number(manualSong?.duration_seconds)||1)));manualLines[selectedLine].tokens[selectedToken][dragBoundary]=Math.round(time*100)/100;drawWave()};
-    $('waveCanvas').onpointerup=()=>{if(dragBoundary){const edge=dragBoundary;dragBoundary=null;renderManual();drawWave();toast(`已微調字詞${edge==='start'?'起點':'終點'}`)}};
-    $('manualVideo').addEventListener('loadedmetadata',drawWave);window.addEventListener('resize',drawWave);
-    $('searchResults').addEventListener('click',e=>{const button=e.target.closest('[data-manual]');if(button)openManual(button.dataset.manual)});
-    showView('controller');updateNetwork();checkServices();setInterval(checkServices,6000);$('settingQr').checked=localStorage.getItem('ktvShowQr')!=='false';$('allowRemoteNext').checked=localStorage.getItem('ktvAllowRemoteNext')!=='false';
+    const fmt = value => { const s = Math.max(0, Math.floor(Number(value) || 0)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+    const fmtClock = value => { const n = Math.max(0, Number(value) || 0), m = Math.floor(n / 60), s = (n % 60).toFixed(2).padStart(5, '0'); return `[${String(m).padStart(2, '0')}:${s}]`; };
+
+    let songs = [], queue = [], history = [], state = {};
+    let searchOffset = 0, searchTotal = 0, libraryOffset = 0, libraryTotal = 0;
+    let searchTimer, searchMode = 'keyword', searchLanguage = '', searchRequest = 0, searchBusy = false, libraryBusy = false;
+    let duration = 0, position = 0, dragging = false;
+    let previewVideoSrc = '', activeSongLines = [], currentLyricsSongId = null;
+    let fsIdleTimer = null;
+    const PAGE = 50;
+
+    function toast(message) {
+      $('toast').textContent = message;
+      $('toast').classList.add('show');
+      setTimeout(() => $('toast').classList.remove('show'), 2300);
+    }
+
+    // View Switching & Shortcuts
+    function showView(name) {
+      document.querySelectorAll('[data-view]').forEach(el => el.hidden = el.dataset.view !== name);
+      document.querySelectorAll('[data-view-button]').forEach(el => el.classList.toggle('active', el.dataset.viewButton === name));
+      if (name === 'library') { loadLibrary(true); loadCatalogHealth(); }
+      if (name === 'fullscreen') resetFsIdleTimer();
+    }
+    document.querySelectorAll('[data-view-button]').forEach(btn => btn.addEventListener('click', () => showView(btn.dataset.viewButton)));
+
+    // Keyboard Shortcuts (1-6, Space, ESC)
+    document.addEventListener('keydown', event => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      if (event.key === 'Escape') {
+        if (!$('overlay').hidden) { event.preventDefault(); $('overlay').hidden = true; return; }
+        if (!$('view-fullscreen').hidden) { event.preventDefault(); showView('controller'); return; }
+      }
+      if (event.key === ' ' && !event.repeat) {
+        event.preventDefault();
+        socket.emit('player_command', { isPlaying: !state.isPlaying });
+        return;
+      }
+      const viewMap = { '1': 'fullscreen', '2': 'controller', '3': 'queue', '4': 'search', '5': 'settings', '6': 'library' };
+      if (viewMap[event.key]) {
+        event.preventDefault();
+        showView(viewMap[event.key]);
+      }
+    });
+
+    // Preview Panel Toggle
+    const savedPreview = localStorage.getItem('ktvShowPreview');
+    if (savedPreview === 'false') {
+      $('workArea').classList.add('hide-preview');
+      $('togglePreview').textContent = '👁️ 預覽: 關';
+      $('togglePreview').classList.remove('active');
+    } else {
+      $('togglePreview').textContent = '👁️ 預覽: 開';
+      $('togglePreview').classList.add('active');
+    }
+    $('togglePreview').onclick = () => {
+      const isHidden = $('workArea').classList.toggle('hide-preview');
+      localStorage.setItem('ktvShowPreview', String(!isHidden));
+      $('togglePreview').textContent = isHidden ? '👁️ 預覽: 關' : '👁️ 預覽: 開';
+      $('togglePreview').classList.toggle('active', !isHidden);
+    };
+
+    // Fullscreen Mode Idle HUD Hiding
+    function resetFsIdleTimer() {
+      const container = $('singContainer');
+      container.classList.remove('fs-hide-hud');
+      clearTimeout(fsIdleTimer);
+      if (!$('view-fullscreen').hidden) {
+        fsIdleTimer = setTimeout(() => {
+          if (!$('view-fullscreen').hidden) container.classList.add('fs-hide-hud');
+        }, 3200);
+      }
+    }
+    $('singContainer').addEventListener('mousemove', resetFsIdleTimer);
+    $('singContainer').addEventListener('touchstart', resetFsIdleTimer);
+    $('fsExit').onclick = () => showView('controller');
+
+    // Desktop Window IPC & Display Detection
+    function updatePlayerButtons(isOpen) {
+      $('playerOpen').style.display = isOpen ? 'none' : '';
+      $('playerClose').style.display = isOpen ? '' : 'none';
+      $('playerToggleFullscreen').style.display = isOpen ? '' : 'none';
+      $('playerStatus').textContent = isOpen ? '電視播放器在線' : '播放器已關閉';
+      $('previewDisplayTarget').textContent = isOpen ? '🔴 播放器連線' : '⚠️ 播放器離線';
+    }
+    async function checkDisplays() {
+      if (!window.ktvDesktop?.getDisplays) {
+        $('displayCountBadge').textContent = 'Web 瀏覽器環境';
+        return;
+      }
+      try {
+        const displays = await window.ktvDesktop.getDisplays();
+        const count = displays?.length || 1;
+        const info = displays.map((d, i) => `螢幕 ${i + 1}: ${d.bounds.width}×${d.bounds.height}`).join(' · ');
+        $('settingsDisplayInfo').textContent = info;
+        if (count > 1) {
+          $('displayCountBadge').textContent = `🖥️ 雙螢幕 (${displays[1].bounds.width}×${displays[1].bounds.height})`;
+          $('displayCountBadge').style.color = 'var(--cyan)';
+          $('previewDisplayTarget').textContent = `螢幕 2 (${displays[1].bounds.width}×${displays[1].bounds.height})`;
+        } else {
+          $('displayCountBadge').textContent = '🖥️ 單螢幕模式';
+          $('previewDisplayTarget').textContent = '單螢幕模式';
+        }
+      } catch (err) {
+        console.warn('Displays check failed:', err);
+      }
+    }
+    $('playerOpen').onclick = $('settingsPlayerOpen').onclick = async () => {
+      if (!window.ktvDesktop?.openPlayer) { toast('內建播放器只能從 Electron 桌面 App 開啟'); return; }
+      try {
+        const res = await window.ktvDesktop.openPlayer();
+        if (res?.ok === false) throw Error(res.error);
+        updatePlayerButtons(true);
+      } catch (e) { toast(e.message || '播放器開啟失敗'); }
+    };
+    $('playerClose').onclick = async () => {
+      if (!window.ktvDesktop?.closePlayer) return;
+      try {
+        await window.ktvDesktop.closePlayer();
+        updatePlayerButtons(false);
+      } catch (e) { toast(e.message || '無法關閉播放器'); }
+    };
+    $('playerToggleFullscreen').onclick = $('settingsPlayerFullscreen').onclick = async () => {
+      if (!window.ktvDesktop?.togglePlayerFullscreen) { toast('請在 Electron 桌面環境執行'); return; }
+      try {
+        await window.ktvDesktop.togglePlayerFullscreen();
+        toast('已切換大螢幕全螢幕模式');
+      } catch (e) { toast(e.message); }
+    };
+    window.ktvDesktop?.onPlayerClosed?.(() => updatePlayerButtons(false));
+    window.ktvDesktop?.onPlayerOpened?.(() => updatePlayerButtons(true));
+    checkDisplays();
+    updatePlayerButtons(true); // Default open in electron
+
+    // QR Code Modal
+    $('qrOpen').onclick = async () => {
+      $('modalTitle').textContent = '📱 手機掃碼點歌';
+      $('modalContent').innerHTML = '<p class="status-note">正在產生遙控器 QR Code…</p>';
+      $('overlay').hidden = false;
+      try {
+        const response = await fetch('/api/qr');
+        const data = await response.json();
+        if (!response.ok) throw Error(data.error || 'QR Code 服務無法使用');
+        $('modalContent').innerHTML = `<img class="qr" alt="手機遙控器 QR Code" src="${esc(data.dataUrl)}"><p class="status-note" style="text-align:center">請讓手機連上同一個 Wi-Fi／熱點，再掃描或開啟：<br><a href="${esc(data.url)}" target="_blank">${esc(data.url)}</a></p>`;
+      } catch (error) {
+        $('modalContent').innerHTML = `<div class="message">${esc(error.message)}<br>請確認手機與主機連線至同一個 Wi-Fi／熱點，並嘗試重新開啟 QR Code。</div>`;
+      }
+    };
+    $('modalClose').onclick = () => { $('overlay').hidden = true; };
+    $('overlay').onclick = e => { if (e.target === $('overlay')) $('overlay').hidden = true; };
+
+    // Lyrics Parsing & Subtitles Synchronization
+    function parseLrc(text) {
+      const rows = [];
+      let current = null;
+      for (const raw of text.split(/\r?\n/)) {
+        const line = raw.trim();
+        const timed = /^\[(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?\](.*)$/.exec(line);
+        if (timed) {
+          rows.push({ time: Number(timed[1]) * 60 + Number(timed[2]) + Number(`0.${timed[3] || 0}`), end: null, text: timed[4].trim(), tokens: [] });
+          current = rows.at(-1);
+          continue;
+        }
+        const lineMatch = /^%([\d.]+)\s+([\d.]+)\s+(.*)$/.exec(line);
+        if (lineMatch) {
+          current = { time: Number(lineMatch[1]), end: Number(lineMatch[2]), text: lineMatch[3], tokens: [] };
+          rows.push(current);
+          continue;
+        }
+        const wordMatch = /^\$([\d.]+)\s+([\d.]+)\s+(.*)$/.exec(line);
+        if (wordMatch && current) current.tokens.push({ text: wordMatch[3], start: Number(wordMatch[1]), end: Number(wordMatch[2]) });
+      }
+      return rows.map(row => ({
+        ...row,
+        tokens: row.tokens.length ? row.tokens : tokenize(row.text).map((text, i, a) => ({
+          text,
+          start: row.time + (row.end ? ((row.end - row.time) * i / a.length) : i * .3),
+          end: row.time + (row.end ? ((row.end - row.time) * (i + 1) / a.length) : (i + 1) * .3)
+        }))
+      }));
+    }
+    function tokenize(text) {
+      return text.match(/[\u3400-\u9fff\u3040-\u30ff\uac00-\ud7af]|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*\s*/gu) || [];
+    }
+    async function syncSongLyrics(song) {
+      if (!song) {
+        activeSongLines = [];
+        currentLyricsSongId = null;
+        updateSubtitlesHUD(0);
+        return;
+      }
+      if (currentLyricsSongId === song.id) return;
+      currentLyricsSongId = song.id;
+      try {
+        if (song.lyrics_filename) {
+          const resp = await fetch(`/media/${encodeURIComponent(song.lyrics_filename)}`);
+          if (resp.ok) {
+            activeSongLines = parseLrc(await resp.text());
+            updateSubtitlesHUD(position);
+            return;
+          }
+        }
+        activeSongLines = parseLrc(song.lyrics || '');
+      } catch {
+        activeSongLines = parseLrc(song.lyrics || '');
+      }
+      updateSubtitlesHUD(position);
+    }
+    function updateSubtitlesHUD(pos) {
+      if (!queue.length || !queue[0]) {
+        $('previewSubtitleBox').textContent = '';
+        $('fsLineCurrent').textContent = '尚未點歌，前往點歌頁點播！';
+        $('fsLineNext').textContent = '';
+        return;
+      }
+      if (!activeSongLines.length) {
+        $('previewSubtitleBox').textContent = '♪ 歌曲準備中 ♪';
+        $('fsLineCurrent').textContent = queue[0].title;
+        $('fsLineNext').textContent = queue[0].artist || '';
+        return;
+      }
+      let curIdx = -1;
+      for (let i = 0; i < activeSongLines.length; i++) {
+        if (pos >= activeSongLines[i].time) curIdx = i;
+        else break;
+      }
+      if (curIdx >= 0) {
+        const cur = activeSongLines[curIdx];
+        const nxt = activeSongLines[curIdx + 1];
+        $('previewSubtitleBox').textContent = cur.text || '♪ ♫ ♪';
+        $('fsLineCurrent').textContent = cur.text || '♪ ♫ ♪';
+        $('fsLineNext').textContent = nxt ? nxt.text : '';
+      } else {
+        $('previewSubtitleBox').textContent = '♪ 前奏準備 ♪';
+        $('fsLineCurrent').textContent = '♪ 前奏準備 ♪';
+        $('fsLineNext').textContent = activeSongLines[0]?.text || '';
+      }
+    }
+
+    // Synchronize Videos (Preview & Fullscreen)
+    function syncVideos(current, isPlaying, pos) {
+      const vSrc = current?.video_filename ? `/media/${encodeURIComponent(current.video_filename)}` : '';
+      const prevVid = $('previewVideo');
+      const fsVid = $('fsVideo');
+      if (previewVideoSrc !== vSrc) {
+        previewVideoSrc = vSrc;
+        if (vSrc) {
+          prevVid.src = vSrc;
+          if (fsVid) fsVid.src = vSrc;
+          $('previewIdleHud').classList.add('hidden');
+        } else {
+          prevVid.removeAttribute('src');
+          if (fsVid) fsVid.removeAttribute('src');
+          $('previewIdleHud').classList.remove('hidden');
+        }
+      }
+      if (vSrc) {
+        if (isPlaying && prevVid.paused) prevVid.play().catch(() => {});
+        else if (!isPlaying && !prevVid.paused) prevVid.pause();
+        if (Math.abs(prevVid.currentTime - pos) > 0.6) prevVid.currentTime = pos;
+
+        if (fsVid) {
+          if (isPlaying && fsVid.paused) fsVid.play().catch(() => {});
+          else if (!isPlaying && !fsVid.paused) fsVid.pause();
+          if (Math.abs(fsVid.currentTime - pos) > 0.6) fsVid.currentTime = pos;
+        }
+      }
+    }
+
+    // Playback Sync Handlers
+    function applyPlayback(payload) {
+      queue = payload.queue || [];
+      history = payload.history || history;
+      state = payload.state || {};
+      const current = queue[0];
+
+      // Titles & Info
+      $('currentTitle').textContent = current?.title || '尚未點歌';
+      $('currentSub').textContent = current ? `${current.artist || '未知歌手'} · 下一首：${queue[1]?.title || '無'}` : '選一首歌開始今晚的演出';
+      $('previewTitle').textContent = current?.title || '尚未點歌';
+      $('previewArtist').textContent = current ? `${current.artist || '未知歌手'} · 下一首：${queue[1]?.title || '無'}` : '選一首歌開始今晚的演出';
+      $('fsTitle').textContent = current?.title || 'OPENKTV';
+      $('fsArtist').textContent = current?.artist || '筆電歡唱模式';
+
+      // Play/Pause button states
+      const playLabel = state.isPlaying ? '⏸ 暫停' : '▶ 播放';
+      $('togglePlay').textContent = playLabel;
+      $('prevTogglePlay').textContent = state.isPlaying ? '⏸' : '▶';
+      $('fsTogglePlay').textContent = playLabel;
+
+      // Audio mode
+      const isAccompaniment = state.audioMode === 'accompaniment';
+      const modeText = isAccompaniment ? '🎤 伴唱模式' : '🗣️ 原唱模式';
+      $('audioMode').textContent = modeText;
+      $('prevAudioMode').textContent = isAccompaniment ? '🎤 伴唱' : '🗣️ 原唱';
+      $('fsAudioMode').textContent = modeText;
+
+      // Key pitch
+      const pitch = state.pitch || 0;
+      const keyLabel = pitch === 0 ? 'Key 0' : (pitch > 0 ? `Key +${pitch}` : `Key ${pitch}`);
+      if ($('keyPitchReset')) $('keyPitchReset').textContent = keyLabel;
+      if ($('prevKeyReset')) $('prevKeyReset').textContent = keyLabel;
+      if ($('fsKeyBadge')) $('fsKeyBadge').textContent = keyLabel;
+
+      // Time & Progress
+      duration = Number(current?.duration_seconds) || 0;
+      position = Number(state.position) || 0;
+      $('duration').textContent = fmt(duration);
+      $('prevDuration').textContent = fmt(duration);
+      if (!dragging) {
+        $('seek').max = duration || 100;
+        $('seek').value = Math.min(position, duration || 100);
+        $('elapsed').textContent = fmt(position);
+        $('prevElapsed').textContent = fmt(position);
+        const percent = duration ? Math.min(100, (position / duration) * 100) : 0;
+        $('previewBarFill').style.width = `${percent}%`;
+      }
+
+      // Volume
+      if (state.musicVol !== undefined) {
+        $('music').value = state.musicVol;
+        $('musicOut').textContent = `${Math.round(state.musicVol * 100)}%`;
+      }
+
+      $('nowQueue').textContent = `待播 ${Math.max(0, queue.length - 1)} 首${history.length ? ` · 已播 ${history.length} 首` : ''}`;
+      renderQueue();
+      syncSongLyrics(current);
+      syncVideos(current, state.isPlaying, position);
+    }
+
+    socket.on('sync_state', payload => applyPlayback(payload || {}));
+    socket.on('playback_snapshot', applyPlayback);
+    socket.on('queue_updated', items => { queue = items || []; renderQueue(); });
+    socket.on('playback_error', data => toast(data?.message || '播放錯誤'));
+    socket.on('crowd_interaction', data => toast(`${data?.type === 'message' ? '💬' : data?.type === 'cheer' ? '🎉' : '👏'} ${data?.user || '來賓'}：${data?.text || '為演出加油！'}`));
+    socket.on('connect', () => {
+      $('clientStatus').classList.remove('offline');
+      $('clientStatus').lastElementChild.textContent = '播放服務已連線';
+      $('socketStatus').textContent = 'Socket.IO 已連線';
+      requestSearch(true);
+      checkServices();
+      checkDisplays();
+    });
+    socket.on('disconnect', () => {
+      $('clientStatus').classList.add('offline');
+      $('clientStatus').lastElementChild.textContent = '播放服務重新連線中';
+      $('socketStatus').textContent = 'Socket.IO 離線';
+    });
+
+    // Control Event Wireups (Main, Preview & Fullscreen HUD)
+    const sendPlay = () => socket.emit('player_command', { isPlaying: !state.isPlaying });
+    const sendNext = () => socket.emit('next_song');
+    const sendReplay = () => socket.emit('replay_current');
+    const sendAudioMode = () => socket.emit('player_command', { audioMode: state.audioMode === 'accompaniment' ? 'original' : 'accompaniment' });
+    const sendKeyDown = () => socket.emit('player_command', { pitch: Math.max(-6, (state.pitch || 0) - 1) });
+    const sendKeyUp = () => socket.emit('player_command', { pitch: Math.min(6, (state.pitch || 0) + 1) });
+    const sendKeyReset = () => socket.emit('player_command', { pitch: 0 });
+
+    $('togglePlay').onclick = $('prevTogglePlay').onclick = $('fsTogglePlay').onclick = sendPlay;
+    $('next').onclick = $('prevNext').onclick = $('fsNext').onclick = sendNext;
+    $('replay').onclick = $('prevReplay').onclick = $('fsReplay').onclick = sendReplay;
+    $('audioMode').onclick = $('prevAudioMode').onclick = $('fsAudioMode').onclick = sendAudioMode;
+    $('keyPitchDown').onclick = $('prevKeyDown').onclick = $('fsKeyDown').onclick = sendKeyDown;
+    $('keyPitchUp').onclick = $('prevKeyUp').onclick = $('fsKeyUp').onclick = sendKeyUp;
+    $('keyPitchReset').onclick = $('prevKeyReset').onclick = sendKeyReset;
+
+    document.querySelectorAll('[data-sfx]').forEach(btn => {
+      btn.onclick = () => { socket.emit('play_sfx', { type: btn.dataset.sfx }); toast(`已發送 ${btn.textContent.trim()}`); };
+    });
+
+    $('seek').oninput = () => { dragging = true; $('elapsed').textContent = fmt($('seek').value); $('prevElapsed').textContent = fmt($('seek').value); };
+    $('seek').onchange = () => { socket.emit('seek', { position: Number($('seek').value) }); dragging = false; };
+    $('music').oninput = () => { $('musicOut').textContent = `${Math.round(Number($('music').value) * 100)}%`; socket.emit('player_command', { musicVol: Number($('music').value) }); };
+
+    // Realtime Progress Clock
+    setInterval(() => {
+      if (state.isPlaying && !dragging && duration) {
+        position = Math.min(duration, position + .25);
+        $('seek').value = position;
+        $('elapsed').textContent = fmt(position);
+        $('prevElapsed').textContent = fmt(position);
+        const percent = (position / duration) * 100;
+        $('previewBarFill').style.width = `${percent}%`;
+        updateSubtitlesHUD(position);
+      }
+    }, 250);
+
+    // Procedural Avatar Helpers
+    function getAvatarColor(str) {
+      const s = String(str || 'KTV');
+      let hash = 0;
+      for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
+      const h1 = Math.abs(hash) % 360;
+      const h2 = (h1 + 45) % 360;
+      return `linear-gradient(135deg, hsl(${h1}, 75%, 45%), hsl(${h2}, 85%, 35%))`;
+    }
+    function getAvatarInitial(str) {
+      const clean = String(str || '').trim();
+      return clean ? clean[0].toUpperCase() : '🎵';
+    }
+
+    // Explore Hub: Trending Songs & Popular Artists
+    async function loadTrendingAndArtists() {
+      try {
+        const [rTrend, rArt] = await Promise.all([
+          fetch('/api/songs/trending?limit=12').then(r => r.json()).catch(() => null),
+          fetch('/api/artists/popular').then(r => r.json()).catch(() => null),
+        ]);
+        if (rTrend?.items?.length) {
+          $('trendingGrid').innerHTML = rTrend.items.map((s, i) => `
+            <div class="trending-card" data-song-id="${esc(s.id)}">
+              <span class="trending-rank">#${i + 1}</span>
+              <div class="song-avatar" style="background:${getAvatarColor(s.artist || s.title)};width:38px;height:38px;font-size:15px">
+                ${getAvatarInitial(s.artist || s.title)}
+              </div>
+              <div class="trending-info">
+                <div class="trending-title">${esc(s.title)}${s.playCount ? `<span class="badge-fire">🔥 ${s.playCount}</span>` : ''}</div>
+                <div class="trending-artist">${esc(s.artist || '未知歌手')}</div>
+              </div>
+              <div class="trending-actions">
+                <button class="small add" data-quick-add="${esc(s.id)}" title="點歌">＋</button>
+                <button class="small" data-quick-insert="${esc(s.id)}" title="插播">⬆</button>
+              </div>
+            </div>
+          `).join('');
+
+          $('trendingGrid').querySelectorAll('[data-quick-add]').forEach(btn => btn.onclick = (e) => {
+            e.stopPropagation();
+            const song = rTrend.items.find(item => item.id === btn.dataset.quickAdd);
+            if (song) socket.emit('add_to_queue', song);
+            toast('已加入待播清單');
+          });
+          $('trendingGrid').querySelectorAll('[data-quick-insert]').forEach(btn => btn.onclick = (e) => {
+            e.stopPropagation();
+            const song = rTrend.items.find(item => item.id === btn.dataset.quickInsert);
+            if (song) socket.emit('insert_to_top', song);
+            toast('已插入下一首');
+          });
+          $('trendingGrid').querySelectorAll('.trending-card').forEach(card => card.onclick = () => {
+            const song = rTrend.items.find(item => item.id === card.dataset.songId);
+            if (song) {
+              socket.emit('add_to_queue', song);
+              toast(`已點播《${song.title}》`);
+            }
+          });
+        }
+
+        if (rArt?.items?.length) {
+          $('artistsScroll').innerHTML = rArt.items.slice(0, 16).map(art => `
+            <div class="artist-chip" data-artist-name="${esc(art.name)}">
+              <div class="artist-avatar-lg" style="background:${getAvatarColor(art.name)}">
+                ${getAvatarInitial(art.name)}
+              </div>
+              <span class="artist-name" title="${esc(art.name)}">${esc(art.name)}</span>
+            </div>
+          `).join('');
+
+          $('artistsScroll').querySelectorAll('[data-artist-name]').forEach(chip => chip.onclick = () => {
+            $('query').value = chip.dataset.artistName;
+            requestSearch(true);
+          });
+        }
+      } catch (e) {
+        console.warn('Trending load failed:', e);
+      }
+    }
+
+    document.querySelectorAll('[data-quick-lang]').forEach(btn => btn.onclick = () => {
+      searchLanguage = btn.dataset.quickLang;
+      document.querySelectorAll('[data-language]').forEach(b => b.classList.toggle('active', b.dataset.language === searchLanguage));
+      requestSearch(true);
+    });
+
+    // Search & Song Browsing
+    function requestSearch(reset = false) {
+      const q = $('query').value.trim();
+      if (!q && !searchLanguage) {
+        $('searchExplore').hidden = false;
+        $('searchResults').hidden = true;
+        $('pagingWrap').hidden = true;
+        return;
+      }
+      $('searchExplore').hidden = true;
+      $('searchResults').hidden = false;
+      $('pagingWrap').hidden = false;
+
+      if (reset) {
+        searchOffset = 0;
+        searchTotal = 0;
+        searchBusy = false;
+        searchRequest++;
+        $('searchResults').innerHTML = '<div class="message">搜尋中…</div>';
+      }
+      if (searchBusy) return;
+      searchBusy = true;
+      $('loadMoreSongs').disabled = true;
+      socket.emit('search_songs', {
+        query: q,
+        language: searchLanguage,
+        mode: searchMode,
+        sort: $('sortSongs').value,
+        offset: searchOffset,
+        limit: PAGE,
+        paginated: true,
+        requestId: searchRequest
+      });
+    }
+    $('query').oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => requestSearch(true), 180); };
+    $('clearSearch').onclick = () => {
+      $('query').value = '';
+      searchLanguage = '';
+      document.querySelectorAll('[data-language]').forEach(b => b.classList.toggle('active', !b.dataset.language));
+      requestSearch(true);
+    };
+    $('loadMoreSongs').onclick = () => requestSearch();
+    $('sortSongs').onchange = () => requestSearch(true);
+    document.querySelectorAll('[data-language]').forEach(button => button.onclick = () => {
+      searchLanguage = button.dataset.language;
+      document.querySelectorAll('[data-language]').forEach(b => b.classList.toggle('active', b === button));
+      requestSearch(true);
+    });
+    document.querySelectorAll('[data-mode]').forEach(button => button.onclick = () => {
+      searchMode = button.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('active', b === button));
+      $('query').placeholder = ({ keyword: '搜尋歌名、歌手、拼音或注音', zhuyin: '輸入注音首字，例如 ㄓㄐㄌ', pinyin: '輸入拼音首字，例如 ZJL', lyrics: '輸入記得的歌詞片段', artist: '搜尋歌手姓名' })[searchMode];
+      $('keyboard').hidden = searchMode !== 'zhuyin';
+      requestSearch(true);
+    });
+    const zhuyinKeys = 'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ';
+    $('keyboard').innerHTML = [...zhuyinKeys].map(char => `<button class="key" data-key="${char}">${char}</button>`).join('');
+    $('keyboard').onclick = e => { const key = e.target.closest('[data-key]'); if (key) { $('query').value += key.dataset.key; requestSearch(true); } };
+    $('voiceSearch').onclick = () => {
+      const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Speech) { toast('此瀏覽器不支援語音搜尋'); return; }
+      const recognition = new Speech();
+      recognition.lang = 'zh-TW';
+      recognition.onresult = e => { $('query').value = e.results[0][0].transcript; requestSearch(true); };
+      recognition.onerror = () => toast('無法辨識語音，請檢查麥克風權限');
+      recognition.start();
+    };
+
+    function songMarkup(song, library = false) {
+      const avatarBg = getAvatarColor(song.artist || song.title);
+      const initial = getAvatarInitial(song.artist || song.title);
+      return `<article class="song-row">
+        <div class="song-avatar" style="background:${avatarBg}">
+          ${initial}
+        </div>
+        <div class="song-info">
+          <div class="song-title">
+            ${esc(song.title || '未命名歌曲')}
+            ${song.playCount ? `<span class="badge-fire">🔥 ${song.playCount}</span>` : ''}
+          </div>
+          <div class="song-sub">
+            ${esc(song.artist || '未知歌手')} · ${esc(song.language || '未標語種')} · ${esc(song.duration_seconds ? fmt(song.duration_seconds) : '時長未知')}
+            <span class="badge-pill">${song.instrumental_filename ? '🎤 原/伴' : '🗣️ 原唱'}</span>
+          </div>
+        </div>
+        <div class="song-actions">
+          <button class="small add" data-add="${esc(song.id)}">＋ 點歌</button>
+          <button class="small" data-insert="${esc(song.id)}">⬆ 插播</button>
+          ${library ? `<button class="small" data-manual="${esc(song.id)}">🎯 歌詞工作台</button>` : ''}
+        </div>
+      </article>`;
+    }
+    function renderSongs(rows, append = false) {
+      const target = $('searchResults');
+      if (!append) target.innerHTML = '';
+      if (rows.length) target.insertAdjacentHTML('beforeend', rows.map(row => songMarkup(row)).join(''));
+      else if (!append) target.innerHTML = '<div class="message">沒有找到歌曲，試試其他搜尋模式或關鍵字。</div>';
+      target.querySelectorAll('[data-add]').forEach(btn => btn.onclick = () => {
+        const song = songs.find(item => item.id === btn.dataset.add);
+        if (song) socket.emit('add_to_queue', song);
+        toast('已加入待播清單');
+      });
+      target.querySelectorAll('[data-insert]').forEach(btn => btn.onclick = () => {
+        const song = songs.find(item => item.id === btn.dataset.insert);
+        if (song) socket.emit('insert_to_top', song);
+        toast('已插入下一首');
+        showView('queue');
+      });
+    }
+    socket.on('search_page_results', page => {
+      if (page?.requestId !== searchRequest) return;
+      searchBusy = false;
+      const rows = page.items || [];
+      songs = page.offset ? [...songs, ...rows] : rows;
+      searchOffset = songs.length;
+      searchTotal = Number(page.total) || 0;
+      renderSongs(rows, Boolean(page.offset));
+      $('resultCount').textContent = `${searchTotal.toLocaleString()} 首歌曲`;
+      $('pageLabel').textContent = `顯示 ${searchOffset} / ${searchTotal} 首`;
+      $('loadMoreSongs').hidden = searchOffset >= searchTotal;
+      $('loadMoreSongs').disabled = false;
+    });
+
+    // Queue Rendering
+    function renderQueue() {
+      const pane = $('queueList');
+      $('queueSummary').textContent = `待播 ${Math.max(0, queue.length - 1)} 首`;
+      pane.innerHTML = queue.length ? queue.map((song, index) => `<article class="queue-row"><div class="song-info"><div class="song-title">${index === 0 ? '▶ NOW · ' : `#${String(index).padStart(2, '0')} · `}${esc(song.title)}</div><div class="song-sub">${esc(song.artist || '未知歌手')} · ${index === 0 ? '正在播放' : '待播'}</div></div><div class="song-actions">${index === 0 ? '<button class="small remove" data-next>⏭ 立即切歌</button>' : `<button class="small" data-top="${esc(song.queueId)}">⬆ 置頂</button><button class="small remove" data-remove="${esc(song.queueId)}">移除</button>`}</div></article>`).join('') : '<div class="message">佇列空空的，前往點歌頁加入歌曲。</div>';
+      pane.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => socket.emit('remove_from_queue', b.dataset.remove));
+      pane.querySelectorAll('[data-top]').forEach(b => b.onclick = () => socket.emit('move_to_top', b.dataset.top));
+      pane.querySelector('[data-next]')?.addEventListener('click', () => socket.emit('next_song'));
+      $('historyList').innerHTML = history.length ? history.map((s, i) => `<article class="queue-row"><div class="song-info"><div class="song-title">${i + 1}. ${esc(s.title)}</div><div class="song-sub">${esc(s.artist || '未知歌手')}</div></div><button class="small add" data-replay="${esc(s.id)}">重新點播</button></article>`).join('') : '<div class="message">尚無本次執行期間的播放歷史。</div>';
+      $('historyList').querySelectorAll('[data-replay]').forEach(b => b.onclick = () => { const song = history.find(s => s.id === b.dataset.replay); if (song) socket.emit('add_to_queue', song); });
+    }
+    document.querySelectorAll('[data-queue-tab]').forEach(button => button.onclick = () => {
+      const show = button.dataset.queueTab === 'history';
+      $('upcomingPane').hidden = show;
+      $('historyPane').hidden = !show;
+      document.querySelectorAll('[data-queue-tab]').forEach(b => b.classList.toggle('active', b === button));
+    });
+    $('shuffleQueue').onclick = () => socket.emit('shuffle_queue');
+    $('clearQueue').onclick = () => { if (confirm('清除所有待播歌曲？目前播放中的歌曲會繼續。')) socket.emit('clear_queue'); };
+
+    // Services Check & Python Ingest
+    let processingSocket = null;
+    function renderTaskQueue(tasks) {
+      const container = $('queueTasksList');
+      if (!tasks || !tasks.length) {
+        container.innerHTML = '';
+        $('cancelIngest').style.display = 'none';
+        return;
+      }
+      $('cancelIngest').style.display = '';
+      container.innerHTML = tasks.map((t, idx) => `
+        <div class="queue-task-item">
+          <span><strong>#${idx + 1}</strong> ${esc(t.title)} ${t.status === 'processing' ? '<span class="pill" style="color:var(--cyan)">處理中</span>' : '<span class="pill">排隊中</span>'}</span>
+          <button class="small remove" data-cancel-task="${esc(t.id)}">✕ 取消</button>
+        </div>
+      `).join('');
+      container.querySelectorAll('[data-cancel-task]').forEach(btn => {
+        btn.onclick = () => {
+          processingSocket?.emit('cancel_download', { taskId: btn.dataset.cancelTask });
+          toast('已送出取消任務請求');
+        };
+      });
+    }
+
+    $('cancelIngest').onclick = () => {
+      processingSocket?.emit('cancel_download', {});
+      toast('已取消所有下載任務');
+    };
+
+    async function checkServices() {
+      try {
+        const r = await fetch('/api/services'), data = await r.json();
+        const ok = r.ok && data.python?.ok;
+        $('serviceBadge').textContent = ok ? 'Python 處理 API 就緒' : 'Python 處理 API 離線';
+        $('serviceBadge').style.color = ok ? 'var(--cyan)' : 'var(--orange)';
+        if (ok && !processingSocket) {
+          processingSocket = io(`${location.protocol}//${location.hostname}:${data.pythonPort}`, { query: { role: 'admin' } });
+          processingSocket.on('connect', () => $('ingestStatus').textContent = 'Python 入庫服務已連線');
+          processingSocket.on('connect_error', () => $('ingestStatus').textContent = '無法連線 Python 入庫服務');
+          processingSocket.on('queue_status', payload => renderTaskQueue(payload?.queue || []));
+          processingSocket.on('task_status', payload => {
+            if (payload.status === 'busy') $('ingestStatus').textContent = '正在處理歌曲…';
+            else if (payload.status === 'idle') {
+              $('startIngest').disabled = false;
+              renderTaskQueue([]);
+            }
+          });
+          processingSocket.on('task_progress', payload => {
+            if (payload.phase === 'done') {
+              $('ingestProgress').style.width = '100%';
+              if (payload.failed && payload.failed.length > 0) {
+                const reason = payload.failed_reason ? ` (原因: ${payload.failed_reason})` : '';
+                $('ingestStatus').textContent = `❌ 處理失敗：${payload.failed.join(', ')}${reason}`;
+                $('ingestStatus').style.color = '#ef4444';
+                toast(`入庫失敗：${payload.failed_reason || '處理未完成'}`);
+              } else {
+                $('ingestStatus').textContent = `✅ 處理完成：成功 ${payload.success || 0} 首`;
+                $('ingestStatus').style.color = 'var(--cyan)';
+              }
+              $('startIngest').disabled = false;
+              setTimeout(() => { loadLibrary(true); requestSearch(true); loadTrendingAndArtists(); }, 1200);
+              return;
+            }
+            $('ingestStatus').style.color = '';
+            const percent = payload.total ? Math.round((payload.current || 0) * 100 / payload.total) : 0;
+            $('ingestProgress').style.width = `${percent}%`;
+            $('ingestStatus').textContent = `${payload.title || '歌曲處理中'} · ${payload.current || 0}/${payload.total || 1} · 第 ${payload.attempt || 1} 次`;
+          });
+          processingSocket.on('admin_log', payload => {
+            if (payload?.msg) {
+              const message = String(payload.msg).slice(0, 240);
+              $('ingestStatus').textContent = message;
+              if (message.includes('正在處理其他歌曲')) $('startIngest').disabled = false;
+            }
+          });
+        }
+      } catch { $('serviceBadge').textContent = 'Python 處理 API 離線'; }
+    }
+    async function updateNetwork() {
+      const url = `${location.origin}/remote`;
+      $('remoteAddress').textContent = url;
+      try {
+        const response = await fetch('/api/room');
+        const room = await response.json();
+        $('networkStatus').lastElementChild.textContent = `區域網路 ${location.host}`;
+        $('clientStatus').lastElementChild.textContent = `${room.clientCount || 0} 台裝置 · ${room.songCount || 0} 首歌曲`;
+      } catch { $('networkStatus').classList.add('offline'); }
+    }
+    $('copyRemote').onclick = async () => {
+      try { await navigator.clipboard.writeText(`${location.origin}/remote`); toast('遙控網址已複製'); }
+      catch { toast(`${location.origin}/remote`); }
+    };
+    $('settingQr').onchange = e => localStorage.setItem('ktvShowQr', String(e.target.checked));
+    $('allowRemoteNext').onchange = e => localStorage.setItem('ktvAllowRemoteNext', String(e.target.checked));
+    $('enableIngest').onchange = e => { $('ingestCard').hidden = !e.target.checked; localStorage.setItem('ktvEnableIngest', String(e.target.checked)); };
+    $('enableIngest').checked = localStorage.getItem('ktvEnableIngest') !== 'false';
+    $('ingestCard').hidden = !$('enableIngest').checked;
+
+    document.querySelectorAll('[data-setting]').forEach(button => button.onclick = () => {
+      document.querySelectorAll('[data-setting]').forEach(b => b.classList.toggle('active', b === button));
+      document.querySelectorAll('[data-setting-pane]').forEach(p => p.hidden = p.dataset.settingPane !== button.dataset.setting);
+    });
+
+    $('ingestUrl').addEventListener('change', async () => {
+      const url = $('ingestUrl').value.trim();
+      if (!url) return;
+      try {
+        const r = await fetch(`/api/resolve_yt_title?url=${encodeURIComponent(url)}`);
+        const data = await r.json();
+        $('ingestStatus').textContent = data.ok ? `偵測到：${data.song} — ${data.singer}` : (data.error || '無法預覽影片標題');
+      } catch { $('ingestStatus').textContent = '無法連線至 Python 處理服務'; }
+    });
+    $('startIngest').onclick = async () => {
+      const urlText = $('ingestUrl').value.trim();
+      if (!urlText) { toast('請先貼上 YouTube 網址'); return; }
+      if (!processingSocket?.connected) { toast('Python 入庫 API 尚未連線'); return; }
+      try {
+        $('startIngest').disabled = true;
+        $('ingestProgress').style.width = '0';
+        $('ingestStatus').textContent = '正在提交任務至隊列…';
+        const lines = urlText.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length === 1 && !lines[0].includes('list=')) {
+          try {
+            const resp = await fetch(`/api/resolve_yt_title?url=${encodeURIComponent(lines[0])}`);
+            const meta = await resp.json();
+            if (meta?.ok) {
+              processingSocket.emit('start_download', {
+                url: lines[0],
+                title: meta.song,
+                singer: meta.singer,
+                singer_is_manual: false,
+                youtube_title: meta.raw_title
+              });
+              $('ingestStatus').textContent = `已加入隊列：${meta.song} — ${meta.singer}`;
+              $('ingestUrl').value = '';
+              $('startIngest').disabled = false;
+              return;
+            }
+          } catch {}
+        }
+        processingSocket.emit('start_download', { url: urlText });
+        $('ingestStatus').textContent = `已提交 ${lines.length} 筆網址至隊列`;
+        $('ingestUrl').value = '';
+        $('startIngest').disabled = false;
+      } catch (error) {
+        $('startIngest').disabled = false;
+        $('ingestStatus').textContent = error.message;
+      }
+    };
+
+    // Library & Catalog Management
+    let libraryRows = [];
+    let libraryViewMode = 'table';
+    const selectedSongIds = new Set();
+    let catalogHealthData = null;
+
+    function fmtBytes(bytes) {
+      if (!bytes || bytes <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+    }
+
+    // Tab switcher between URL and Local ingest
+    $('tabIngestUrl').onclick = () => {
+      $('tabIngestUrl').style.color = 'var(--cyan)';
+      $('tabIngestUrl').style.borderColor = 'var(--cyan)';
+      $('tabIngestLocal').style.color = '';
+      $('tabIngestLocal').style.borderColor = '';
+      $('paneIngestUrl').style.display = 'block';
+      $('paneIngestLocal').style.display = 'none';
+    };
+    $('tabIngestLocal').onclick = () => {
+      $('tabIngestLocal').style.color = 'var(--cyan)';
+      $('tabIngestLocal').style.borderColor = 'var(--cyan)';
+      $('tabIngestUrl').style.color = '';
+      $('tabIngestUrl').style.borderColor = '';
+      $('paneIngestLocal').style.display = 'block';
+      $('paneIngestUrl').style.display = 'none';
+    };
+
+    // Local Drag and Drop file selection
+    let pickedMediaFile = null;
+    let pickedLyricsFile = null;
+
+    function updateLocalPickInfo() {
+      const parts = [];
+      if (pickedMediaFile) parts.push(`🎬 影音：${pickedMediaFile.name} (${fmtBytes(pickedMediaFile.size)})`);
+      if (pickedLyricsFile) parts.push(`📝 歌詞：${pickedLyricsFile.name}`);
+      $('localSelectedInfo').textContent = parts.join(' ｜ ');
+      $('btnConfirmUpload').style.display = pickedMediaFile ? 'inline-block' : 'none';
+    }
+
+    $('btnPickMedia').onclick = () => $('localMediaInput').click();
+    $('btnPickLyrics').onclick = () => $('localLyricsInput').click();
+    $('localMediaInput').onchange = (e) => {
+      if (e.target.files?.[0]) {
+        pickedMediaFile = e.target.files[0];
+        updateLocalPickInfo();
+      }
+    };
+    $('localLyricsInput').onchange = (e) => {
+      if (e.target.files?.[0]) {
+        pickedLyricsFile = e.target.files[0];
+        updateLocalPickInfo();
+      }
+    };
+
+    const dropZone = $('localDropZone');
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+    dropZone.ondragleave = () => { dropZone.classList.remove('dragover'); };
+    dropZone.ondrop = (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files?.length) {
+        for (const file of e.dataTransfer.files) {
+          const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+          if (ext === '.lrc') pickedLyricsFile = file;
+          else if (['.mp4', '.mkv', '.webm', '.mp3', '.m4a', '.wav', '.flac'].includes(ext)) {
+            pickedMediaFile = file;
+          }
+        }
+        updateLocalPickInfo();
+      }
+    };
+
+    $('btnConfirmUpload').onclick = async () => {
+      if (!pickedMediaFile) return;
+      const formData = new FormData();
+      formData.append('file', pickedMediaFile);
+      if (pickedLyricsFile) formData.append('lyrics', pickedLyricsFile);
+
+      try {
+        $('btnConfirmUpload').disabled = true;
+        $('btnConfirmUpload').textContent = '⏳ 上傳入庫中...';
+        const res = await fetch('/api/catalog/upload-local', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || '上傳失敗');
+        toast(`✅ 成功匯入本機歌曲：${data.title} ${data.artist ? `(${data.artist})` : ''}`);
+        pickedMediaFile = null;
+        pickedLyricsFile = null;
+        $('localMediaInput').value = '';
+        $('localLyricsInput').value = '';
+        updateLocalPickInfo();
+        loadLibrary(true);
+        loadCatalogHealth();
+      } catch (err) {
+        toast(`匯入失敗: ${err.message}`);
+      } finally {
+        $('btnConfirmUpload').disabled = false;
+        $('btnConfirmUpload').textContent = '🚀 確認匯入曲庫';
+      }
+    };
+
+    // Health Audit & Orphan Cleanup
+    async function loadCatalogHealth() {
+      try {
+        const res = await fetch('/api/catalog/health');
+        if (!res.ok) return;
+        const data = await res.json();
+        catalogHealthData = data;
+        $('healthDiskUsage').textContent = fmtBytes(data.total_disk_bytes);
+        $('healthTotalSongs').textContent = `${data.total_songs} 首`;
+        $('healthMissingMedia').textContent = `${data.missing_media_count} 首`;
+        $('healthMissingMedia').style.color = data.missing_media_count > 0 ? '#ff7b72' : 'var(--cyan)';
+        $('healthOrphans').textContent = `${data.orphan_count} 個 (${fmtBytes(data.orphan_bytes)})`;
+        $('healthOrphans').style.color = data.orphan_count > 0 ? '#ff7b72' : 'var(--cyan)';
+        $('healthAuditNote').textContent = `字級逐字對齊: ${data.word_synced_count} 首 ｜ 逐行對齊: ${data.line_synced_count} 首 ｜ 缺伴奏音軌: ${data.missing_instrumental_count} 首`;
+      } catch {}
+    }
+    $('btnRefreshHealth').onclick = () => loadCatalogHealth();
+    $('btnCleanupOrphans').onclick = async () => {
+      const token = catalogToken();
+      if (!token) { toast('請先輸入並儲存曲庫管理權杖'); return; }
+      if (!confirm(`確定要清除硬碟上所有未被曲庫引用的孤兒媒體檔案嗎？\n預估可釋放約 ${fmtBytes(catalogHealthData?.orphan_bytes || 0)} 空間。`)) return;
+      try {
+        $('btnCleanupOrphans').disabled = true;
+        const res = await fetch('/api/catalog/cleanup-orphans', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || '清理失敗');
+        toast(`🧹 已釋放 ${fmtBytes(data.freed_bytes)} 磁碟空間，移除了 ${data.deleted_count} 個孤兒檔案`);
+        loadCatalogHealth();
+      } catch (err) {
+        toast(`清理失敗: ${err.message}`);
+      } finally {
+        $('btnCleanupOrphans').disabled = false;
+      }
+    };
+
+    // View Switcher (Table vs Grid)
+    $('btnViewTable').onclick = () => {
+      libraryViewMode = 'table';
+      $('btnViewTable').style.background = 'rgba(57,197,187,0.15)';
+      $('btnViewTable').style.color = 'var(--cyan)';
+      $('btnViewGrid').style.background = '';
+      $('btnViewGrid').style.color = '';
+      $('libraryTableWrap').style.display = 'block';
+      $('libraryGridView').style.display = 'none';
+      renderLibrary();
+    };
+    $('btnViewGrid').onclick = () => {
+      libraryViewMode = 'grid';
+      $('btnViewGrid').style.background = 'rgba(57,197,187,0.15)';
+      $('btnViewGrid').style.color = 'var(--cyan)';
+      $('btnViewTable').style.background = '';
+      $('btnViewTable').style.color = '';
+      $('libraryTableWrap').style.display = 'none';
+      $('libraryGridView').style.display = 'grid';
+      renderLibrary();
+    };
+
+    // Bulk selection helpers
+    function updateBulkBar() {
+      const count = selectedSongIds.size;
+      $('bulkSelectedCount').textContent = count;
+      $('bulkActionBar').classList.toggle('active', count > 0);
+      $('selectAllCheckbox').checked = count > 0 && count === libraryRows.length;
+    }
+    $('selectAllCheckbox').onchange = (e) => {
+      if (e.target.checked) libraryRows.forEach(s => selectedSongIds.add(s.id));
+      else selectedSongIds.clear();
+      updateBulkBar();
+      renderLibrary();
+    };
+    $('btnBulkClear').onclick = () => {
+      selectedSongIds.clear();
+      updateBulkBar();
+      renderLibrary();
+    };
+
+    function loadLibrary(reset = false) {
+      if (libraryBusy) return;
+      if (reset) { libraryOffset = 0; libraryRows = []; selectedSongIds.clear(); updateBulkBar(); }
+      libraryBusy = true;
+      const q = $('libraryQuery').value.trim();
+      fetch(`/api/songs?q=${encodeURIComponent(q)}&limit=${PAGE}&offset=${libraryOffset}&sort=title`).then(r => r.json()).then(data => {
+        libraryRows = libraryOffset ? [...libraryRows, ...data.items] : data.items;
+        libraryOffset = libraryRows.length;
+        libraryTotal = data.total;
+        renderLibrary();
+        libraryBusy = false;
+      }).catch(() => {
+        libraryBusy = false;
+        $('libraryRows').innerHTML = '<tr><td colspan="11">無法載入正式曲庫</td></tr>';
+      });
+    }
+
+    function renderLibrary() {
+      $('libraryCount').textContent = `${libraryTotal.toLocaleString()} 首`;
+      $('libraryPageLabel').textContent = `顯示 ${libraryOffset} / ${libraryTotal} 首`;
+      $('libraryMore').hidden = libraryOffset >= libraryTotal;
+      updateBulkBar();
+
+      if (libraryViewMode === 'table') {
+        $('libraryRows').innerHTML = libraryRows.map(song => {
+          const isSelected = selectedSongIds.has(song.id);
+          const hasDualTrack = Boolean(song.video_filename && song.instrumental_filename);
+          const trackLabel = song.video_filename ? (hasDualTrack ? '原／伴' : '原唱') : '缺影音';
+          return `<tr>
+            <td><input type="checkbox" data-select="${esc(song.id)}" ${isSelected ? 'checked' : ''}></td>
+            <td title="${esc(song.id)}">${esc(song.id?.slice(0, 10))}</td>
+            <td title="${esc(song.title)}"><span class="marquee"><span>${esc(song.title)}</span></span></td>
+            <td title="${esc(song.artist)}">${esc(song.artist)}</td>
+            <td title="${esc(song.album || '')}">${esc(song.album || '—')}</td>
+            <td>${esc(song.release_year || '—')}</td>
+            <td>${esc(song.duration_seconds ? fmt(song.duration_seconds) : '—')}</td>
+            <td>${esc(song.language || '—')}</td>
+            <td title="${esc([song.separator_mode || song.separator_model, song.alignment_model].filter(Boolean).join(' / '))}">${esc([song.separator_mode || song.separator_model, song.alignment_model].filter(Boolean).join(' / ') || '—')}</td>
+            <td>🎬 ${esc(trackLabel)}</td>
+            <td>
+              <button class="small" data-edit="${esc(song.id)}">✏️ 編輯</button>
+              <button class="small" data-manual="${esc(song.id)}">🎯 對齊</button>
+              <button class="small" data-reprocess="${esc(song.id)}">🔄 重製</button>
+              <button class="small remove" data-delete="${esc(song.id)}">🗑️ 刪除</button>
+            </td>
+          </tr>`;
+        }).join('');
+      } else {
+        $('libraryGridView').innerHTML = libraryRows.map(song => {
+          const isSelected = selectedSongIds.has(song.id);
+          const hasDual = Boolean(song.video_filename && song.instrumental_filename);
+          const bg = generateAvatarBg(song.artist || song.title);
+          const initial = (song.artist || song.title || 'K').slice(0, 1).toUpperCase();
+          return `
+            <div class="lib-card" style="border-color:${isSelected ? 'var(--cyan)' : ''}">
+              <div>
+                <div class="lib-card-head">
+                  <input type="checkbox" data-select="${esc(song.id)}" ${isSelected ? 'checked' : ''} style="margin-right:2px">
+                  <div class="lib-card-avatar" style="background:${bg}">${initial}</div>
+                  <div style="min-width:0;flex:1">
+                    <div class="lib-card-title" title="${esc(song.title)}">${esc(song.title)}</div>
+                    <div class="lib-card-artist" title="${esc(song.artist)}">${esc(song.artist)}</div>
+                  </div>
+                </div>
+                <div class="lib-card-badges">
+                  <span class="lib-badge ${hasDual ? 'active' : ''}">${hasDual ? '🎬 雙軌伴奏' : '原唱單軌'}</span>
+                  <span class="lib-badge ${song.lyrics_filename ? 'active' : ''}">${song.lyrics_filename ? '📝 歌詞就緒' : '無歌詞'}</span>
+                  ${song.language ? `<span class="lib-badge">${esc(song.language)}</span>` : ''}
+                  ${song.duration_seconds ? `<span class="lib-badge">⏱️ ${fmt(song.duration_seconds)}</span>` : ''}
+                </div>
+              </div>
+              <div class="lib-card-actions">
+                <button class="small" data-edit="${esc(song.id)}">✏️ 編輯</button>
+                <button class="small" data-manual="${esc(song.id)}">🎯 歌詞</button>
+                <button class="small" data-reprocess="${esc(song.id)}">🔄 重製</button>
+                <button class="small remove" data-delete="${esc(song.id)}">🗑️</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Bind selection checkboxes
+      document.querySelectorAll('[data-select]').forEach(cb => {
+        cb.onchange = (e) => {
+          const id = e.target.dataset.select;
+          if (e.target.checked) selectedSongIds.add(id);
+          else selectedSongIds.delete(id);
+          updateBulkBar();
+        };
+      });
+
+      // Bind action buttons
+      document.querySelectorAll('[data-manual]').forEach(b => b.onclick = () => openManual(b.dataset.manual));
+      document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openCatalogEditor(b.dataset.edit));
+      document.querySelectorAll('[data-reprocess]').forEach(b => b.onclick = () => openReprocessModal(b.dataset.reprocess));
+      document.querySelectorAll('[data-delete]').forEach(b => b.onclick = () => deleteCatalogSong(b.dataset.delete));
+    }
+
+    $('libraryRows').addEventListener('mouseover', event => {
+      const ticker = event.target.closest('.marquee');
+      if (ticker && ticker.firstElementChild.scrollWidth > ticker.clientWidth + 2) ticker.classList.add('overflowing');
+    });
+    $('libraryQuery').oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => loadLibrary(true), 180); };
+    $('libraryMore').onclick = () => loadLibrary();
+
+    $('saveCatalogToken').onclick = () => {
+      const token = $('catalogTokenInput').value.trim();
+      if (!token) { sessionStorage.removeItem('ktvCatalogAdminToken'); $('catalogTokenStatus').textContent = '權杖已清除'; return; }
+      sessionStorage.setItem('ktvCatalogAdminToken', token);
+      $('catalogTokenInput').value = '';
+      $('catalogTokenStatus').textContent = '已暫存於本分頁工作階段';
+    };
+    function catalogToken() { return sessionStorage.getItem('ktvCatalogAdminToken') || ''; }
+
+    function openCatalogEditor(id) {
+      const song = libraryRows.find(row => row.id === id);
+      if (!song) return;
+      $('modalTitle').textContent = `編輯歌曲｜${song.title}`;
+      const fields = [['title', '歌曲名稱'], ['artist', '歌手'], ['album', '專輯'], ['release_year', '發行年份'], ['artist_gender', '歌手性別'], ['genre', '歌曲風格'], ['language', '語種']];
+      $('modalContent').innerHTML = `<form id="catalogEditForm">${fields.map(([key, label]) => `<div class="setting-row"><label for="edit-${key}">${label}</label><input id="edit-${key}" name="${key}" value="${esc(song[key] || '')}" style="width:100%"></div>`).join('')}<div class="setting-row"><label for="edit-lyrics">純文字歌詞</label><textarea id="edit-lyrics" name="lyrics" rows="5" style="width:100%;background:#0d1117;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px">${esc(song.lyrics || '')}</textarea></div><p class="status-note">寫入 SQLite 資料庫與相容 CSV，ID、處理結果及檔名不變。</p><div class="button-row" style="justify-content:flex-end;margin-top:14px"><button class="action primary" type="submit">儲存 metadata</button></div></form>`;
+      $('overlay').hidden = false;
+      $('catalogEditForm').onsubmit = async event => {
+        event.preventDefault();
+        const token = catalogToken();
+        if (!token) { toast('請先設定曲庫管理權杖'); return; }
+        const updates = Object.fromEntries(new FormData(event.currentTarget));
+        try {
+          const response = await fetch(`/api/catalog/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
+          const result = await response.json();
+          if (!response.ok) throw Error(result.error || '儲存失敗');
+          $('overlay').hidden = true;
+          toast('✅ 歌曲資料已成功更新');
+          loadLibrary(true);
+        } catch (error) { toast(error.message); }
+      };
+    }
+
+    async function deleteCatalogSong(id) {
+      const song = libraryRows.find(row => row.id === id);
+      if (!song) return;
+      const token = catalogToken();
+      if (!token) { toast('請先設定曲庫管理權杖'); return; }
+
+      $('modalTitle').textContent = `刪除歌曲確認｜${song.title}`;
+      $('modalContent').innerHTML = `
+        <p>確定要從曲庫移除「<strong>${esc(song.title)} — ${esc(song.artist)}</strong>」嗎？</p>
+        <div style="margin:16px 0;background:#0d1117;padding:12px;border-radius:8px;border:1px solid var(--line)">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="deleteFilesCheckbox" checked>
+            <span>同時從硬碟永久清除實體音訊/視訊/歌詞檔案（釋放硬碟空間）</span>
+          </label>
+        </div>
+        <div class="button-row" style="justify-content:flex-end;margin-top:14px">
+          <button id="btnCancelDelete" class="small">取消</button>
+          <button id="btnConfirmDelete" class="small remove">確認刪除</button>
+        </div>
+      `;
+      $('overlay').hidden = false;
+      $('btnCancelDelete').onclick = () => { $('overlay').hidden = true; };
+      $('btnConfirmDelete').onclick = async () => {
+        const deleteFiles = $('deleteFilesCheckbox').checked;
+        try {
+          $('btnConfirmDelete').disabled = true;
+          const response = await fetch(`/api/catalog/${encodeURIComponent(id)}?delete_files=${deleteFiles}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const result = await response.json();
+          if (!response.ok) throw Error(result.error || '刪除失敗');
+          $('overlay').hidden = true;
+          toast(`已刪除歌曲${deleteFiles ? '及實體媒體檔案' : ''}`);
+          selectedSongIds.delete(id);
+          updateBulkBar();
+          loadLibrary(true);
+          loadCatalogHealth();
+        } catch (err) {
+          toast(err.message);
+        }
+      };
+    }
+
+    function openReprocessModal(id) {
+      const song = libraryRows.find(row => row.id === id);
+      if (!song) return;
+      const token = catalogToken();
+      if (!token) { toast('請先設定曲庫管理權杖'); return; }
+      $('modalTitle').textContent = `重新處理｜${song.title}`;
+      $('modalContent').innerHTML = `
+        <form id="reprocessForm">
+          <div class="setting-row">
+            <label for="reprocessAction">重跑項目</label>
+            <select id="reprocessAction" style="width:100%;padding:8px;background:#0d1117;color:var(--text);border:1px solid var(--line);border-radius:8px">
+              <option value="re-separate">人聲／伴奏分離 (重新抽取無人聲伴奏音軌)</option>
+              <option value="re-align">歌詞時間軸對齊 (重新使用 WhisperX 產生逐字時間軸)</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="reprocessBackend">分離引擎</label>
+            <select id="reprocessBackend" style="width:100%;padding:8px;background:#0d1117;color:var(--text);border:1px solid var(--line);border-radius:8px">
+              <option value="demucs">Demucs (HTDemucs 4-stem / 高音質)</option>
+              <option value="uvr">Ultimate Vocal Remover (MDX-Net)</option>
+              <option value="hybrid">Hybrid 混合雙管線</option>
+            </select>
+          </div>
+          <div class="button-row" style="justify-content:flex-end;margin-top:16px">
+            <button type="button" id="btnCancelReprocess" class="small">取消</button>
+            <button type="submit" class="action primary">開始重新處理</button>
+          </div>
+        </form>
+      `;
+      $('overlay').hidden = false;
+      $('btnCancelReprocess').onclick = () => { $('overlay').hidden = true; };
+      $('reprocessForm').onsubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const action = $('reprocessAction').value;
+          const backend = $('reprocessBackend').value;
+          const res = await fetch(`/api/catalog/${encodeURIComponent(id)}/reprocess`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, options: { separator_backend: backend, stems: '4' } })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || '重新處理失敗');
+          $('overlay').hidden = true;
+          toast(`✅ 已將「${song.title}」排入背景重製隊列！`);
+        } catch (err) {
+          toast(`失敗: ${err.message}`);
+        }
+      };
+    }
+
+    // Bulk Delete
+    $('btnBulkDelete').onclick = async () => {
+      if (selectedSongIds.size === 0) return;
+      const token = catalogToken();
+      if (!token) { toast('請先設定曲庫管理權杖'); return; }
+      const count = selectedSongIds.size;
+      $('modalTitle').textContent = `批次刪除確認 (${count} 首)`;
+      $('modalContent').innerHTML = `
+        <p>確定要刪除選取的 <strong>${count}</strong> 首歌曲嗎？</p>
+        <div style="margin:16px 0;background:#0d1117;padding:12px;border-radius:8px;border:1px solid var(--line)">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="bulkDeleteFilesCheckbox" checked>
+            <span>同時從硬碟永久清除這 ${count} 首歌的實體媒體檔案（釋放空間）</span>
+          </label>
+        </div>
+        <div class="button-row" style="justify-content:flex-end;margin-top:14px">
+          <button id="btnCancelBulkDelete" class="small">取消</button>
+          <button id="btnConfirmBulkDelete" class="small remove">確認批次刪除</button>
+        </div>
+      `;
+      $('overlay').hidden = false;
+      $('btnCancelBulkDelete').onclick = () => { $('overlay').hidden = true; };
+      $('btnConfirmBulkDelete').onclick = async () => {
+        const deleteFiles = $('bulkDeleteFilesCheckbox').checked;
+        $('btnConfirmBulkDelete').disabled = true;
+        let deletedCount = 0;
+        for (const id of [...selectedSongIds]) {
+          try {
+            await fetch(`/api/catalog/${encodeURIComponent(id)}?delete_files=${deleteFiles}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            deletedCount++;
+          } catch {}
+        }
+        $('overlay').hidden = true;
+        toast(`已批次刪除 ${deletedCount} 首歌曲`);
+        selectedSongIds.clear();
+        updateBulkBar();
+        loadLibrary(true);
+        loadCatalogHealth();
+      };
+    };
+
+    // Bulk Tag Edit
+    $('btnBulkTag').onclick = () => {
+      if (selectedSongIds.size === 0) return;
+      const token = catalogToken();
+      if (!token) { toast('請先設定曲庫管理權杖'); return; }
+      const count = selectedSongIds.size;
+      $('modalTitle').textContent = `批次修改標籤 (${count} 首)`;
+      $('modalContent').innerHTML = `
+        <form id="bulkTagForm">
+          <div class="setting-row">
+            <label for="bulkLanguage">設定語種 (留空則不變更)</label>
+            <select id="bulkLanguage" name="language" style="width:100%;padding:8px;background:#0d1117;color:var(--text);border:1px solid var(--line);border-radius:8px">
+              <option value="">(保持原樣)</option>
+              <option value="國語">國語</option>
+              <option value="台語">台語</option>
+              <option value="粵語">粵語</option>
+              <option value="英語">英語</option>
+              <option value="日語">日語</option>
+              <option value="韓語">韓語</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="bulkGenre">設定歌曲風格 (留空則不變更)</label>
+            <input id="bulkGenre" name="genre" placeholder="例如: 流行 / 搖滾 / 經典" style="width:100%">
+          </div>
+          <div class="button-row" style="justify-content:flex-end;margin-top:16px">
+            <button type="button" id="btnCancelBulkTag" class="small">取消</button>
+            <button type="submit" class="action primary">套用變更</button>
+          </div>
+        </form>
+      `;
+      $('overlay').hidden = false;
+      $('btnCancelBulkTag').onclick = () => { $('overlay').hidden = true; };
+      $('bulkTagForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const lang = $('bulkLanguage').value;
+        const genre = $('bulkGenre').value.trim();
+        if (!lang && !genre) { toast('未設定任何修改項目'); return; }
+        const updates = {};
+        if (lang) updates.language = lang;
+        if (genre) updates.genre = genre;
+        let successCount = 0;
+        for (const id of [...selectedSongIds]) {
+          try {
+            const res = await fetch(`/api/catalog/${encodeURIComponent(id)}`, {
+              method: 'PATCH',
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify(updates)
+            });
+            if (res.ok) successCount++;
+          } catch {}
+        }
+        $('overlay').hidden = true;
+        toast(`已更新 ${successCount} 首歌曲之標籤`);
+        loadLibrary(true);
+      };
+    };
+
+    // Bulk Export
+    $('btnBulkExport').onclick = () => {
+      if (selectedSongIds.size === 0) return;
+      const exportRows = libraryRows.filter(s => selectedSongIds.has(s.id));
+      const fields = ['id', 'artist', 'title', 'album', 'release_year', 'duration_seconds', 'artist_gender', 'genre', 'language', 'char_count', 'pinyin_abbr', 'zhuyin_abbr'];
+      const quote = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+      const csvText = [fields.join(','), ...exportRows.map(row => fields.map(field => quote(row[field])).join(','))].join('\r\n');
+      download(new Blob(['\ufeff', csvText], { type: 'text/csv;charset=utf-8' }), `selected-songs-export-${selectedSongIds.size}.csv`);
+      toast(`已匯出 ${exportRows.length} 首選取歌曲`);
+    };
+
+    $('exportCatalog').onclick = async () => {
+      try {
+        const rows = [], query = $('libraryQuery').value.trim();
+        for (let offset = 0; offset < libraryTotal; offset += 100) {
+          const response = await fetch(`/api/songs?q=${encodeURIComponent(query)}&limit=100&offset=${offset}&sort=title`);
+          if (!response.ok) throw new Error('曲庫匯出失敗');
+          rows.push(...(await response.json()).items);
+        }
+        const fields = ['id', 'artist', 'title', 'album', 'release_year', 'duration_seconds', 'artist_gender', 'genre', 'lyrics', 'separator_model', 'separator_mode', 'alignment_model', 'video_filename', 'instrumental_filename', 'lyrics_filename', 'source_url', 'youtube_title', 'vocals_filename', 'dereverbed_vocals_filename', 'alignment_results_filename', 'processing_status', 'created_at', 'language', 'char_count', 'pinyin_abbr', 'zhuyin_abbr'];
+        const quote = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+        const csvText = [fields.join(','), ...rows.map(row => fields.map(field => quote(row[field])).join(','))].join('\r\n');
+        download(new Blob(['\ufeff', csvText], { type: 'text/csv;charset=utf-8' }), 'library_index-export.csv');
+      } catch (error) { toast(error.message); }
+    };
+    function download(blob, name) {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function exportSong(id) {
+      const song = libraryRows.find(row => row.id === id);
+      if (song) download(new Blob([JSON.stringify(song, null, 2)], { type: 'application/json' }), `${song.id}.json`);
+    }
+
+    // Manual Lyrics Studio
+    let manualSong = null, manualLines = [], selectedLine = 0, loopEnabled = false;
+    $('manualBack').onclick = () => showView('library');
+    async function openManual(id) {
+      manualSong = libraryRows.find(row => row.id === id) || songs.find(row => row.id === id);
+      if (!manualSong) return;
+      showView('manual');
+      $('manualTitle').textContent = `🎯 人工對齊｜${manualSong.title} — ${manualSong.artist}`;
+      $('manualVideo').src = manualSong.path || '';
+      try {
+        if (manualSong.lyrics_filename) {
+          const response = await fetch(`/media/${encodeURIComponent(manualSong.lyrics_filename)}`);
+          manualLines = parseLrc(await response.text());
+        } else manualLines = parseLrc(manualSong.lyrics || '');
+      } catch { manualLines = parseLrc(manualSong.lyrics || ''); }
+      selectedLine = 0;
+      renderManual();
+      loadVocalWave();
+    }
+    function renderManual() {
+      const nav = $('lineNavigator');
+      nav.innerHTML = manualLines.map((line, i) => `<button class="small" data-line="${i}" style="text-align:left;color:${i === selectedLine ? 'var(--cyan)' : 'var(--text)'}">${i === selectedLine ? '▶ ' : ''}${fmtClock(line.time)} ${esc(line.text || '[間奏]')}</button>`).join('');
+      nav.querySelectorAll('[data-line]').forEach(b => b.onclick = () => {
+        selectedLine = Number(b.dataset.line);
+        $('manualVideo').currentTime = manualLines[selectedLine]?.time || 0;
+        renderManual();
+      });
+      const line = manualLines[selectedLine];
+      $('manualLineText').textContent = line ? `${fmtClock(line.time)} ${line.text}` : '沒有歌詞句子';
+      $('manualText').value = line?.text || '';
+      $('tokenEditor').innerHTML = (line?.tokens || []).map((token, i) => `<label class="token" data-token-wrap="${i}"><span>${esc(token.text)}</span><span>起點</span><input data-token="${i}" data-edge="start" type="number" min="0" step=".01" value="${Number(token.start).toFixed(2)}" aria-label="${esc(token.text)} 起點"><span>終點</span><input data-token="${i}" data-edge="end" type="number" min="0" step=".01" value="${Number(token.end).toFixed(2)}" aria-label="${esc(token.text)} 終點"></label>`).join('');
+      $('tokenEditor').querySelectorAll('[data-token-wrap]').forEach(w => w.onclick = () => {
+        document.querySelectorAll('[data-token-wrap]').forEach(x => x.style.borderColor = '');
+        w.style.borderColor = 'var(--cyan)';
+        selectedToken = Number(w.dataset.tokenWrap);
+      });
+      drawWave();
+    }
+    $('manualVideo').onended = () => { if (loopEnabled && manualLines[selectedLine]) $('manualVideo').currentTime = manualLines[selectedLine].time; };
+    document.querySelectorAll('[data-rate]').forEach(b => b.onclick = () => { $('manualVideo').playbackRate = Number(b.dataset.rate); $('manualVideo').preservesPitch = true; });
+    $('loopLine').onclick = () => {
+      loopEnabled = !loopEnabled;
+      $('loopLine').textContent = `🔁 單句循環：${loopEnabled ? '開' : '關'}`;
+      if (loopEnabled && manualLines[selectedLine]) $('manualVideo').currentTime = manualLines[selectedLine].time;
+    };
+    $('manualVideo').ontimeupdate = () => {
+      if (loopEnabled && manualLines[selectedLine]) {
+        const next = manualLines[selectedLine + 1]?.time || manualSong?.duration_seconds || Infinity;
+        if ($('manualVideo').currentTime >= next) $('manualVideo').currentTime = manualLines[selectedLine].time;
+      }
+    };
+    $('newLine').onclick = () => {
+      const time = $('manualVideo').currentTime || 0;
+      manualLines.splice(selectedLine + 1, 0, { time, end: time + .5, text: '', tokens: [] });
+      selectedLine++;
+      renderManual();
+    };
+    $('editLine').onclick = () => { $('manualText').hidden = !$('manualText').hidden; };
+    $('manualText').onchange = () => {
+      const line = manualLines[selectedLine];
+      if (!line) return;
+      line.text = $('manualText').value;
+      const tokens = tokenize(line.text), end = line.end || line.tokens.at(-1)?.end || line.time + tokens.length * .3;
+      line.tokens = tokens.map((text, i) => ({ text, start: line.time + (end - line.time) * i / Math.max(1, tokens.length), end: line.time + (end - line.time) * (i + 1) / Math.max(1, tokens.length) }));
+      line.end = end;
+      renderManual();
+    };
+    $('splitLine').onclick = () => {
+      const line = manualLines[selectedLine];
+      if (!line) return;
+      const mid = Math.ceil(line.text.length / 2), textA = line.text.slice(0, mid), textB = line.text.slice(mid), splitAt = line.time + Math.max(.1, (line.end - line.time) / 2);
+      manualLines.splice(selectedLine, 1, { time: line.time, end: splitAt, text: textA, tokens: tokenize(textA).map((text, i, a) => ({ text, start: line.time + (splitAt - line.time) * i / a.length, end: line.time + (splitAt - line.time) * (i + 1) / a.length })) }, { time: splitAt, end: line.end, text: textB, tokens: tokenize(textB).map((text, i, a) => ({ text, start: splitAt + (line.end - splitAt) * i / a.length, end: splitAt + (line.end - splitAt) * (i + 1) / a.length })) });
+      renderManual();
+    };
+    $('mergeLine').onclick = () => {
+      if (manualLines[selectedLine + 1]) {
+        const next = manualLines.splice(selectedLine + 1, 1)[0];
+        manualLines[selectedLine].text += next.text;
+        manualLines[selectedLine].tokens.push(...next.tokens);
+        manualLines[selectedLine].end = next.end;
+        renderManual();
+      }
+    };
+    let selectedToken = 0, heldToken = null;
+    function setTokenEdge(edge, time) {
+      const line = manualLines[selectedLine], token = line?.tokens[selectedToken];
+      if (!token) return;
+      token[edge] = time;
+      if (edge === 'start' && selectedToken > 0) line.tokens[selectedToken - 1].end = time;
+      if (edge === 'end' && line.tokens[selectedToken + 1]) line.tokens[selectedToken + 1].start = time;
+      renderManual();
+    }
+    $('tokenEditor').addEventListener('change', e => {
+      if (e.target.matches('[data-token]')) {
+        const i = Number(e.target.dataset.token), edge = e.target.dataset.edge;
+        manualLines[selectedLine].tokens[i][edge] = Number(e.target.value);
+        selectedToken = i;
+      }
+    });
+    $('tapToken').onclick = () => { setTokenEdge('start', $('manualVideo').currentTime); heldToken = selectedToken; };
+    $('tokenEnd').onclick = () => setTokenEdge('end', $('manualVideo').currentTime);
+    window.addEventListener('keydown', e => {
+      if (!$('view-manual').hidden && e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+        setTokenEdge('start', $('manualVideo').currentTime);
+        heldToken = selectedToken;
+      }
+    });
+    window.addEventListener('keyup', e => {
+      if (e.code === 'Space' && heldToken !== null && !$('view-manual').hidden) {
+        setTokenEdge('end', $('manualVideo').currentTime);
+        heldToken = null;
+        selectedToken = Math.min(selectedToken + 1, (manualLines[selectedLine]?.tokens.length || 1) - 1);
+      }
+    });
+    function generateKtvLrcText() {
+      const rows = ['@format ktv-lrc', '@version 1', '', '@id 000000', '', `@song_name ${manualSong?.title || ''}, zh-tw`, `@singer ${manualSong?.artist || 'Unknown'}, zh-tw`, `@duration ${Math.floor(manualSong?.duration_seconds || 0)}`, '', '@lyrics zh-tw', '@lyric_synced word', '', '@lyric zh-tw', ...manualLines.flatMap(line => [`%${Number(line.time).toFixed(3)} ${Number(line.end || line.tokens.at(-1)?.end || line.time).toFixed(3)} ${line.text}`, ...line.tokens.map(token => `$${Number(token.start).toFixed(3)} ${Number(token.end).toFixed(3)} ${token.text}`), '']), '@dialogue'];
+      return rows.join('\n');
+    }
+    $('manualExport').onclick = () => {
+      download(new Blob([generateKtvLrcText()], { type: 'text/plain;charset=utf-8' }), `${manualSong?.id || 'lyrics'}-manual-draft.lrc`);
+      toast('已匯出人工歌詞草稿備份');
+    };
+    $('manualSaveCatalog').onclick = async () => {
+      if (!manualSong?.id) return;
+      const token = catalogToken();
+      if (!token) { toast('請先在曲庫管理設定管理權杖'); return; }
+      try {
+        $('manualSaveCatalog').disabled = true;
+        const res = await fetch(`/api/catalog/${encodeURIComponent(manualSong.id)}/lyrics`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lrc_content: generateKtvLrcText() })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || '儲存歌詞失敗');
+        toast('✅ 歌詞已成功儲存回曲庫並即時套用！');
+        loadLibrary(true);
+      } catch (err) {
+        toast(`儲存失敗: ${err.message}`);
+      } finally {
+        $('manualSaveCatalog').disabled = false;
+      }
+    };
+    async function loadVocalWave() {
+      const filename = manualSong?.vocals_filename;
+      if (!filename) { drawWave('曲庫沒有 vocals_filename，無法載入原始人聲波形'); return; }
+      try {
+        const response = await fetch(`/media/${encodeURIComponent(filename)}`);
+        if (!response.ok) throw Error('人聲 WAV 無法讀取');
+        drawWaveFromWav(await response.arrayBuffer());
+      } catch { drawWave('無法載入人聲 WAV 波形'); }
+    }
+    function drawWaveFromWav(buffer) {
+      const view = new DataView(buffer);
+      let offset = 12, format = 1, channels = 1, bits = 16, dataOffset = 0, dataSize = 0;
+      while (offset + 8 < view.byteLength) {
+        const id = String.fromCharCode(view.getUint8(offset), view.getUint8(offset + 1), view.getUint8(offset + 2), view.getUint8(offset + 3)), size = view.getUint32(offset + 4, true);
+        if (id === 'fmt ') { format = view.getUint16(offset + 8, true); channels = view.getUint16(offset + 10, true); bits = view.getUint16(offset + 22, true); }
+        if (id === 'data') { dataOffset = offset + 8; dataSize = size; break; }
+        offset += 8 + size + (size % 2);
+      }
+      if (!dataOffset || ![16, 24, 32].includes(bits) || ![1, 3].includes(format)) { drawWave('此 WAV 編碼格式目前無法繪製'); return; }
+      const samples = Math.floor(dataSize / (bits / 8) / channels), bins = 900, values = [];
+      for (let bin = 0; bin < bins; bin++) {
+        const start = Math.floor(bin * samples / bins), end = Math.max(start + 1, Math.floor((bin + 1) * samples / bins));
+        let peak = 0;
+        for (let i = start; i < end; i += Math.max(1, Math.floor((end - start) / 60))) {
+          const at = dataOffset + i * channels * (bits / 8);
+          let value;
+          if (format === 3 && bits === 32) value = Math.abs(view.getFloat32(at, true));
+          else if (bits === 16) value = Math.abs(view.getInt16(at, true) / 32768);
+          else if (bits === 24) { let raw = view.getUint8(at) | (view.getUint8(at + 1) << 8) | (view.getUint8(at + 2) << 16); if (raw & 0x800000) raw |= 0xff000000; value = Math.abs(raw / 8388608); }
+          else value = Math.abs(view.getInt32(at, true) / 2147483648);
+          peak = Math.max(peak, value);
+        }
+        values.push(peak);
+      }
+      drawWave(null, values);
+    }
+    let waveformValues = [], dragBoundary = null;
+    function drawWave(message = '', values = waveformValues) {
+      if (values.length) waveformValues = values;
+      const canvas = $('waveCanvas'), ctx = canvas.getContext('2d'), ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, canvas.clientWidth) * ratio;
+      canvas.height = Math.max(1, canvas.clientHeight) * ratio;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.fillStyle = '#0b1017';
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      if (!waveformValues.length) {
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '11px system-ui';
+        ctx.fillText(message || '載入 vocals.wav 後顯示實際人聲波形', 8, 18);
+        return;
+      }
+      ctx.strokeStyle = '#39c5bb';
+      ctx.beginPath();
+      const mid = canvas.clientHeight / 2;
+      waveformValues.forEach((value, i) => {
+        const x = i / waveformValues.length * canvas.clientWidth, y = Math.max(1, value * mid);
+        ctx.moveTo(x, mid - y);
+        ctx.lineTo(x, mid + y);
+      });
+      ctx.stroke();
+      const tokens = manualLines[selectedLine]?.tokens || [], total = Number(manualSong?.duration_seconds) || 1;
+      tokens.forEach((token, i) => {
+        const x = token.start / total * canvas.clientWidth, end = token.end / total * canvas.clientWidth;
+        ctx.fillStyle = i === selectedToken ? 'rgba(88, 166, 255, 0.28)' : 'rgba(57, 197, 187, 0.16)';
+        ctx.fillRect(x, 0, Math.max(2, end - x), canvas.clientHeight);
+        ctx.strokeStyle = '#58a6ff';
+        ctx.beginPath();
+        ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight);
+        ctx.moveTo(end, 0); ctx.lineTo(end, canvas.clientHeight);
+        ctx.stroke();
+      });
+    }
+    $('waveCanvas').onpointerdown = e => {
+      const canvas = $('waveCanvas'), rect = canvas.getBoundingClientRect(), x = e.clientX - rect.left, total = Number(manualSong?.duration_seconds) || 1, tokens = manualLines[selectedLine]?.tokens || [];
+      let closest = null, distance = 13;
+      tokens.forEach((token, i) => ['start', 'end'].forEach(edge => {
+        const dx = Math.abs(token[edge] / total * rect.width - x);
+        if (dx < distance) { distance = dx; closest = { index: i, edge }; }
+      }));
+      if (closest) { selectedToken = closest.index; dragBoundary = closest.edge; canvas.setPointerCapture(e.pointerId); }
+    };
+    $('waveCanvas').onpointermove = e => {
+      if (!dragBoundary) return;
+      const rect = $('waveCanvas').getBoundingClientRect(), time = Math.max(0, Math.min(Number(manualSong?.duration_seconds) || Infinity, (e.clientX - rect.left) / rect.width * (Number(manualSong?.duration_seconds) || 1)));
+      manualLines[selectedLine].tokens[selectedToken][dragBoundary] = Math.round(time * 100) / 100;
+      drawWave();
+    };
+    $('waveCanvas').onpointerup = () => {
+      if (dragBoundary) {
+        const edge = dragBoundary;
+        dragBoundary = null;
+        renderManual();
+        drawWave();
+        toast(`已微調字詞${edge === 'start' ? '起點' : '終點'}`);
+      }
+    };
+    $('manualVideo').addEventListener('loadedmetadata', drawWave);
+    window.addEventListener('resize', drawWave);
+    $('searchResults').addEventListener('click', e => {
+      const button = e.target.closest('[data-manual]');
+      if (button) openManual(button.dataset.manual);
+    });
+
+    // Startup Initialization
+    showView('controller');
+    updateNetwork();
+    checkServices();
+    loadTrendingAndArtists();
+    setInterval(checkServices, 6000);
+    socket.on('catalog_updated', () => {
+      loadTrendingAndArtists();
+      requestSearch(true);
+      loadLibrary(true);
+    });
+    $('settingQr').checked = localStorage.getItem('ktvShowQr') !== 'false';
+    $('allowRemoteNext').checked = localStorage.getItem('ktvAllowRemoteNext') !== 'false';
   </script>
 </body>
 </html>

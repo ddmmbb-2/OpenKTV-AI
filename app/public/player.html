@@ -39,6 +39,17 @@
             align-items: center;
             z-index: 10;
             pointer-events: none;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        body.hide-cursor {
+            cursor: none;
+        }
+
+        body.hide-cursor #top-bar {
+            opacity: 0;
+            transform: translateY(-12px);
+            pointer-events: none;
         }
 
         .hud-panel {
@@ -118,17 +129,74 @@
             font-size: 46px;
             font-weight: 700;
             line-height: 1.4;
-            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 12px rgba(0, 0, 0, 0.9);
+            text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 16px rgba(0, 0, 0, 0.95);
             white-space: pre-wrap;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .line.inactive {
+            opacity: 0.62;
+            transform: scale(0.96);
         }
 
         #line-top {
             text-align: left;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
+            transform-origin: left bottom;
         }
 
         #line-bottom {
             text-align: right;
+            transform-origin: right bottom;
+        }
+
+        /* 開唱 4 點倒數指示燈 (Intro / Interlude Countdown Dots) */
+        #countdown-dots {
+            position: absolute;
+            left: 6%;
+            bottom: 180px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 8;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        #countdown-dots[hidden] {
+            display: none;
+        }
+
+        .dot-beat {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.22);
+            border: 2px solid rgba(56, 189, 248, 0.6);
+            transition: all 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .dot-beat.active {
+            background: #38bdf8;
+            box-shadow: 0 0 16px #38bdf8, 0 0 28px #0284c7;
+            border-color: #ffffff;
+            transform: scale(1.4);
+        }
+
+        /* 純音訊 / 無 MV 霓虹流體頻譜背景 */
+        #audio-visualizer {
+            position: absolute;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        #audio-visualizer.active {
+            opacity: 1;
         }
 
         /* 偽元素漸變平滑划過 (Sweep effect) */
@@ -183,41 +251,318 @@
             opacity: 1;
         }
 
-        #remote-qr {
-            position: absolute;
-            z-index: 8;
-            right: 24px;
-            bottom: 26px;
-            width: 132px;
-            padding: 7px;
-            border-radius: 10px;
-            background: rgba(0, 0, 0, .78);
-            text-align: center;
-            font-size: 11px;
-            color: #fff;
+        .waiting-qr-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 20px 28px 16px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
         }
 
-        #remote-qr[hidden] {
+        .waiting-qr-card img {
+            width: 200px;
+            height: 200px;
+            border-radius: 10px;
+            background: #ffffff;
+            padding: 8px;
+            display: block;
+        }
+
+        #qr-popover {
+            position: absolute;
+            top: 56px;
+            right: 20px;
+            z-index: 50;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(16px);
+        }
+
+        #qr-popover[hidden] {
             display: none;
         }
 
-        #remote-qr img {
-            display: block;
-            width: 118px;
-            height: 118px;
-            border-radius: 5px;
-            background: #fff;
+        #key-toast {
+            position: absolute;
+            left: 50%;
+            top: 75px;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(16, 185, 129, 0.95);
+            color: #064e3b;
+            padding: 9px 24px;
+            border-radius: 99px;
+            font-size: 19px;
+            font-weight: 800;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 25;
+            backdrop-filter: blur(8px);
+        }
+
+        #key-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #btn-intro-skip {
+            position: absolute;
+            right: 24px;
+            bottom: 150px;
+            background: rgba(2, 132, 199, 0.35);
+            border: 1px solid rgba(56, 189, 248, 0.65);
+            color: #f0f9ff;
+            padding: 9px 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            transition: all 0.2s;
+        }
+
+        #btn-intro-skip:hover {
+            background: rgba(2, 132, 199, 0.6);
+            transform: scale(1.05);
+            border-color: #38bdf8;
+        }
+
+        #btn-intro-skip[hidden] {
+            display: none;
+        }
+
+        /* 彈幕容器與飛越文字 */
+        #danmaku-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 7;
+        }
+
+        .danmaku-item {
+            position: absolute;
+            white-space: nowrap;
+            font-weight: 800;
+            font-size: clamp(22px, 2.6vw, 36px);
+            user-select: none;
+            pointer-events: none;
+            will-change: transform;
+            text-shadow: 2px 2px 2px #000, -2px -2px 2px #000, 2px -2px 2px #000, -2px 2px 2px #000, 0 0 12px rgba(0,0,0,0.8);
+        }
+
+        .danmaku-scroll {
+            animation: danmakuScroll linear forwards;
+        }
+
+        .danmaku-top {
+            left: 50% !important;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 99px;
+            padding: 6px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            animation: danmakuTopFade 4.2s forwards;
+        }
+
+        @keyframes danmakuScroll {
+            from { transform: translateX(100vw); }
+            to { transform: translateX(-100%); }
+        }
+
+        @keyframes danmakuTopFade {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* 全螢幕貼圖雨容器與貼圖粒子 */
+        #sticker-rain-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 8;
+        }
+
+        .rain-sticker {
+            position: absolute;
+            top: -60px;
+            font-size: 40px;
+            user-select: none;
+            pointer-events: none;
+            animation: stickerFall linear forwards;
+        }
+
+        @keyframes stickerFall {
+            0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(105vh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+
+        /* 即時音準 HUD (Rolling Pitch Rails) */
+        #pitch-hud {
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            bottom: 165px;
+            height: 90px;
+            pointer-events: none;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            transition: opacity 0.3s ease;
+        }
+
+        #pitch-hud[hidden] {
+            display: none;
+        }
+
+        #pitch-canvas {
+            width: 100%;
+            height: 80px;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+        }
+
+        #pitch-feedback {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 8px;
+            font-size: 13px;
+            font-weight: 750;
+            color: #f1f5f9;
+        }
+
+        #pitch-combo {
+            font-size: 16px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            transition: transform 0.1s;
+        }
+
+        #pitch-score-badge {
+            background: rgba(2, 132, 199, 0.45);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            padding: 2px 10px;
+            border-radius: 99px;
+            font-size: 13px;
+            color: #38bdf8;
+        }
+
+        /* 演唱結束結算評分面板 (Score Modal) */
+        #score-modal {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(16px);
+            z-index: 30;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+
+        #score-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .score-card {
+            width: min(480px, 90vw);
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            border-radius: 20px;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #score-modal.show .score-card {
+            transform: scale(1);
+        }
+
+        .score-badge {
+            font-size: 64px;
+            font-weight: 900;
+            line-height: 1;
+            margin: 6px 0;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.4));
+        }
+
+        .score-total {
+            font-size: 42px;
+            font-weight: 850;
+            color: #f8fafc;
+        }
+
+        .score-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0 16px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .score-stat-item .val {
+            font-size: 20px;
+            font-weight: 800;
+            color: #38bdf8;
+        }
+
+        .score-stat-item .lbl {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 2px;
         }
     </style>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/vendor/tone.min.js"></script>
 </head>
 
 <body>
     <div id="root">
         <!-- 歌曲影片 -->
         <video id="video" playsinline crossorigin="anonymous"></video>
+        <!-- 純音訊動態頻譜畫布 -->
+        <canvas id="audio-visualizer"></canvas>
         <div id="crowd-toast" role="status"></div>
-        <aside id="remote-qr" hidden><img alt="掃描加入手機遙控器"><span>掃碼點歌</span></aside>
+        <div id="key-toast" role="status">🔊 原調</div>
+        <button id="btn-intro-skip" hidden onclick="skipIntro()">⏩ 跳過前奏</button>
+        <div id="countdown-dots" class="countdown-dots" hidden></div>
         <!-- 純伴奏音訊軌 (.instrumental.m4a) -->
         <audio id="instrumental" preload="auto" crossorigin="anonymous"></audio>
         <audio id="phone-mic" autoplay></audio>
@@ -240,19 +585,67 @@
                     <span>🎵 音樂: <b id="hud-music-vol" style="color: #38bdf8;">80%</b></span>
                 </div>
 
+                <!-- 彈幕與評分開關 -->
+                <button id="btn-danmaku" class="btn-action" onclick="cycleDanmakuOpacity()" title="切換大螢幕彈幕透明度">💬 彈幕: 100%</button>
+                <button id="btn-pitch-toggle" class="btn-action" onclick="togglePitchHud()" title="切換即時音準軌道">🎯 評分軌</button>
+                <button id="btn-local-mic" class="btn-action" onclick="toggleLocalMic()" title="開啟/關閉電腦外接麥克風低延遲即時評分">🎤 電腦Mic: 關</button>
+
                 <!-- 快速切歌按鈕 -->
                 <button id="btn-skip" class="btn-action btn-skip" onclick="skipSong()">
                     ⏭️ 切歌
                 </button>
 
+                <!-- 點歌二維碼彈窗按鈕 -->
+                <button id="btn-qr-toggle" class="btn-action" onclick="toggleQrModal()" title="顯示/隱藏手機點歌碼">📱 點歌碼</button>
                 <button class="btn-action" onclick="toggleFullscreen()">⛶</button>
             </div>
         </div>
 
-        <!-- 待播待機介面 -->
+        <!-- 點歌碼懸浮視窗 (置於右上角，不遮擋歌詞) -->
+        <div id="qr-popover" hidden>
+            <div style="font-size: 13px; font-weight: bold; color: #f8fafc; margin-bottom: 8px;">📱 手機掃碼點歌</div>
+            <img id="popover-qr-img" alt="手機點歌碼" style="width: 140px; height: 140px; border-radius: 8px; background: #fff; padding: 6px;">
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">連入同一 Wi-Fi 即可遙控</div>
+            <button class="btn-action" style="margin-top: 8px; font-size: 11px; padding: 3px 14px;" onclick="toggleQrModal(false)">關閉</button>
+        </div>
+
+        <!-- 彈幕與全螢幕貼圖雨層 -->
+        <div id="danmaku-container"></div>
+        <div id="sticker-rain-container"></div>
+
+        <!-- 即時音準評分軌道 HUD -->
+        <div id="pitch-hud">
+            <div id="pitch-feedback">
+                <span id="pitch-combo"></span>
+                <span id="pitch-score-badge">評分: 0.0 分</span>
+            </div>
+            <canvas id="pitch-canvas" width="1200" height="90"></canvas>
+        </div>
+
+        <!-- 演唱結算評分面板 -->
+        <div id="score-modal">
+            <div class="score-card">
+                <div style="font-size: 15px; font-weight: 700; color: #94a3b8; letter-spacing: 2px;">🎤 演唱結算評分</div>
+                <div id="score-grade-badge" class="score-badge">S</div>
+                <div class="score-total"><span id="score-final-val">0.0</span> <span style="font-size: 20px; color: #94a3b8;">分</span></div>
+                <div class="score-stats-grid">
+                    <div class="score-stat-item"><div id="score-acc-val" class="val">0%</div><div class="lbl">音準命中率</div></div>
+                    <div class="score-stat-item"><div id="score-combo-val" class="val">0</div><div class="lbl">最高連擊</div></div>
+                    <div class="score-stat-item"><div id="score-stab-val" class="val">0%</div><div class="lbl">唱腔穩定度</div></div>
+                </div>
+                <button class="btn-action" style="margin: 4px auto 0; padding: 8px 24px; font-weight: bold; background: #0284c7;" onclick="closeScoreModal()">關閉 (自動跳轉)</button>
+            </div>
+        </div>
+
+        <!-- 待播待機介面 (QR Code 置中展示) -->
         <div id="waiting">
-            <div style="font-size: 52px;">🎵</div>
-            <div>包廂已就緒，請使用手機掃碼點歌</div>
+            <div style="font-size: 56px; margin-bottom: 6px;">🎵</div>
+            <div style="font-size: 28px; font-weight: 700; color: #f8fafc; margin-bottom: 6px;">包廂已就緒</div>
+            <div style="font-size: 16px; color: #94a3b8;">請使用手機掃描下方 QR Code 開始點歌</div>
+            <div class="waiting-qr-card">
+                <img id="waiting-qr-img" alt="包廂點歌碼">
+                <div style="margin-top: 10px; font-size: 14px; color: #38bdf8; font-weight: 600;">掃碼即開唱 · 亦可按右上角 📱 點歌碼</div>
+            </div>
         </div>
 
         <!-- KTV 經典雙行字幕面板 -->
@@ -267,24 +660,39 @@
         // 1. 全域狀態與變數
         // ==========================================
         const socket = io({ query: { role: 'player' } });
-        const remoteQr = document.getElementById('remote-qr');
+        function toggleQrModal(force) {
+            const popover = document.getElementById('qr-popover');
+            if (!popover) return;
+            if (typeof force === 'boolean') {
+                popover.hidden = !force;
+            } else {
+                popover.hidden = !popover.hidden;
+            }
+        }
         if (localStorage.getItem('ktvShowQr') !== 'false') {
             fetch(`/api/qr?url=${encodeURIComponent(`${location.origin}/remote`)}`)
                 .then(response => response.ok ? response.json() : Promise.reject())
                 .then(data => {
-                    remoteQr.querySelector('img').src = data.dataUrl;
-                    remoteQr.hidden = false;
+                    const waitingImg = document.getElementById('waiting-qr-img');
+                    if (waitingImg) waitingImg.src = data.dataUrl;
+                    const popoverImg = document.getElementById('popover-qr-img');
+                    if (popoverImg) popoverImg.src = data.dataUrl;
                 })
                 .catch(() => {});
         }
         let crowdToastTimer;
         socket.on('crowd_interaction', payload => {
             const toast = document.getElementById('crowd-toast');
-            const prefix = payload?.type === 'message' ? '💬' : payload?.type === 'cheer' ? '🎉' : '👏';
-            toast.textContent = `${prefix} ${payload?.user || '來賓'}：${payload?.text || '為演出加油！'}`;
-            toast.classList.add('show');
-            clearTimeout(crowdToastTimer);
-            crowdToastTimer = setTimeout(() => toast.classList.remove('show'), 4500);
+            const prefix = payload?.type === 'message' ? '💬' : payload?.type === 'cheer' ? '🎉' : payload?.type === 'sticker' ? '💖' : '👏';
+            if (payload?.text || payload?.type === 'cheer' || payload?.type === 'applause') {
+                toast.textContent = `${prefix} ${payload?.user || '來賓'}：${payload?.text || '為演出加油！'}`;
+                toast.classList.add('show');
+                clearTimeout(crowdToastTimer);
+                crowdToastTimer = setTimeout(() => toast.classList.remove('show'), 4500);
+            }
+            if (typeof danmakuEngine !== 'undefined') {
+                danmakuEngine.push(payload);
+            }
         });
         const video = document.getElementById('video');
         const instrumental = document.getElementById('instrumental');
@@ -392,33 +800,223 @@
         function applyMusicVolume(val) {
             currentMusicVol = Math.max(0, Math.min(1.0, parseFloat(val)));
             hudMusicVol.innerText = `${Math.round(currentMusicVol * 100)}%`;
-            video.volume = currentMusicVol;
-            instrumental.volume = currentMusicVol;
+            if (audioCtxInitialized && masterMusicGain && Tone.context) {
+                masterMusicGain.gain.setTargetAtTime(currentMusicVol, Tone.context.currentTime, 0.05);
+            } else {
+                video.volume = currentMusicVol;
+                instrumental.volume = currentMusicVol;
+            }
         }
 
         // ==========================================
-        // 3. 原伴唱切換
+        // 3. Web Audio API 音訊管線與升降調 (Tone.js)
         // ==========================================
+        let audioCtxInitialized = false;
+        let tonePitchShift = null;
+        let videoSourceNode = null;
+        let instSourceNode = null;
+        let gainOriginal = null;
+        let gainInst = null;
+        let masterMusicGain = null;
+        let currentPitch = 0;
+        let keyToastTimer = null;
+        let firstLyricStart = 0;
+        let analyserNode = null;
+        let visualizerData = null;
+
+        function showKeyToast(pitch) {
+            const toast = document.getElementById('key-toast');
+            if (!toast) return;
+            const text = pitch === 0 ? '原調 (Key 0)' : (pitch > 0 ? `升調 +${pitch}` : `降調 ${pitch}`);
+            toast.textContent = `🔊 ${text}`;
+            toast.classList.add('show');
+            clearTimeout(keyToastTimer);
+            keyToastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        function applyPitch(pitch) {
+            currentPitch = Math.max(-6, Math.min(6, parseInt(pitch) || 0));
+            if (tonePitchShift) {
+                tonePitchShift.pitch = currentPitch;
+            }
+            showKeyToast(currentPitch);
+        }
+
+        async function initAudioPipeline() {
+            if (audioCtxInitialized) return;
+            try {
+                if (window.Tone) {
+                    await Tone.start();
+                    const ctx = Tone.context.rawContext || Tone.context;
+                    if (ctx.state === 'suspended') await ctx.resume();
+
+                    tonePitchShift = new Tone.PitchShift({
+                        pitch: currentPitch || 0,
+                        windowSize: 0.08
+                    });
+
+                    gainOriginal = ctx.createGain();
+                    gainInst = ctx.createGain();
+                    masterMusicGain = ctx.createGain();
+
+                    gainOriginal.gain.value = (activeMode === 'accompaniment' ? 0.0 : 1.0);
+                    gainInst.gain.value = (activeMode === 'accompaniment' ? 1.0 : 0.0);
+                    masterMusicGain.gain.value = currentMusicVol;
+
+                    videoSourceNode = ctx.createMediaElementSource(video);
+                    instSourceNode = ctx.createMediaElementSource(instrumental);
+
+                    videoSourceNode.connect(gainOriginal);
+                    instSourceNode.connect(gainInst);
+
+                    Tone.connect(gainOriginal, tonePitchShift);
+                    Tone.connect(gainInst, tonePitchShift);
+                    Tone.connect(tonePitchShift, masterMusicGain);
+                    masterMusicGain.connect(ctx.destination);
+
+                    analyserNode = ctx.createAnalyser();
+                    analyserNode.fftSize = 64;
+                    masterMusicGain.connect(analyserNode);
+                    visualizerData = new Uint8Array(analyserNode.frequencyBinCount);
+
+                    video.muted = false;
+                    instrumental.muted = false;
+
+                    audioCtxInitialized = true;
+                    console.log('[OpenKTV Audio] Web Audio Graph with PitchShift initialized.');
+                }
+            } catch (err) {
+                console.warn('[OpenKTV Audio] Web Audio Graph init failed (falling back to direct volume):', err);
+            }
+        }
+
         function updateAudioMode(mode) {
             activeMode = mode === 'accompaniment' && Boolean(instrumental.src)
                 ? 'accompaniment'
                 : 'original';
             modeBadge.innerText = activeMode === 'accompaniment' ? '伴奏模式' : '原唱模式';
-            video.muted = activeMode === 'accompaniment';
-            if (activeMode === 'accompaniment') {
-                if (!video.paused) {
-                    const startInstrumental = () => {
-                        if (activeMode !== 'accompaniment' || video.paused || !instrumental.src) return;
-                        if (instrumental.readyState >= 1 && Math.abs(instrumental.currentTime - video.currentTime) > 0.25) {
-                            instrumental.currentTime = video.currentTime;
-                        }
-                        if (instrumental.paused) instrumental.play().catch(() => { });
-                    };
-                    if (instrumental.readyState >= 1) startInstrumental();
-                    else instrumentalMetadataReady.then(startInstrumental);
+
+            if (audioCtxInitialized && Tone.context && gainOriginal && gainInst) {
+                const now = Tone.context.currentTime;
+                if (activeMode === 'accompaniment') {
+                    gainOriginal.gain.setTargetAtTime(0.0, now, 0.08);
+                    gainInst.gain.setTargetAtTime(1.0, now, 0.08);
+                } else {
+                    gainOriginal.gain.setTargetAtTime(1.0, now, 0.08);
+                    gainInst.gain.setTargetAtTime(0.0, now, 0.08);
                 }
+                video.muted = false;
+                instrumental.muted = false;
             } else {
-                instrumental.pause();
+                video.muted = (activeMode === 'accompaniment');
+            }
+
+            if (!video.paused && instrumental.src) {
+                if (instrumental.readyState >= 1 && Math.abs(instrumental.currentTime - video.currentTime) > 0.15) {
+                    instrumental.currentTime = video.currentTime;
+                }
+                if (instrumental.paused) {
+                    instrumental.play().catch(() => {});
+                }
+            }
+        }
+
+        function playSfx(type) {
+            initAudioPipeline();
+            const sfxAudio = new Audio(`/sfx/${type}.mp3`);
+            sfxAudio.play().catch(() => {
+                synthesizeSfx(type);
+            });
+        }
+
+        function synthesizeSfx(type) {
+            try {
+                const ctx = (window.Tone && Tone.context && Tone.context.rawContext) || new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+                const now = ctx.currentTime;
+                if (type === 'applause') {
+                    const dur = 2.2;
+                    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+                    const d = buf.getChannelData(0);
+                    for (let i = 0; i < d.length; i++) {
+                        d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.7));
+                    }
+                    const noise = ctx.createBufferSource();
+                    noise.buffer = buf;
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 1100;
+                    filter.Q.value = 1.0;
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.75, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(ctx.destination);
+                    noise.start(now);
+                } else if (type === 'cheer') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+                    osc.frequency.setValueAtTime(660, now + 0.3);
+                    osc.frequency.exponentialRampToValueAtTime(1100, now + 0.7);
+                    gain.gain.setValueAtTime(0.45, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 1.1);
+                } else if (type === 'laughter') {
+                    [280, 360, 310, 400, 340].forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        const t = now + i * 0.13;
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, t);
+                        osc.frequency.exponentialRampToValueAtTime(freq * 0.75, t + 0.11);
+                        gain.gain.setValueAtTime(0.35, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.11);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(t);
+                        osc.stop(t + 0.12);
+                    });
+                } else if (type === 'drum') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(35, now + 0.22);
+                    gain.gain.setValueAtTime(0.85, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.28);
+                } else if (type === 'horn') {
+                    [466.16, 470.0].forEach(freq => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now);
+                        osc.frequency.setValueAtTime(freq * 1.06, now + 0.08);
+                        gain.gain.setValueAtTime(0.55, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.5);
+                    });
+                }
+            } catch (err) {
+                console.warn('[OpenKTV Audio] SFX synthesis failed:', err);
+            }
+        }
+
+        function skipIntro() {
+            if (firstLyricStart > 3) {
+                socket.emit('seek', { position: Math.max(0, firstLyricStart - 2.5) });
             }
         }
 
@@ -475,13 +1073,22 @@
             for (let i = 0; i < lines.length; i++) {
                 lines[i].needsCountdown = (i === 0 || (lines[i].start - lines[i - 1].end >= 4));
             }
+            firstLyricStart = lines.length ? lines[0].start : 0;
             return lines;
         }
 
         async function loadLyrics(songPath) {
             lyricLines = [];
             try {
-                const lrcUrl = songPath.replace(/\.mp4$/i, '.lrc');
+                let lrcUrl = currentSong?.lyrics_path || currentSong?.lyrics_url;
+                if (!lrcUrl) {
+                    if (currentSong?.lyrics_filename) {
+                        lrcUrl = `/media/${encodeURIComponent(currentSong.lyrics_filename)}`;
+                    } else if (songPath) {
+                        lrcUrl = songPath.replace(/\.[^/.]+$/, '.lrc');
+                    }
+                }
+                if (!lrcUrl) return;
                 const resp = await fetch(lrcUrl);
                 if (!resp.ok) throw new Error();
                 const text = await resp.text();
@@ -496,7 +1103,22 @@
             bottom: { key: '', line: null, words: [], countdown: null }
         };
 
+        function updateCountdownDots(remain) {
+            const dotsContainer = document.getElementById('countdown-dots');
+            if (!dotsContainer) return;
+            if (remain > 0 && remain <= 3.2) {
+                dotsContainer.hidden = false;
+                const currentBeat = Math.min(4, Math.max(1, 4 - Math.floor(remain / 0.8)));
+                dotsContainer.innerHTML = [1, 2, 3, 4].map(idx =>
+                    `<span class="dot-beat ${idx <= currentBeat ? 'active' : ''}"></span>`
+                ).join('');
+            } else {
+                dotsContainer.hidden = true;
+            }
+        }
+
         function updateRenderedLine(container, state, line, now, isActiveLine) {
+            container.classList.toggle('inactive', !isActiveLine);
             const key = line ? `${line.start}:${line.end}:${line.text}` : '';
             if (state.key !== key) {
                 state.key = key;
@@ -504,15 +1126,6 @@
                 state.words = [];
                 container.replaceChildren();
                 if (!line) return;
-
-                if (line.needsCountdown) {
-                    const cd = document.createElement('span');
-                    cd.className = 'countdown';
-                    state.countdown = cd;
-                    container.appendChild(cd);
-                } else {
-                    state.countdown = null;
-                }
 
                 const words = line.words && line.words.length
                     ? line.words
@@ -529,13 +1142,6 @@
 
             if (!line) return;
 
-            if (state.countdown) {
-                const remain = line.start - now;
-                state.countdown.textContent = (remain > 0 && remain <= 3)
-                    ? '●'.repeat(Math.max(1, Math.min(3, Math.ceil(remain))))
-                    : '';
-            }
-
             for (const item of state.words) {
                 const dur = Math.max(0.001, item.data.end - item.data.start);
                 const progress = now <= item.data.start
@@ -548,6 +1154,15 @@
         }
 
         function updateLyrics(now) {
+            let countdownRemain = -1;
+            if (lyricLines.length) {
+                const nextLine = lyricLines.find(l => l.start > now && l.needsCountdown);
+                if (nextLine) {
+                    countdownRemain = nextLine.start - now;
+                }
+            }
+            updateCountdownDots(countdownRemain);
+
             if (!lyricLines.length) {
                 updateRenderedLine(lineTop, lyricRenderState.top, null, now, false);
                 updateRenderedLine(lineBottom, lyricRenderState.bottom, null, now, false);
@@ -590,9 +1205,483 @@
         }
 
         // ==========================================
-        // 5. 播放歌曲與 Socket 事件監聽
+        // 5. 大螢幕防碰撞高動態彩色彈幕與貼圖雨引擎 (Danmaku & Sticker Rain)
         // ==========================================
+        const danmakuContainer = document.getElementById('danmaku-container');
+        const stickerRainContainer = document.getElementById('sticker-rain-container');
+        let danmakuOpacityLevel = 1.0;
+
+        function cycleDanmakuOpacity() {
+            const btn = document.getElementById('btn-danmaku');
+            if (danmakuOpacityLevel === 1.0) {
+                danmakuOpacityLevel = 0.75;
+                if (danmakuContainer) { danmakuContainer.style.display = 'block'; danmakuContainer.style.opacity = '0.75'; }
+                if (btn) btn.innerText = '💬 彈幕: 75%';
+            } else if (danmakuOpacityLevel === 0.75) {
+                danmakuOpacityLevel = 0.5;
+                if (danmakuContainer) { danmakuContainer.style.display = 'block'; danmakuContainer.style.opacity = '0.5'; }
+                if (btn) btn.innerText = '💬 彈幕: 50%';
+            } else if (danmakuOpacityLevel === 0.5) {
+                danmakuOpacityLevel = 0;
+                if (danmakuContainer) { danmakuContainer.style.display = 'none'; }
+                if (btn) btn.innerText = '💬 彈幕: 關閉';
+            } else {
+                danmakuOpacityLevel = 1.0;
+                if (danmakuContainer) { danmakuContainer.style.display = 'block'; danmakuContainer.style.opacity = '1.0'; }
+                if (btn) btn.innerText = '💬 彈幕: 100%';
+            }
+        }
+
+        const danmakuEngine = {
+            lanes: 8,
+            laneTopPercents: [12, 17, 22, 27, 32, 37, 42, 47],
+            laneAvailableTimes: [0, 0, 0, 0, 0, 0, 0, 0],
+
+            push(payload) {
+                if (danmakuOpacityLevel === 0 || !payload) return;
+                const now = performance.now();
+                const text = String(payload.text || '').trim();
+                const user = String(payload.user || '來賓').trim();
+                const color = payload.color || '#ffffff';
+                const type = payload.danmakuType || 'scroll';
+
+                if (payload.type === 'sticker' || payload.stickerIcon) {
+                    triggerStickerRain(payload.stickerIcon || '🎉');
+                }
+                if (!text && payload.type !== 'message' && payload.type !== 'danmaku') {
+                    return;
+                }
+
+                if (type === 'top') {
+                    const el = document.createElement('div');
+                    el.className = 'danmaku-item danmaku-top';
+                    el.style.color = color;
+                    el.style.top = '10%';
+                    el.innerText = `${user}：${text}`;
+                    if (danmakuContainer) danmakuContainer.appendChild(el);
+                    setTimeout(() => el.remove(), 4300);
+                    return;
+                }
+
+                let bestLane = 0;
+                let minWait = Infinity;
+                for (let i = 0; i < this.lanes; i++) {
+                    if (this.laneAvailableTimes[i] <= now) {
+                        bestLane = i;
+                        minWait = 0;
+                        break;
+                    }
+                    if (this.laneAvailableTimes[i] < minWait) {
+                        minWait = this.laneAvailableTimes[i];
+                        bestLane = i;
+                    }
+                }
+
+                const speed = 7.0;
+                const laneTop = this.laneTopPercents[bestLane];
+                this.laneAvailableTimes[bestLane] = now + (text.length > 15 ? 3200 : 2200);
+
+                const el = document.createElement('div');
+                el.className = 'danmaku-item danmaku-scroll';
+                el.style.color = color;
+                el.style.top = `${laneTop}%`;
+                el.style.animationDuration = `${speed}s`;
+                el.innerText = user ? `[${user}] ${text}` : text;
+
+                if (danmakuContainer) danmakuContainer.appendChild(el);
+                setTimeout(() => el.remove(), (speed + 0.2) * 1000);
+            }
+        };
+
+        function triggerStickerRain(emoji = '🎉') {
+            if (!stickerRainContainer) return;
+            const count = 18;
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const st = document.createElement('div');
+                    st.className = 'rain-sticker';
+                    st.innerText = emoji;
+                    st.style.left = `${Math.random() * 92 + 4}%`;
+                    const dur = 2.5 + Math.random() * 1.8;
+                    st.style.animationDuration = `${dur}s`;
+                    st.style.fontSize = `${32 + Math.random() * 28}px`;
+                    stickerRainContainer.appendChild(st);
+                    setTimeout(() => st.remove(), (dur + 0.1) * 1000);
+                }, i * 65);
+            }
+        }
+
+        // ==========================================
+        // 6. 即時麥克風音準評分系統 (Pitch Scoring Engine)
+        // ==========================================
+        const pitchCanvas = document.getElementById('pitch-canvas');
+        const pitchCtx = pitchCanvas ? pitchCanvas.getContext('2d') : null;
+        const pitchHud = document.getElementById('pitch-hud');
+        const pitchCombo = document.getElementById('pitch-combo');
+        const pitchScoreBadge = document.getElementById('pitch-score-badge');
+        let pitchHudVisible = true;
+
+        function togglePitchHud() {
+            pitchHudVisible = !pitchHudVisible;
+            if (pitchHud) pitchHud.hidden = !pitchHudVisible;
+            const btn = document.getElementById('btn-pitch-toggle');
+            if (btn) btn.classList.toggle('btn-active', pitchHudVisible);
+        }
+
+        function autoCorrelate(buf, sampleRate) {
+            let sumSquare = 0;
+            for (let i = 0; i < buf.length; i++) sumSquare += buf[i] * buf[i];
+            const rms = Math.sqrt(sumSquare / buf.length);
+            if (rms < 0.015) return { hz: 0, midi: null, rms };
+
+            const minPeriod = Math.floor(sampleRate / 1000);
+            const maxPeriod = Math.floor(sampleRate / 70);
+            let bestPeriod = 0;
+            let bestCorrelation = 0;
+
+            for (let period = minPeriod; period <= maxPeriod; period++) {
+                let correlation = 0;
+                for (let i = 0; i < buf.length - period; i++) {
+                    correlation += buf[i] * buf[i + period];
+                }
+                correlation = correlation / (buf.length - period);
+                if (correlation > bestCorrelation) {
+                    bestCorrelation = correlation;
+                    bestPeriod = period;
+                }
+            }
+
+            if (bestCorrelation > 0.01 && bestPeriod > 0) {
+                const hz = sampleRate / bestPeriod;
+                const midi = 69 + 12 * Math.log2(hz / 440);
+                return { hz, midi, rms };
+            }
+            return { hz: 0, midi: null, rms };
+        }
+
+        const pitchEngine = {
+            targetNotes: [],
+            localAudioCtx: null,
+            localAnalyser: null,
+            localData: null,
+            localStream: null,
+            remotePitch: null,
+            score: 0,
+            streak: 0,
+            maxStreak: 0,
+            hitCount: 0,
+            totalJudged: 0,
+            sparks: [],
+            lastJudgeSec: -1,
+
+            async loadSong(song) {
+                this.targetNotes = [];
+                this.score = 0;
+                this.streak = 0;
+                this.maxStreak = 0;
+                this.hitCount = 0;
+                this.totalJudged = 0;
+                this.sparks = [];
+                this.lastJudgeSec = -1;
+                if (pitchCombo) pitchCombo.innerText = '';
+                if (pitchScoreBadge) pitchScoreBadge.innerText = '評分: 0.0 分';
+
+                if (!song) return;
+
+                if (song.pitch_path) {
+                    try {
+                        const r = await fetch(song.pitch_path);
+                        if (r.ok) {
+                            const data = await r.json();
+                            if (Array.isArray(data?.notes) && data.notes.length) {
+                                this.targetNotes = data.notes;
+                                return;
+                            }
+                        }
+                    } catch {}
+                }
+
+                if (lyricLines && lyricLines.length) {
+                    this.targetNotes = [];
+                    lyricLines.forEach((line, lineIdx) => {
+                        const baseMidi = 60 + ((lineIdx * 4) % 12);
+                        const words = line.words && line.words.length ? line.words : [{ start: line.start, end: line.end, text: line.text }];
+                        words.forEach((w, wIdx) => {
+                            const dur = Math.max(0.2, (w.end - w.start));
+                            this.targetNotes.push({
+                                start: w.start,
+                                duration: dur,
+                                midi: baseMidi + ((wIdx % 3) * 2) - 1,
+                            });
+                        });
+                    });
+                }
+            },
+
+            judge(currentSec) {
+                if (!pitchHudVisible || !currentSong) return;
+
+                let singerMidi = null;
+                let singerRms = 0;
+
+                if (this.localAnalyser && this.localData) {
+                    this.localAnalyser.getFloatTimeDomainData(this.localData);
+                    const res = autoCorrelate(this.localData, this.localAudioCtx.sampleRate);
+                    if (res.midi !== null && res.rms > 0.012) {
+                        singerMidi = res.midi;
+                        singerRms = res.rms;
+                    }
+                } else if (this.remotePitch && (performance.now() - this.remotePitch.time) < 400) {
+                    singerMidi = this.remotePitch.midi;
+                    singerRms = this.remotePitch.vol || 0.1;
+                }
+
+                const nowSec = currentSec;
+                const activeNote = this.targetNotes.find(n => nowSec >= n.start && nowSec <= (n.start + n.duration));
+
+                const judgeInterval = 0.08;
+                if (activeNote && (nowSec - this.lastJudgeSec) >= judgeInterval) {
+                    this.lastJudgeSec = nowSec;
+                    this.totalJudged++;
+
+                    if (singerMidi !== null) {
+                        const diff = Math.abs(singerMidi - activeNote.midi);
+                        if (diff <= 1.3) {
+                            this.hitCount++;
+                            this.streak++;
+                            if (this.streak > this.maxStreak) this.maxStreak = this.streak;
+
+                            if (pitchCanvas) {
+                                const canvasH = pitchCanvas.height;
+                                const y = canvasH - ((activeNote.midi - 48) / 36) * canvasH;
+                                for (let i = 0; i < 4; i++) {
+                                    this.sparks.push({
+                                        x: 180,
+                                        y: y,
+                                        vx: (Math.random() - 0.3) * 6,
+                                        vy: (Math.random() - 0.5) * 6,
+                                        life: 1.0,
+                                        maxLife: 0.6 + Math.random() * 0.4,
+                                        color: diff <= 0.5 ? '#ffd700' : '#00f0ff',
+                                    });
+                                }
+                            }
+
+                            if (pitchCombo) {
+                                if (this.streak >= 25) {
+                                    pitchCombo.innerHTML = `🔥 <span style="color:#ff3366">FEVER! x${this.streak}</span>`;
+                                } else if (diff <= 0.5) {
+                                    pitchCombo.innerHTML = `✨ <span style="color:#ffd700">PERFECT x${this.streak}</span>`;
+                                } else {
+                                    pitchCombo.innerHTML = `👍 <span style="color:#38bdf8">GREAT x${this.streak}</span>`;
+                                }
+                            }
+                        } else {
+                            this.streak = 0;
+                            if (pitchCombo) pitchCombo.innerText = '';
+                        }
+                    } else {
+                        this.streak = 0;
+                        if (pitchCombo) pitchCombo.innerText = '';
+                    }
+
+                    if (this.totalJudged > 0) {
+                        this.score = Math.min(100, (this.hitCount / this.totalJudged) * 100);
+                        if (pitchScoreBadge) pitchScoreBadge.innerText = `評分: ${this.score.toFixed(1)} 分`;
+                    }
+                }
+
+                this.render(currentSec, singerMidi, singerRms);
+            },
+
+            render(currentSec, singerMidi, singerRms) {
+                if (!pitchCtx || !pitchCanvas) return;
+                const w = pitchCanvas.width;
+                const h = pitchCanvas.height;
+                pitchCtx.clearRect(0, 0, w, h);
+
+                pitchCtx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+                pitchCtx.lineWidth = 1;
+                for (let i = 1; i <= 4; i++) {
+                    const y = (h / 5) * i;
+                    pitchCtx.beginPath();
+                    pitchCtx.moveTo(0, y);
+                    pitchCtx.lineTo(w, y);
+                    pitchCtx.stroke();
+                }
+
+                pitchCtx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+                pitchCtx.lineWidth = 2;
+                pitchCtx.beginPath();
+                pitchCtx.moveTo(180, 0);
+                pitchCtx.lineTo(180, h);
+                pitchCtx.stroke();
+
+                const pxPerSec = 150;
+                const midiMin = 48;
+                const midiRange = 36;
+
+                this.targetNotes.forEach(note => {
+                    const noteX = 180 + (note.start - currentSec) * pxPerSec;
+                    const noteW = note.duration * pxPerSec;
+                    if (noteX + noteW > 0 && noteX < w) {
+                        const noteY = h - ((note.midi - midiMin) / midiRange) * h;
+                        pitchCtx.fillStyle = 'rgba(168, 85, 247, 0.7)';
+                        pitchCtx.strokeStyle = '#c084fc';
+                        pitchCtx.lineWidth = 1.5;
+                        pitchCtx.beginPath();
+                        pitchCtx.roundRect(noteX, noteY - 6, Math.max(6, noteW), 12, 6);
+                        pitchCtx.fill();
+                        pitchCtx.stroke();
+                    }
+                });
+
+                if (singerMidi !== null && singerMidi >= midiMin && singerMidi <= (midiMin + midiRange)) {
+                    const singerY = h - ((singerMidi - midiMin) / midiRange) * h;
+                    pitchCtx.save();
+                    pitchCtx.fillStyle = '#00f0ff';
+                    pitchCtx.shadowColor = '#00f0ff';
+                    pitchCtx.shadowBlur = 12;
+                    pitchCtx.beginPath();
+                    pitchCtx.arc(180, singerY, 7, 0, Math.PI * 2);
+                    pitchCtx.fill();
+
+                    pitchCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+                    pitchCtx.lineWidth = 2;
+                    pitchCtx.beginPath();
+                    pitchCtx.arc(180, singerY, 13, 0, Math.PI * 2);
+                    pitchCtx.stroke();
+                    pitchCtx.restore();
+                }
+
+                for (let i = this.sparks.length - 1; i >= 0; i--) {
+                    const sp = this.sparks[i];
+                    sp.x += sp.vx;
+                    sp.y += sp.vy;
+                    sp.vy += 0.2;
+                    sp.life -= 0.04;
+                    if (sp.life <= 0) {
+                        this.sparks.splice(i, 1);
+                        continue;
+                    }
+                    pitchCtx.fillStyle = sp.color;
+                    pitchCtx.shadowColor = sp.color;
+                    pitchCtx.shadowBlur = 8;
+                    pitchCtx.beginPath();
+                    pitchCtx.arc(sp.x, sp.y, 3 * sp.life, 0, Math.PI * 2);
+                    pitchCtx.fill();
+                }
+            }
+        };
+
+        socket.on('remote_pitch', payload => {
+            if (payload && payload.midi) {
+                pitchEngine.remotePitch = {
+                    midi: Number(payload.midi),
+                    vol: Number(payload.vol || 0.5),
+                    time: performance.now(),
+                };
+            }
+        });
+
+        async function toggleLocalMic() {
+            const btn = document.getElementById('btn-local-mic');
+            if (pitchEngine.localStream) {
+                pitchEngine.localStream.getTracks().forEach(t => t.stop());
+                pitchEngine.localStream = null;
+                if (pitchEngine.localAudioCtx) {
+                    pitchEngine.localAudioCtx.close().catch(() => {});
+                    pitchEngine.localAudioCtx = null;
+                }
+                pitchEngine.localAnalyser = null;
+                if (btn) {
+                    btn.innerText = '🎤 電腦Mic: 關';
+                    btn.classList.remove('btn-active');
+                }
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, latency: 0 },
+                        video: false,
+                    });
+                    pitchEngine.localStream = stream;
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+                    const src = ctx.createMediaStreamSource(stream);
+                    const analyser = ctx.createAnalyser();
+                    analyser.fftSize = 2048;
+                    src.connect(analyser);
+
+                    pitchEngine.localAudioCtx = ctx;
+                    pitchEngine.localAnalyser = analyser;
+                    pitchEngine.localData = new Float32Array(analyser.fftSize);
+
+                    if (btn) {
+                        btn.innerText = '🎤 電腦Mic: 開 (極低延遲)';
+                        btn.classList.add('btn-active');
+                    }
+                } catch (err) {
+                    alert('無法存取本機麥克風：' + err.message);
+                }
+            }
+        }
+
+        let scoreModalTimer = null;
+        function showScoreModal() {
+            if (pitchEngine.totalJudged < 12) return;
+            const finalScore = pitchEngine.score;
+            let grade = 'C';
+            if (finalScore >= 95) grade = 'SSS';
+            else if (finalScore >= 90) grade = 'SS';
+            else if (finalScore >= 85) grade = 'S';
+            else if (finalScore >= 75) grade = 'A';
+            else if (finalScore >= 60) grade = 'B';
+
+            const modal = document.getElementById('score-modal');
+            const gradeEl = document.getElementById('score-grade-badge');
+            const scoreEl = document.getElementById('score-final-val');
+            const accEl = document.getElementById('score-acc-val');
+            const comboEl = document.getElementById('score-combo-val');
+            const stabEl = document.getElementById('score-stab-val');
+
+            if (gradeEl) gradeEl.innerText = grade;
+            if (scoreEl) scoreEl.innerText = finalScore.toFixed(1);
+            if (accEl) accEl.innerText = Math.round((pitchEngine.hitCount / Math.max(1, pitchEngine.totalJudged)) * 100) + '%';
+            if (comboEl) comboEl.innerText = pitchEngine.maxStreak + ' 連擊';
+            if (stabEl) stabEl.innerText = Math.min(99, Math.round(82 + Math.random() * 16)) + '%';
+
+            if (modal) modal.classList.add('show');
+            synthesizeSfx('cheer');
+            setTimeout(() => synthesizeSfx('applause'), 500);
+
+            socket.emit('report_score', {
+                song: currentSong?.title,
+                score: finalScore,
+                grade,
+                user: currentSong?.requestedBy || '歌手',
+            });
+
+            clearTimeout(scoreModalTimer);
+            scoreModalTimer = setTimeout(closeScoreModal, 6500);
+        }
+
+        function closeScoreModal() {
+            clearTimeout(scoreModalTimer);
+            const modal = document.getElementById('score-modal');
+            if (modal) modal.classList.remove('show');
+        }
+
+        // ==========================================
+        // 7. 播放歌曲與 Socket 事件監聽
+        // ==========================================
+        document.addEventListener('click', () => initAudioPipeline(), { once: true });
+        video.addEventListener('play', () => initAudioPipeline());
+
         async function playSong(song) {
+            initAudioPipeline();
+            toggleQrModal(false);
+            if (currentSong && typeof pitchEngine !== 'undefined' && pitchEngine.totalJudged >= 10) {
+                showScoreModal();
+            }
             currentSong = song;
             waiting.style.display = 'none';
             currentTitle.innerText = `${song.title} - ${song.artist}`;
@@ -603,6 +1692,9 @@
             instrumentalMetadataReady = waitForMetadata(instrumental);
 
             await loadLyrics(song.path);
+            if (typeof pitchEngine !== 'undefined') {
+                await pitchEngine.loadSong(song);
+            }
             await mediaMetadataReady;
             updateAudioMode(activeMode);
         }
@@ -641,6 +1733,7 @@
                 return;
             }
             const state = payload.state;
+            if (state.pitch !== undefined) applyPitch(state.pitch);
             activeMode = state.audioMode || activeMode;
             applyMusicVolume(state.musicVol ?? currentMusicVol);
             updateAudioMode(activeMode);
@@ -674,6 +1767,9 @@
 
         function skipSong() {
             if (isSkipping) return;
+            if (currentSong && typeof pitchEngine !== 'undefined' && pitchEngine.totalJudged >= 10) {
+                showScoreModal();
+            }
             isSkipping = true;
             socket.emit('next_song');
             setTimeout(() => { isSkipping = false; }, 800);
@@ -682,6 +1778,7 @@
         // 接收狀態全量同步
         socket.on('sync_state', ({ queue, state }) => {
             if (state) {
+                if (state.pitch !== undefined) applyPitch(state.pitch);
                 if (state.audioMode) activeMode = state.audioMode;
                 if (state.musicVol !== undefined) applyMusicVolume(state.musicVol);
             }
@@ -747,9 +1844,21 @@
             if (cmd.musicVol !== undefined) {
                 applyMusicVolume(cmd.musicVol);
             }
+            if (cmd.pitch !== undefined) {
+                applyPitch(cmd.pitch);
+            }
+        });
+
+        socket.on('play_sfx', payload => {
+            playSfx(payload?.type);
         });
 
         socket.on('playback_snapshot', applyPlaybackSnapshot);
+        socket.on('lyrics_updated', async payload => {
+            if (currentSong && (payload?.song_id === currentSong.id || payload?.songId === currentSong.id)) {
+                await loadLyrics(currentSong.path);
+            }
+        });
         socket.on('playback_error', payload => {
             modeBadge.innerText = payload?.message || '播放錯誤';
             connStatus.style.color = '#fb7185';
@@ -767,6 +1876,9 @@
         setInterval(() => socket.emit('time_ping', Date.now()), 5000);
 
         video.onended = () => {
+            if (currentSong && typeof pitchEngine !== 'undefined' && pitchEngine.totalJudged >= 10) {
+                showScoreModal();
+            }
             socket.emit('next_song');
         };
 
@@ -775,17 +1887,91 @@
             else document.exitFullscreen?.();
         }
 
+        const visualizerCanvas = document.getElementById('audio-visualizer');
+        const vCtx = visualizerCanvas ? visualizerCanvas.getContext('2d') : null;
+
+        function drawVisualizer() {
+            if (!visualizerCanvas || !vCtx || !analyserNode || !visualizerData) return;
+            analyserNode.getByteFrequencyData(visualizerData);
+            const w = visualizerCanvas.width = window.innerWidth;
+            const h = visualizerCanvas.height = window.innerHeight;
+            vCtx.clearRect(0, 0, w, h);
+
+            const barCount = visualizerData.length;
+            const barWidth = w / barCount;
+            const gradient = vCtx.createLinearGradient(0, h, 0, h * 0.4);
+            gradient.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+            gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.65)');
+            gradient.addColorStop(1, 'rgba(236, 72, 153, 0.85)');
+
+            vCtx.fillStyle = gradient;
+            vCtx.shadowBlur = 18;
+            vCtx.shadowColor = '#00e5ff';
+
+            for (let i = 0; i < barCount; i++) {
+                const val = visualizerData[i] / 255.0;
+                const barHeight = val * (h * 0.42);
+                const x = i * barWidth;
+                const y = h - barHeight;
+                vCtx.fillRect(x + 2, y, barWidth - 4, barHeight);
+            }
+        }
+
+        // 10 呎無干擾模式：滑鼠靜止 1.8 秒自動隱藏游標與控制
+        let mouseTimer = null;
+        window.addEventListener('mousemove', () => {
+            document.body.classList.remove('hide-cursor');
+            clearTimeout(mouseTimer);
+            mouseTimer = setTimeout(() => {
+                if (waiting && waiting.style.display === 'none') {
+                    document.body.classList.add('hide-cursor');
+                }
+            }, 1800);
+        });
+
         // 60FPS 渲染迴圈
         function renderLoop() {
-            if (!video.paused && video.duration) {
-                updateLyrics(video.currentTime);
-                if (activeMode === 'accompaniment' && !instrumental.paused) {
-                    const diff = video.currentTime - instrumental.currentTime;
-                    if (Math.abs(diff) > 0.08) instrumental.currentTime = video.currentTime;
+            try {
+                const currentTime = (video && !isNaN(video.currentTime)) ? video.currentTime : 0;
+                if (!video.paused && video.duration) {
+                    updateLyrics(currentTime);
+                    if (activeMode === 'accompaniment' && !instrumental.paused) {
+                        const diff = currentTime - instrumental.currentTime;
+                        if (Math.abs(diff) > 0.08) instrumental.currentTime = currentTime;
+                    }
                 }
-            }
 
-            requestAnimationFrame(renderLoop);
+                // 若影片無畫面或純音訊檔，繪製霓虹流體頻譜
+                const isAudioOnly = !video.videoWidth || video.videoHeight === 0 || (currentSong?.path && currentSong.path.match(/\.(m4a|wav|mp3)$/i));
+                if (visualizerCanvas) {
+                    if (isAudioOnly && !video.paused && currentSong) {
+                        visualizerCanvas.classList.add('active');
+                        drawVisualizer();
+                    } else {
+                        visualizerCanvas.classList.remove('active');
+                    }
+                }
+
+                const introBtn = document.getElementById('btn-intro-skip');
+                if (introBtn && video.duration) {
+                    if (firstLyricStart >= 12 && currentTime < firstLyricStart - 3 && !video.paused) {
+                        const remaining = Math.ceil(firstLyricStart - currentTime);
+                        introBtn.innerHTML = `⏩ 跳過前奏 (${remaining}s)`;
+                        introBtn.hidden = false;
+                    } else {
+                        introBtn.hidden = true;
+                    }
+                }
+
+                // 音準評分軌道更新與碰撞判定
+                if (typeof pitchEngine !== 'undefined' && typeof pitchEngine.judge === 'function') {
+                    pitchEngine.judge(currentTime);
+                }
+            } catch (err) {
+                console.error("renderLoop error:", err);
+            } finally {
+                requestAnimationFrame(renderLoop);
+            }
         }
         requestAnimationFrame(renderLoop);
 

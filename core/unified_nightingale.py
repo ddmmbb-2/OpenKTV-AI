@@ -460,6 +460,7 @@ class KTVProcessor:
     def __init__(self, settings: AppSettings, log_cb):
         self.settings = settings
         self.log = log_cb
+        self.last_error = ""
 
     def sanitize_filename(self, name: str) -> str:
         return "".join([char for char in name if char not in r'\\/:*?"<>|'])
@@ -487,11 +488,23 @@ class KTVProcessor:
             return ""
 
     def process_song(self, url: str, manual_title: str = "", options: dict | None = None) -> bool:
+        self.last_error = ""
         options = options or {}
-        stems = 4 if str(options.get("stems", self.settings.separator_stems)) == "4" else 2
-        device_pref = str(options.get("device", self.settings.device_preference)).lower()
-        separator_backend = str(options.get("separator_backend", self.settings.separator_backend)).lower()
-        alignment_backend = str(options.get("alignment_backend", self.settings.alignment_backend)).lower()
+        stems_val = options.get("stems")
+        stems = 4 if str(stems_val if stems_val is not None else self.settings.separator_stems) == "4" else 2
+
+        dev_val = options.get("device")
+        device_pref = str(dev_val if dev_val and str(dev_val).lower() != "none" else self.settings.device_preference).lower()
+
+        sep_val = options.get("separator_backend")
+        separator_backend = str(sep_val if sep_val and str(sep_val).lower() != "none" else self.settings.separator_backend).lower()
+        if separator_backend not in {"demucs", "uvr", "hybrid"}:
+            separator_backend = str(self.settings.separator_backend or "demucs").lower()
+            if separator_backend not in {"demucs", "uvr", "hybrid"}:
+                separator_backend = "demucs"
+
+        ali_val = options.get("alignment_backend")
+        alignment_backend = str(ali_val if ali_val and str(ali_val).lower() != "none" else self.settings.alignment_backend).lower()
         lyrics_text = (options.get("lyrics_text") or "").strip()
         lyrics_url = (options.get("lrclib_url") or "").strip()
         singer = (options.get("singer") or "").strip()
@@ -566,8 +579,12 @@ class KTVProcessor:
             temp_dereverbed_vocals = job_temp_dir / "vocals.dereverbed.wav"
             temp_lrc = job_temp_dir / "lyrics.lrc"
 
-            self.log("步驟 1/8: 下載影片...")
-            download_youtube_video(url, temp_input, self.settings.ffmpeg_dir, self.settings.yt_dlp_path)
+            if options.get("local_file") and Path(options["local_file"]).is_file():
+                self.log("步驟 1/8: 載入本機影片/音訊...")
+                shutil.copy2(options["local_file"], temp_input)
+            else:
+                self.log("步驟 1/8: 下載影片...")
+                download_youtube_video(url, temp_input, self.settings.ffmpeg_dir, self.settings.yt_dlp_path)
 
             if separator_backend in {"demucs", "hybrid"}:
                 ensure_demucs_weights(self.settings.demucs_model, cache_dir=self.settings.demucs_cache_dir, log_cb=self.log)
@@ -662,9 +679,11 @@ class KTVProcessor:
             self.log("✅ 製作完成！歌曲檔案與正式曲庫 CSV 已更新。")
             return True
         except subprocess.CalledProcessError as error:
+            self.last_error = f"外部指令執行失敗 (Code {error.returncode}): {error}"
             self.log(f"❌ 執行失敗 (Code {error})")
             return False
         except Exception as error:
+            self.last_error = str(error)
             self.log(f"❌ 錯誤: {error}")
             for path in moved_files:
                 path.unlink(missing_ok=True)
